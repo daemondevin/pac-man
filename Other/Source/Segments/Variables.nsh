@@ -36,7 +36,7 @@ ${SegmentFile}
 	${WordReplace} $R0 \ \\ + $R3
 	${SetEnvironmentVariable} "$R1:DoubleBackslash" $R3
 	;=== Make the java.util.prefs path
-	; Based on the forwardslashes path, s/[^a-z:]/\/&/g
+	; Based on the forwardslashes path, s/[^a-z:0-9]/\/&/g
 	StrCpy $R3 ""
 	StrLen $R7 $R2
 	IntOp $R7 $R7 - 1 ; base 0
@@ -69,6 +69,16 @@ ${SegmentFile}
 		${OrIf} $R9 S== y
 		${OrIf} $R9 S== z
 		${OrIf} $R9 S== :
+		${OrIf} $R9 S== 0
+		${OrIf} $R9 S== 1
+		${OrIf} $R9 S== 2
+		${OrIf} $R9 S== 3
+		${OrIf} $R9 S== 4
+		${OrIf} $R9 S== 5
+		${OrIf} $R9 S== 6
+		${OrIf} $R9 S== 7
+		${OrIf} $R9 S== 8
+		${OrIf} $R9 S== 9
 			StrCpy $R3 $R3$R9
 		${Else}
 			StrCpy $R3 $R3/$R9
