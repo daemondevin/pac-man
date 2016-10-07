@@ -13,17 +13,18 @@ ${SegmentFile}
 	 * For example:
 	 *   ${SetEnvironmentVariablesPath} PortableApps.comAppDirectory $EXEDIR\App
 	 * Will produce the following environment variables:
-	 *   %PAL:AppDir%                 = X:\PortableApps\AppNamePortable\App
-	 *   %PAL:AppDir:Forwardslash%    = X:/PortableApps/AppNamePortable/App
-	 *   %PAL:AppDir:DoubleBackslash% = X:\\PortableApps\\AppNamePortable\\App
-	 *   %PAL:AppDir:java.util.prefs% = /X:///Portable/Apps///App/Name/Portable///App
+	 *   %PAL:AppDir%                      = X:\PortableApps\AppNamePortable\App
+	 *   %PAL:AppDir:Forwardslash%         = X:/PortableApps/AppNamePortable/App
+	 *   %PAL:AppDir:DoubleBackslash%      = X:\\PortableApps\\AppNamePortable\\App
+	 *   %PAL:AppDir:QuadrupleBackslash%   = X:\\\\PortableApps\\\\AppNamePortable\\\\App
+	 *   %PAL:AppDir:java.util.prefs%      = /X:///Portable/Apps///App/Name/Portable///App
 	 */
 	Exch $R0 ; path
 	Exch
 	Exch $R1 ; variable name
 
 	Push $R2 ; forwardslash
-	Push $R3 ; double backslash, java.util.prefs
+	Push $R3 ; double backslash, quad backslash, java.util.prefs
 	Push $R7 ; jup len
 	Push $R8 ; jup pos
 	Push $R9 ; jup char
@@ -35,6 +36,9 @@ ${SegmentFile}
 	;=== Make the double backslashes path (e.g. X:\\PortableApps\\AppNamePortable)
 	${WordReplace} $R0 \ \\ + $R3
 	${SetEnvironmentVariable} "$R1:DoubleBackslash" $R3
+	;=== Make the quadruple backslashes path (e.g. X:\\\\PortableApps\\\\AppNamePortable)
+	${WordReplace} $R0 \ \\\\ + $R3
+	${SetEnvironmentVariable} "$R1:QuadrupleBackslash" $R3
 	;=== Make the java.util.prefs path
 	; Based on the forwardslashes path, s/[^a-z:0-9]/\/&/g
 	StrCpy $R3 ""

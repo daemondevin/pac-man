@@ -56,17 +56,14 @@ ${!echo} "Including required files..."
 !include LangFile.nsh
 !include LogicLib.nsh
 !include FileFunc.nsh
-!include NewTextReplace.nsh
 !include TextFunc.nsh
 !include WordFunc.nsh
 
 ;(NSIS Plugins) {{{2
-!addincludedir Plugins
-!addplugindir  Plugins
+!include NewTextReplace.nsh
+!addplugindir Plugins
 
 ;(Custom) {{{2
-!addincludedir Include
-!include Debug.nsh
 !include ReplaceInFileWithTextReplace.nsh
 !include ForEachINIPair.nsh
 !include ForEachPath.nsh
@@ -143,6 +140,9 @@ Var WaitForProgram
 ; Load the segments {{{1
 ${!echo} "Loading segments..."
 !include Segments.nsh
+
+;=== Debugging {{{1
+!include Debug.nsh
 
 ;=== Program Details {{{1
 ${!echo} "Specifying program details and setting options..."

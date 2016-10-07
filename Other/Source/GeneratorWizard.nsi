@@ -1,6 +1,5 @@
-﻿;Copyright (C) 2006-2009 John T. Haller
-
-;Website: http://PortableApps.com/Installer
+﻿;Copyright 2006-2016 John T. Haller
+;Website: http://PortableApps.com/
 
 ;This software is OSI Certified Open Source Software.
 ;OSI Certified is a certification mark of the Open Source Initiative.
@@ -19,6 +18,10 @@
 ;along with this program; if not, write to the Free Software
 ;Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
+;=== For NSIS3
+Unicode true 
+ManifestDPIAware true
+
 !define CustomIconAndName
 
 ;=== Require at least Unicode NSIS 2.46
@@ -29,14 +32,14 @@ Name "PortableApps.com Launcher Generator"
 OutFile ..\..\PortableApps.comLauncherGenerator.exe
 Icon ..\..\App\AppInfo\appicon.ico
 Caption "PortableApps.com Launcher Generator"
-VIProductVersion 1.0.0.0
+VIProductVersion 2.9.0.99
 VIAddVersionKey ProductName "PortableApps.com Launcher Generator"
 VIAddVersionKey Comments "A compiler for custom PortableApps.com Launcher builds. For additional details, visit PortableApps.com"
 VIAddVersionKey CompanyName PortableApps.com
 VIAddVersionKey LegalCopyright PortableApps.com
 VIAddVersionKey FileDescription "PortableApps.com Launcher Generator"
-VIAddVersionKey FileVersion 1.0.0.0
-VIAddVersionKey ProductVersion 1.0.0.0
+VIAddVersionKey FileVersion 2.9.0.99
+VIAddVersionKey ProductVersion 2.9.0.99
 VIAddVersionKey InternalName "PortableApps.com Launcher Generator"
 VIAddVersionKey LegalTrademarks "PortableApps.com is a Trademark of Rare Ideas, LLC."
 VIAddVersionKey OriginalFilename PortableApps.comLauncherGenerator.exe
@@ -55,14 +58,13 @@ SetDatablockOptimize On
 !include FileFunc.nsh
 !include LogicLib.nsh
 !include MUI.nsh
-!include NewTextReplace.nsh
 
 ;(NSIS Plugins)
-!addincludedir Plugins
-!addplugindir  Plugins
+!include NewTextReplace.nsh
+!addplugindir Plugins
 
 ;(Custom)
-!include Include\ReplaceInFileWithTextReplace.nsh
+!include ReplaceInFileWithTextReplace.nsh
 
 ;=== Icon & Stye ===
 !define MUI_ICON "..\..\App\AppInfo\appicon.ico"
@@ -127,11 +129,7 @@ Function .onInit
 		StrCpy $PACKAGE $0$PACKAGE
 	${EndIf}
 
-	ReadINIStr $NSIS $EXEDIR\Data\settings.ini GeneratorWizard makensis
-	${If} $NSIS == ""
-		StrCpy $NSIS ..\NSISPortable\App\NSIS\makensis.exe
-		WriteINIStr $EXEDIR\Data\settings.ini GeneratorWizard makensis $NSIS
-	${EndIf}
+	StrCpy $NSIS "$EXEDIR\App\NSIS\makensis.exe"
 
 	${GetParameters} $R0
 	StrCmp $R0 "" PreFillForm
@@ -184,6 +182,7 @@ FunctionEnd
 	FileWriteByte $9 "13"
 	FileWriteByte $9 "10"
 	FileClose $9
+	StrCpy $ERROROCCURED "true"
 !macroend
 
 !macro UpdatePath Source Target
@@ -227,7 +226,7 @@ Section Main
 	${IfNot} ${FileExists} $NSIS
 		StrCpy $ERROROCCURED true
 		${WriteErrorToLog} "NSIS not found at $NSIS."
-		MessageBox MB_ICONSTOP "NSIS was not found! (Looked for it in $NSIS)$\r$\n$\r$\nYou can specify a custom path to makensis.exe in $EXEDIR\Data\settings.ini, [GeneratorWizard]:makensis"
+		MessageBox MB_ICONSTOP "NSIS was not found! (Looked for it in $NSIS)"
 		Abort
 	${EndIf}
 
@@ -241,10 +240,10 @@ Section Main
 	RealProgress::SetProgress /NOUNLOAD 0
 	RealProgress::GradualProgress /NOUNLOAD 1 20 90 "Processing complete."
 
-	; Check if any upgrade needs to be done from 2.0
+	; Check if any upgrade needs to be done from 2.0 to 2.1
 	${If}   ${FileExists} $PACKAGE\Other\Source\PortableApps.comLauncherCustom.nsh
 	${OrIf} ${FileExists} $PACKAGE\Other\Source\PortableApps.comLauncherDebug.nsh
-		DetailPrint "Upgrading from 2.0..."
+		DetailPrint "Upgrading from 2.0 to 2.1..."
 		!insertmacro UpdatePath Other\Source\PortableApps.comLauncherCustom.nsh App\AppInfo\Launcher\Custom.nsh
 		!insertmacro UpdatePath Other\Source\PortableApps.comLauncherDebug.nsh  App\AppInfo\Launcher\Debug.nsh
 
@@ -256,9 +255,11 @@ Section Main
 		; Avoid ${...} being taken amiss
 		StrCpy $0 $${ReadUser
 		${If} $1 = 0xFEFF
-			${ReplaceInFileUTF16LECS} $PACKAGE\App\AppInfo\Launcher\Custom.nsh $0OverrideConfig} $0Config}
-		${Else}
-			${ReplaceInFileCS} $PACKAGE\App\AppInfo\Launcher\Custom.nsh $0OverrideConfig} $0Config}
+			${If} $5 == UTF-16LE
+				${ReplaceInFileUTF16LECS} $PACKAGE\App\AppInfo\Launcher\Custom.nsh $0OverrideConfig} $0Config}
+			${Else}
+				${ReplaceInFileCS} $PACKAGE\App\AppInfo\Launcher\Custom.nsh $0OverrideConfig} $0Config}
+			${EndIf}
 		${EndIf}
 		DetailPrint " "
 	${EndIf}
@@ -341,12 +342,13 @@ Section Main
 
 	DetailPrint " "
 	DetailPrint "Processing complete."
-	${If} $ERROROCCURED != true
+	${If} ${FileExists} $PACKAGE\$AppID.exe
 		StrCpy $FINISHTITLE "Launcher Created"
 		StrCpy $FINISHTEXT "The launcher has been created. Launcher location:\r\n$PACKAGE\r\n\r\nLauncher name:\r\n$AppID.exe" 
 	${Else}
 		StrCpy $FINISHTITLE "An Error Occured"
 		StrCpy $FINISHTEXT "The launcher was not created.  You can view the log file for more information."
+		StrCpy $ERROROCCURED true
 	${EndIf}
 SectionEnd
 
