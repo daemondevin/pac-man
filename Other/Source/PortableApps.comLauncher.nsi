@@ -35,9 +35,122 @@
 !define !echo "!insertmacro !echo"
 
 ;=== Require at least Unicode NSIS 2.46 {{{1
-!include RequireLatestNSIS.nsh
+;!include RequireLatestNSIS.nsh
+
+;= DEFINES
+;= ################
+!define APPINFO			`${PACKAGE}\App\AppInfo\appinfo.ini`
+!define CUSTOM			`${PACKAGE}\App\AppInfo\Launcher\custom.nsh`
+!define NEWLINE			`$\r$\n`
+
+!searchparse /NOERRORS /FILE `${APPINFO}` `AppID=` APPNAME
+
+!define LAUNCHER		`${PACKAGE}\App\AppInfo\Launcher\${APPNAME}.ini`
+
+!searchreplace APP "${APPNAME}" "Portable" ""
+
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `ProgramExecutable64=` APPEXE64
+
+!if ! "${APPEXE64}" == ""
+	!searchreplace APP64 "${APPNAME}" "Portable" "64"
+!endif
+!undef APPEXE64
+
+!searchparse /NOERRORS /FILE `${APPINFO}` `Name=` PORTABLEAPPNAME
+!searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
+
+!define APPDIR			`$EXEDIR\App\${APP}`
+
+!ifdef APP64
+	!define APPDIR64	`$EXEDIR\App\${APP64}`
+!endif
+
+${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
+
+;=== Manifest
+!searchparse /NOERRORS /FILE `${APPINFO}` `ElevatedPrivileges= ` RequestLevel
+!if "${RequestLevel}" == true
+	!define /REDEF RequestLevel ADMIN
+!else 
+	!define /REDEF RequestLevel USER
+!endif
+!define ResHacker		`Tools\bin\ResHacker.exe`
+!define ManifDir		`Tools\manifests`
+!define Manifest		`NSIS_3.01_Win8`
+!packhdr				`$%TEMP%\exehead.tmp` \ 
+						`"${Reshacker}" -addoverwrite "%TEMP%\exehead.tmp", "%TEMP%\exehead.tmp", "${ManifDir}\${Manifest}_${RequestLevel}.manifest", 24,1,1033`
+
+;=== Custom Defines
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `Registry=` REGISTRY
+!if "${REGISTRY}" == true
+	!define /REDEF REGISTRY
+	!define REGEXE		`$SYSDIR\reg.exe`
+	!define REGEDIT		`$SYSDIR\regedit.exe`
+	!searchparse /NOERRORS /FILE `${LAUNCHER}` `[RegistryValueWrite` RegValueWrite
+	!if "${RegValueWrite}" == "]"
+		!define RegSleep 50	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
+	!endif
+	!searchparse /NOERRORS /FILE `${LAUNCHER}` `Type=Replace` Replace
+	!if "${RegValueWrite}" == "]"
+		!define RegSleep 50	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
+	!endif
+	!ifdef APP64
+		;= TODO: Figure out a better way to handle this.
+		; !define DISABLEFSR	;=== Disable redirection
+	!endif
+!else
+	!ifdef REGISTRY
+		!undef REGISTRY
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `Java=` JAVA
+!if "${JAVA}" == true
+	!define /REDEF JAVA
+	Var UsingJavaExecutable
+	Var JavaMode
+	Var JavaDirectory
+!else
+	!ifdef JAVA
+		!undef JAVA
+	!endif
+!endif
+!if "${RequestLevel}" == "ADMIN"
+	Var RunAsAdmin
+	!define UAC
+	!define TrimString
+	!include UAC.nsh
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
+!else
+	!ifdef UAC
+		!undef UAC
+	!endif
+!endif
+
+;=== ExecAsUser
+!searchparse /noerrors /file `${APPINFO}` `UseStdUtils= ` StdUtils	;=== Include StndUtils without ExecAsUser
+!searchparse /noerrors /file `${APPINFO}` `ExecAsUser= ` ExecAsUser	;=== For applications which need to run as normal user.
+!if ${StdUtils} == true
+	!define /redef StdUtils
+!else
+	!ifdef StdUtils
+		!undef StdUtils
+	!endif
+!endif
+!if ${ExecAsUser} == true
+	!define /redef ExecAsUser
+!else
+	!ifdef ExecAsUser
+		!undef ExecAsUser
+	!endif
+!endif
 
 ;=== Runtime Switches {{{1
+Unicode true	;=== NSIS3 Support
+ManifestDPIAware true
 WindowIcon Off
 XPStyle on
 SilentInstall Silent
@@ -50,8 +163,108 @@ RequestExecutionLevel user
 SetCompressor /SOLID lzma
 SetCompressorDictSize 32
 
+!define PAL				PortableApps.comLauncher
+!define /DATE YEAR		`%Y`
+!define LCID			`kernel32::GetUserDefaultLangID()i .r0`
+!define GETSYSWOW64		`kernel32::GetSystemWow64Directory(t .r0, i ${NSIS_MAX_STRLEN})`
+!define DISABLEREDIR	`kernel32::Wow64EnableWow64FsRedirection(i0)`
+!define ENABLEREDIR		`kernel32::Wow64EnableWow64FsRedirection(i1)`
+!define GETCURRPROC		`kernel32::GetCurrentProcess()i.s`
+!define WOW				`kernel32::IsWow64Process(is,*i.r0)`
+Function IsWOW64
+	!macro _IsWOW64 _RETURN
+		Push ${_RETURN}
+		Call IsWOW64
+		Pop ${_RETURN}
+	!macroend
+	!define IsWOW64 `!insertmacro _IsWOW64`
+	Exch $0
+	System::Call `${GETCURRPROC}`
+	System::Call `${WOW}`
+	Exch $0
+FunctionEnd
+!define ReadLauncherConfig `!insertmacro ReadLauncherConfig`
+!macro ReadLauncherConfig _RETURN _SECTION _ENTRY
+	ReadINIStr ${_RETURN} `${LAUNCHER}` `${_SECTION}` `${_ENTRY}`
+!macroend
+!define WriteLauncherConfig `!insertmacro WriteLauncherConfig`
+!macro WriteLauncherConfig _SECTION _ENTRY _VALUE
+	WriteINIStr `${LAUNCHER}` `${_SECTION}` `${_ENTRY}` `${_VALUE}`
+!macroend
+!define DeleteLauncherConfig `!insertmacro DeleteLauncherConfig`
+!macro DeleteLauncherConfig _SECTION _ENTRY
+	DeleteINIStr `${LAUNCHER}` `${_SECTION}` `${_ENTRY}`
+!macroend
+!define DeleteLauncherConfigSec `!insertmacro DeleteLauncherConfigSec`
+!macro DeleteLauncherConfigSec _SECTION
+	DeleteINISec `${LAUNCHER}` `${_SECTION}`
+!macroend
+!define ReadLauncherConfigWithDefault `!insertmacro ReadLauncherConfigWithDefault`
+!macro ReadLauncherConfigWithDefault _RETURN _SECTION _VALUE _DEFAULT
+	ClearErrors
+	${ReadLauncherConfig} ${_RETURN} `${_SECTION}` `${_VALUE}`
+	${IfThen} ${Errors} ${|} StrCpy ${_OUTPUT} `${_DEFAULT}` ${|}
+!macroend
+!define ReadUserConfig `!insertmacro ReadUserConfig`
+!macro ReadUserConfig _RETURN _KEY
+	${ConfigReadS} `${CONFIG}` `${_KEY}=` `${_RETURN}`
+!macroend
+!define WriteUserConfig `!insertmacro WriteUserConfig`
+!macro WriteUserConfig _VALUE _KEY
+	${ConfigWriteS} `${CONFIG}` `${_KEY}=` `${_VALUE}` $R0
+!macroend
+!define ReadUserOverrideConfig `!insertmacro ReadUserOverrideConfigError`
+!macro ReadUserOverrideConfigError a b
+	!error `ReadUserOverrideConfig has been renamed to ReadUserConfig in PAL 2.1.`
+!macroend
+!define InvalidValueError `!insertmacro InvalidValueError`
+!macro InvalidValueError _SECTION_KEY _VALUE
+	MessageBox MB_OK|MB_ICONSTOP `Error: invalid value '${_VALUE}' for ${_SECTION_KEY}. Please refer to the Manual for valid values.`
+!macroend
+!define WriteRuntimeData "!insertmacro WriteRuntimeData"
+!macro WriteRuntimeData _SECTION _KEY _VALUE
+	WriteINIStr `${RUNTIME}` `${_SECTION}` `${_KEY}` `${_VALUE}`
+	WriteINIStr `${RUNTIME2}` `${_SECTION}` `${_KEY}` `${_VALUE}`
+!macroend
+!define DeleteRuntimeData "!insertmacro DeleteRuntimeData"
+!macro DeleteRuntimeData _SECTION _KEY
+	DeleteINIStr `${RUNTIME}` `${_SECTION}` `${_KEY}`
+	DeleteINIStr `${RUNTIME2}` `${_SECTION}` `${_KEY}`
+!macroend
+!define ReadRuntimeData "!insertmacro ReadRuntimeData"
+!macro ReadRuntimeData _RETURN _SECTION _KEY
+	IfFileExists `${RUNTIME}` 0 +3
+	ReadINIStr `${_RETURN}` `${RUNTIME}` `${_SECTION}` `${_KEY}`
+	Goto +2
+	ReadINIStr `${_RETURN}` `${RUNTIME2}` `${_SECTION}` `${_KEY}`
+!macroend
+!define WriteRuntime "!insertmacro WriteRuntime"
+!macro WriteRuntime _VALUE _KEY
+	WriteINIStr `${RUNTIME}` PortableApps.comLauncher `${_KEY}` `${_VALUE}`
+	WriteINIStr `${RUNTIME2}` PortableApps.comLauncher `${_KEY}` `${_VALUE}`
+!macroend
+!define ReadRuntime "!insertmacro ReadRuntime"
+!macro ReadRuntime _RETURN _KEY
+	IfFileExists `${RUNTIME}` 0 +3
+	ReadINIStr `${_RETURN}` `${RUNTIME}` PortableApps.comLauncher `${_KEY}`
+	Goto +2
+	ReadINIStr `${_RETURN}` `${RUNTIME2}` PortableApps.comLauncher `${_KEY}`
+!macroend
+!define WriteSettings `!insertmacro WriteSettings`
+!macro WriteSettings _VALUE _KEY
+	WriteINIStr `${SETINI}` ${APPNAME}Settings `${_KEY}` `${_VALUE}`
+!macroend
+!define ReadSettings `!insertmacro ReadSettings`
+!macro ReadSettings _RETURN _KEY
+	ReadINIStr `${_RETURN}` `${SETINI}` ${APPNAME}Settings `${_KEY}`
+!macroend
+!define DeleteSettings `!insertmacro DeleteSettings`
+!macro DeleteSettings _KEY
+	DeleteINIStr `${SETINI}` ${APPNAME}Settings `${_KEY}`
+!macroend
+
 ;=== Include {{{1
-${!echo} "Including required files..."
+${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 ;(Standard NSIS) {{{2
 !include LangFile.nsh
 !include LogicLib.nsh
@@ -59,9 +272,78 @@ ${!echo} "Including required files..."
 !include TextFunc.nsh
 !include WordFunc.nsh
 
-;(NSIS Plugins) {{{2
-!include NewTextReplace.nsh
-!addplugindir Plugins
+;(NSIS Plugins) {{{
+!ifdef ExecAsUser
+	!include StdUtils.nsh
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
+!ifdef StdUtils
+	!ifndef ExecAsUser
+		!include StdUtils.nsh
+		!ifndef PLUGINSDIR
+			!define PLUGINSDIR
+			!AddPluginDir Plugins
+		!endif
+	!endif
+!endif
+!ifdef REPLACE
+	!include NewTextReplace.nsh
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
+!ifdef XML_PLUGIN
+	!include XML.nsh
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
+!ifdef NSIS_REGISTRY
+	!include NSISRegistry.nsh
+	!insertmacro MOVEREGKEY
+!endif
+;(Custom) {{{2
+!ifdef REPLACE
+	!include ReplaceInFileWithTextReplace.nsh
+!endif
+!include ForEachINIPair.nsh
+!include ForEachPath.nsh
+!include SetFileAttributesDirectoryNormal.nsh
+!include ProcFunc.nsh
+!include EmptyWorkingSet.nsh
+!include SetEnvironmentVariable.nsh
+!include LogicLibAdditions.nsh
+!ifdef GetBetween.nsh
+	!include GetBetween.nsh
+!endif
+!ifdef GetLocale.nsh
+	!include GetLocale.nsh
+!endif
+!ifdef 64.nsh
+	!include x64.nsh
+!endif
+!ifdef IsFileLocked
+	!ifndef 64.nsh
+		!include x64.nsh
+	!endif
+!endif
+!ifdef Include_LineWrite.nsh
+	!include LineWrite.nsh
+!endif
+!ifdef Include_WinMessages.nsh
+	!include WinMessages.nsh
+!endif
+!ifdef DIRECTORIES_MOVE
+	!ifndef GET_ROOT
+		!define GET_ROOT
+	!endif
+!endif
+
 
 ;(Custom) {{{2
 !include ReplaceInFileWithTextReplace.nsh
@@ -75,11 +357,11 @@ ${!echo} "Including required files..."
 !include LogicLibAdditions.nsh
 
 ;=== Languages {{{1
-${!echo} "Loading language strings..."
+${!echo} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 !include Languages.nsh
 
 ;=== Variables {{{1
-${!echo} "Initialising variables and macros..."
+${!echo} "${NEWLINE}Initialising variables and macros...${NEWLINE}${NEWLINE}"
 Var AppID
 Var BaseName
 Var MissingFileOrPath
@@ -89,63 +371,15 @@ Var ProgramExecutable
 Var StatusMutex
 Var WaitForProgram
 
-; Macro: read a value from the launcher configuration file {{{1
-!macro ReadLauncherConfig _OUTPUT _SECTION _VALUE
-	ReadINIStr ${_OUTPUT} $LauncherFile ${_SECTION} ${_VALUE}
-!macroend
-!define ReadLauncherConfig "!insertmacro ReadLauncherConfig"
-
-!macro ReadLauncherConfigWithDefault _OUTPUT _SECTION _VALUE _DEFAULT
-	ClearErrors
-	${ReadLauncherConfig} ${_OUTPUT} `${_SECTION}` `${_VALUE}`
-	${IfThen} ${Errors} ${|} StrCpy ${_OUTPUT} `${_DEFAULT}` ${|}
-!macroend
-!define ReadLauncherConfigWithDefault "!insertmacro ReadLauncherConfigWithDefault"
-
-!macro ReadUserConfig _OUTPUT _VALUE
-	;ReadINIStr ${_OUTPUT} $EXEDIR\$BaseName.ini $BaseName ${_VALUE}
-	${ConfigRead} $EXEDIR\$BaseName.ini ${_VALUE}= ${_OUTPUT}
-!macroend
-!define ReadUserConfig "!insertmacro ReadUserConfig"
-
-; Better to keep people away from the name completely. The Generator updates references in Custom.nsh when moving the file, anyway.
-!macro ReadUserOverrideConfigError a b
-	!error `ReadUserOverrideConfig has been renamed to ReadUserConfig in PAL 2.1.`
-!macroend
-!define ReadUserOverrideConfig "!insertmacro ReadUserOverrideConfigError"
-
-!macro InvalidValueError _SECTION_KEY _VALUE
-	MessageBox MB_OK|MB_ICONSTOP "Error: invalid value '${_VALUE}' for ${_SECTION_KEY}. Please refer to the Manual for valid values."
-!macroend
-!define InvalidValueError "!insertmacro InvalidValueError"
-
-; Macros: runtime data read/write {{{1
-; The runtime data file is mirrored on disk and locally so that if the disk is
-; removed it should still be able to clean up and know about things like
-; registry keys that failed.
-!macro WriteRuntimeData Section Key Value
-	WriteINIStr $DataDirectory\PortableApps.comLauncherRuntimeData-$BaseName.ini ${Section} ${Key} ${Value}
-	WriteINIStr $PLUGINSDIR\runtimedata.ini ${Section} ${Key} ${Value}
-!macroend
-!define WriteRuntimeData "!insertmacro WriteRuntimeData"
-
-!macro ReadRuntimeData Output Section Key
-	IfFileExists $DataDirectory\PortableApps.comLauncherRuntimeData-$BaseName.ini 0 +3
-	ReadINIStr ${Output} $DataDirectory\PortableApps.comLauncherRuntimeData-$BaseName.ini ${Section} ${Key}
-	Goto +2
-	ReadINIStr ${Output} $PLUGINSDIR\runtimedata.ini ${Section} ${Key}
-!macroend
-!define ReadRuntimeData "!insertmacro ReadRuntimeData"
-
 ; Load the segments {{{1
-${!echo} "Loading segments..."
+${!echo} "${NEWLINE}Loading segments...${NEWLINE}${NEWLINE}"
 !include Segments.nsh
 
 ;=== Debugging {{{1
 !include Debug.nsh
 
 ;=== Program Details {{{1
-${!echo} "Specifying program details and setting options..."
+${!echo} "${NEWLINE}Specifying program details and setting options...${NEWLINE}${NEWLINE}"
 
 Name "${NamePortable} (PortableApps.com Launcher)"
 OutFile "${PACKAGE}\${AppID}.exe"
