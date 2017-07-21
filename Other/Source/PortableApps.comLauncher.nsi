@@ -96,6 +96,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!define /REDEF REGISTRY
 	!define REGEXE		`$SYSDIR\reg.exe`
 	!define REGEDIT		`$SYSDIR\regedit.exe`
+	Var Registry
 	!searchparse /NOERRORS /FILE `${LAUNCHER}` `[RegistryValueWrite` RegValueWrite
 	!if "${RegValueWrite}" == "]"
 		!define RegSleep 50	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
@@ -104,17 +105,11 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!if "${REPLACE}" == "lace"
 		!define /REDEF REPLACE ;=== Enables Replace functionality in [FileWrite]
 	!endif
-	!searchparse /NOERRORS /FILE `${APPINFO}` `RegCopy= ` RegCopy	;=== Include StndUtils without ExecAsUser
-	!if ${RegCopy} == true
-		!define /REDEF RegCopy
-	!else
-		!ifdef RegCopy
-			!undef RegCopy
-		!endif
-	!endif
 	!ifdef APP64
-		;= TODO: Figure out a better way to handle this.
-		; !define DISABLEFSR	;=== Disable redirection
+		!searchparse /NOERRORS /FILE `${APPINFO}` `RegDisableRedirection= ` DISABLEFSR	;=== Disable Registry redirection for x64 machines.
+		!if ${DISABLEFSR} == true
+			!define /REDEF DISABLEFSR
+		!endif
 	!endif
 !else
 	!ifdef REGISTRY
@@ -134,7 +129,12 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 !endif
 !searchparse /NOERRORS /FILE `${LAUNCHER}` `Java=` JAVA
-!if "${JAVA}" == true
+!if "${JAVA}" == "find"
+	!define /REDEF JAVA
+	Var UsingJavaExecutable
+	Var JavaMode
+	Var JavaDirectory
+!else if "${JAVA}" == "require"
 	!define /REDEF JAVA
 	Var UsingJavaExecutable
 	Var JavaMode
@@ -142,6 +142,22 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!ifdef JAVA
 		!undef JAVA
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `JDK=` JDK
+!if "${JDK}" == "find"
+	!define /REDEF JDK
+	Var UsingJavaExecutable
+	Var JDKMode
+	Var jdkDirectory
+!else if "${JDK}" == "require"
+	!define /REDEF JDK
+	Var UsingJavaExecutable
+	Var JDKMode
+	Var jdkDirectory
+!else
+	!ifdef JDK
+		!undef JDK
 	!endif
 !endif
 !searchparse /NOERRORS /FILE `${LAUNCHER}` `XML=` XML_PLUGIN
