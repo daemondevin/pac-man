@@ -446,18 +446,6 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 	!endif
 !endif
 
-
-;(Custom) {{{2
-!include ReplaceInFileWithTextReplace.nsh
-!include ForEachINIPair.nsh
-!include ForEachPath.nsh
-!include SetFileAttributesDirectoryNormal.nsh
-!include ProcFunc.nsh
-!include EmptyWorkingSet.nsh
-!include SetEnvironmentVariable.nsh
-!include CheckForPlatformSplashDisable.nsh
-!include LogicLibAdditions.nsh
-
 ;=== Languages {{{1
 ${!echo} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 !include Languages.nsh
