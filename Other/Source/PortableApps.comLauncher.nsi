@@ -544,6 +544,7 @@ ${!echo}	`${NewLine}Specifying program details and setting options...${NewLine}$
 ### BRANDING ###
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Trademarks=` TRADEMARK
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Developer=` DEVELOPER
+!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Contributors=` CONTRIBUTORS
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Publisher=` PUBLISHER
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `PackageVersion=` PACKAGE_VERSION
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Start=` OUTFILE
@@ -604,7 +605,11 @@ Caption		`${FULLNAME}`
 !endif
 !ifdef DEVELOPER
 	!if ! "${DEVELOPER}" == ""
-		VIAddVersionKey /LANG=${LANG_ENGLISH} Comments         `Developed by ${DEVELOPER} (http://softables.tk/)`
+		!if ! "${CONTRIBUTORS}" == ""
+			VIAddVersionKey /LANG=${LANG_ENGLISH} Comments         `Developed by ${DEVELOPER} (with help from ${CONTRIBUTORS})`
+		!else
+			VIAddVersionKey /LANG=${LANG_ENGLISH} Comments         `Developed by ${DEVELOPER}`
+		!endif
 	!else
 		VIAddVersionKey /LANG=${LANG_ENGLISH} Comments         `A portable build of ${FULLNAME} using the PortableApps.com Launcher`
 		!ifdef DEVELOPER
