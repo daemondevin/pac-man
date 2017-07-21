@@ -234,9 +234,9 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef NTFS
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `ACLSupport= ` ACL	
+!searchparse /NOERRORS /FILE `${APPINFO}` `ACLRegSupport= ` ACL	
 !if ${ACL} == true
-	!define /REDEF ACL ;=== Enable AccessControl support 
+	!define /REDEF ACL ;=== Enable AccessControl support for the registry
 !else
 	!ifdef ACL
 		!undef ACL
@@ -259,9 +259,9 @@ XPStyle on
 SilentInstall Silent
 AutoCloseWindow True
 !ifdef RUNASADMIN_COMPILEFORCE
-RequestExecutionLevel admin
+	RequestExecutionLevel admin
 !else
-RequestExecutionLevel user
+	RequestExecutionLevel user
 !endif
 SetCompressor /SOLID lzma
 SetCompressorDictSize 32
