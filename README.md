@@ -53,6 +53,12 @@ For applications which need to run as normal user but need the launcher to have 
 * __UseStdUtils__
 Include the StdUtils plug-in without `ExecAsUser`
 
+* __Services__
+Add support for Windows Services
+
+* __RegisterDLLs__
+Add support for handling library (DLLs) file registration.
+
 * __DisableRedirection__
 Enable support for enabling/disabling file system redirection.
 
