@@ -6,7 +6,7 @@ Var GSRegExists
 Var GSExecutable
 
 Function _Ghostscript_ValidateInstall
-	${If} $Bits = 64
+	${If} $Bit = 64
 		${If} ${FileExists} $GSDirectory\bin\gswin64c.exe
 			StrCpy $GSExecutable $GSDirectory\bin\gswin64c.exe
 			;${DebugMsg} "Found valid 64-bit Ghostscript install at $GSDirectory."
