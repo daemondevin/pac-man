@@ -193,6 +193,22 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef ExecAsUser
 	!endif
 !endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `Services= ` SERVICES	
+!if ${SERVICES} == true
+	!define /REDEF SERVICES ;=== Enable support for Services
+!else
+	!ifdef SERVICES
+		!undef SERVICES
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `RegisterDLLs= ` REGISTERDLL	
+!if ${REGISTERDLL} == true
+	!define /REDEF REGISTERDLL ;=== Enable support for registering library (DLLs) files
+!else
+	!ifdef REGISTERDLL
+		!undef REGISTERDLL
+	!endif
+!endif
 !searchparse /NOERRORS /FILE `${APPINFO}` `DisableRedirection= ` SYSTEMWIDE_DISABLEREDIR
 !if ${SYSTEMWIDE_DISABLEREDIR} == true
 	!define /REDEF SYSTEMWIDE_DISABLEREDIR
