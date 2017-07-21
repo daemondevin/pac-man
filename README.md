@@ -135,6 +135,8 @@ Enable support for AccessControl on directories.
 
 This forked project has been started by [demon.devin][author] and hopefully maintained on a regular basis. However, if you would like to be a part of this then please do not hesitate on getting involved! I'm always open to new ideas and a willingness for the betterment of all things code. =)
 
+I should convey that some of the code I've added here was written by FukenGruven. Without his codebase, most of this version of PAL would not be possible. So a round of applause is in order for FukenGruven! Thank you FG. =)
+
 
 [1]: https://github.com/GordCaswell/portableapps.comlauncher "PortableApps.com Launcher"
 [2]: http://portableapps.com/ "PortableApps.com/"
