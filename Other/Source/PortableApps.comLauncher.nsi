@@ -90,6 +90,16 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !packhdr				`$%TEMP%\exehead.tmp` \ 
 						`"${Reshacker}" -addoverwrite "%TEMP%\exehead.tmp", "%TEMP%\exehead.tmp", "${ManifDir}\${Manifest}_${RequestLevel}.manifest", 24,1,1033`
 
+;=== Certificate
+!searchparse /NOERRORS /FILE `${APPINFO}` `DeveloperCertificate=` Certificate
+!if "${Certificate}" == true
+	!define /REDEF Certificate
+!else
+	!ifdef Certificate
+		!undef Certificate
+	!endif
+!endif
+
 ;=== Custom Defines
 !searchparse /NOERRORS /FILE `${LAUNCHER}` `Registry=` REGISTRY
 !if "${REGISTRY}" == true
@@ -603,6 +613,20 @@ Caption		`${FULLNAME}`
 	!endif
 !endif
 VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
+
+;=== Code Signing
+!ifdef Certificate
+	${!echo}	`${NewLine} Gathering the certificate and other information then signing ${OUTFILE}...${NewLine}${NewLine}`
+	;=== Signing Macro
+	!define Finalize::Sign  `!insertmacro _Finalize::Sign`
+	!macro _Finalize::Sign _CMD
+		!finalize `${_CMD}`
+	!macroend
+	!define CERT		`${DEVELOPER}.p12`
+	!define SIGNTOOL	`"signtool.exe" sign /f "${CERT}" /p "" /t "http://timestamp.comodoca.com" /v "${PACKAGE}\${OUTFILE}"`
+	;=== Sign
+	${Finalize::Sign} `${SIGNTOOL}`
+!endif
 
 !verbose 4
 
