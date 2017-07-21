@@ -31,9 +31,34 @@ The support for services is by default disabled in the official builds of PAL. I
 Other things could follow depending on my availability, interest.. and of course the interest and support from others. So with that being said, this little project might not even see the light of day. Lol.
 
 ## Added Features
+#### __PortableApps.comLauncher.nsi__
+ - Added code to add a manifest file to the Launcher.exe for better user privileges support. Refer to line 80 for referance.
+ - Added support for using new NSISPortable which is the new NSIS3 with Unicode support. Removed NSIS in the App directory.
+ - Added support for automatic code signing. Refer to lines 93 and 617 for referance.
 
 #### __AppInfo.ini__
-Along with the normal keys in the `[Dependencies]` section, I've add the support for the following (a short description of what each key means or does can be found further below):
+Added the section `[Team]` for use with code signing and application specifications. New keys are as follows (a short description of what each key means or does can be found further below):
+> Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
+```INI
+[Team]
+Developer=demon.devin
+Contributors=FukenGruven and DoomStorm
+CertSigning=true
+CertExtention=p12
+```
+* __Developer__
+The name of the developer that created the portable application.
+
+* __Contributors__
+Specify here anyone who has helped with the creation of the portable application.
+
+* __CertSigning__
+If set to true, the `Launcher.exe` will be signed automatically. __Note:__ As it is written right now, the `LauncherGenerator.exe` expects the certificate to be the developer's name (same as the above key's value) and located in `..\Other\Source\Contrib\Certs`. 
+
+* __CertExtention__
+If the key `CertSigning` is set to true then this should be set to the certificate's file extention without the period (e.g. "_pfx_" not "_.pfx_").
+
+Alongside the already provided keys in the `[Dependencies]` section, I've added the support for the following (a short description of what each key means or does can be found further below):
 > Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
 ```INI
 [Dependencies]
@@ -43,7 +68,10 @@ Services=true
 RegisterDLLs=true
 DisableRedirection=true
 ForceDisableRedirection=true
+RegistryCopyKeys=true
+RegDisableRedirection=true
 FontsFolder=true
+FileCleanup=true
 FileLocking=true
 Junctions=true
 ACLRegSupport=true
@@ -67,6 +95,12 @@ Enable support for enabling/disabling file system redirection.
 * __ForceDisableRedirection__
 Checks using the variable `$Bit` to disable/enable file system redirection.
 
+* __RegistryCopyKeys__
+Enable support for adding the section `[RegistryCopyKeys]` in `Launcher.ini`. See `RegistryCopyKeys.nsh` in the Segments directory.
+
+* __RegDisableRedirection__
+Enable support for enabling/disabling registry redirection (For use with `RegistryCopyKeys`)
+
 * __FontsFolder__
 Allows the portable application to support fonts within the directory `..\Data\Fonts`. Any fonts added in this folder will be added and are available for usage during runtime. Be aware, the more fonts to process the longer it will take for the launcher to load and unload these fonts.
 > Supported Fonts: 
@@ -79,6 +113,9 @@ Allows the portable application to support fonts within the directory `..\Data\F
 > - .mmm
 > - .pfb
 > - .pfm.
+
+* __FileCleanup__
+Enable support for adding the section `[FilesCleanup]` in `Launcher.ini`. See `FilesCleanup.nsh` in the Segments directory.
 
 * __FileLocking__
 Enable this to prevent ejection/unplugging problems for USB devices. Windows Explorer tend to lock application's DLL(s). 
