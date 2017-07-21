@@ -39,6 +39,8 @@ Along with the normal keys in the `[Dependencies]` section, I've add the support
 [Dependencies]
 ExecAsUser=true
 UseStdUtils=true
+Services=true
+RegisterDLLs=true
 DisableRedirection=true
 ForceDisableRedirection=true
 FontsFolder=true
