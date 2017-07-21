@@ -104,6 +104,14 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!if "${REPLACE}" == "lace"
 		!define /REDEF REPLACE ;=== Enables Replace functionality in [FileWrite]
 	!endif
+	!searchparse /NOERRORS /FILE `${APPINFO}` `RegCopy= ` RegCopy	;=== Include StndUtils without ExecAsUser
+	!if ${RegCopy} == true
+		!define /REDEF RegCopy
+	!else
+		!ifdef RegCopy
+			!undef RegCopy
+		!endif
+	!endif
 	!ifdef APP64
 		;= TODO: Figure out a better way to handle this.
 		; !define DISABLEFSR	;=== Disable redirection
@@ -167,6 +175,14 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!ifdef UAC
 		!undef UAC
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `[DirectoriesMove` DIRECTORIES_MOVE
+!if "${DIRECTORIES_MOVE}" == "]"
+	!define /REDEF DIRECTORIES_MOVE	;=== enable for the [DirectoriesMove] section in launcher.ini and added macros. See DirectoriesMove.nsh in Segments
+!else
+	!ifdef DIRECTORIES_MOVE
+		!undef DIRECTORIES_MOVE
 	!endif
 !endif
 !searchparse /NOERRORS /FILE `${LAUNCHER}` `[DirectoriesCleanupIfEmpty` RMEMPTYDIRECTORIES
@@ -264,6 +280,14 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!ifdef ACL_DIR
 		!undef ACL_DIR
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `FileCleanup= ` FileCleanup	
+!if ${FileCleanup} == true
+	!define /REDEF FileCleanup ;=== Enable FileCleanup segment
+!else
+	!ifdef FileCleanup
+		!undef FileCleanup
 	!endif
 !endif
 
@@ -449,12 +473,6 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 	!ifndef 64.nsh
 		!include x64.nsh
 	!endif
-!endif
-!ifdef Include_LineWrite.nsh
-	!include LineWrite.nsh
-!endif
-!ifdef Include_WinMessages.nsh
-	!include WinMessages.nsh
 !endif
 !ifdef DIRECTORIES_MOVE
 	!ifndef GET_ROOT
@@ -650,6 +668,7 @@ Function Init           ;{{{1
 	${If} $SecondaryLaunch != true
 		${RunSegment} Settings
 	${EndIf}
+	;${RunSegment} SplashScreen
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 			IntCmp $Bit 64 0 +2 +2
@@ -684,6 +703,7 @@ Function Pre           ;{{{1
 	${RunSegment} Custom
 	${RunSegment} RunLocally
 	${RunSegment} Temp
+	${RunSegment} LastRunEnvironment
 	${RunSegment} Environment
 	${RunSegment} ExecString
 	!ifdef SYSTEMWIDE_DISABLEREDIR
@@ -715,6 +735,7 @@ Function PrePrimary           ;{{{1
 	${RunSegment} DriveLetter
 	${RunSegment} Variables
 	${RunSegment} DirectoryMoving
+	${RunSegment} LastRunEnvironment
 	${RunSegment} FileWrite
 	${RunSegment} FilesMove
 	${RunSegment} DirectoriesMove
@@ -762,6 +783,7 @@ Function PreSecondary           ;{{{1
 		!endif
 	!endif
 	${RunSegment} Custom
+	;${RunSegment} *
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 			IntCmp $Bit 64 0 +2 +2
@@ -790,6 +812,7 @@ Function PreExec           ;{{{1
 	${EndIf}
 	${RunSegment} RefreshShellIcons
 	${RunSegment} WorkingDirectory
+	${RunSegment} RunBeforeAfter
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 			IntCmp $Bit 64 0 +2 +2
@@ -812,6 +835,8 @@ Function PreExecPrimary           ;{{{1
 	!endif
 	${RunSegment} Custom
 	${RunSegment} Core
+	${RunSegment} LastRunEnvironment
+	;${RunSegment} SplashScreen
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 			IntCmp $Bit 64 0 +2 +2
@@ -833,6 +858,7 @@ Function PreExecSecondary           ;{{{1
 		!endif
 	!endif
 	${RunSegment} Custom
+	;${RunSegment} *
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 			IntCmp $Bit 64 0 +2 +2
@@ -944,6 +970,16 @@ Function Execute           ;{{{1
 		!endif
 	!endif
 FunctionEnd
+Function PostExecPrimary   ;{{{1
+	${RunSegment} Custom
+FunctionEnd
+Function PostExecSecondary ;{{{1
+	${RunSegment} Custom
+FunctionEnd
+Function PostExec          ;{{{1
+	${RunSegment} RunBeforeAfter
+	${RunSegment} Custom
+FunctionEnd
 Function PostPrimary           ;{{{1
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
@@ -1004,6 +1040,7 @@ Function PostSecondary           ;{{{1
 			System::Call `${DISABLEREDIR}`
 		!endif
 	!endif
+	;${RunSegment} *
 	${RunSegment} Custom
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
@@ -1050,6 +1087,7 @@ Function Unload           ;{{{1
 			System::Call `${DISABLEREDIR}`
 		!endif
 	!endif
+	;${RunSegment} XML
 	${If} $SecondaryLaunch != true
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
@@ -1060,6 +1098,7 @@ Function Unload           ;{{{1
 		${RunSegment} FilesCleanup
 		${RunSegment} DirectoriesCleanup
 	${EndIf}
+	;${RunSegment} SplashScreen
 	${RunSegment} Core
 	${RunSegment} Custom
 	!ifdef SYSTEMWIDE_DISABLEREDIR
