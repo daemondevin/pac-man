@@ -1,7 +1,4 @@
-${SegmentFile}
-
 !include WinVer.nsh
-
 !macro _OperatingSystem_CheckOS Check Value
 	ClearErrors
 	${ReadLauncherConfig} $0 Launch ${Value}
@@ -18,6 +15,8 @@ ${SegmentFile}
 			${IfNotThen} ${At${Check}Win2008}   ${|} StrCpy $2 bad-os ${|}
 		${Case} 7
 			${IfNotThen} ${At${Check}Win7}      ${|} StrCpy $2 bad-os ${|}
+		${Case} 8
+			${IfNotThen} ${At${Check}Win8}      ${|} StrCpy $2 bad-os ${|}
 		${Case} "2008 R2"
 			${IfNotThen} ${At${Check}Win2008R2} ${|} StrCpy $2 bad-os ${|}
 		${Default}
@@ -25,7 +24,6 @@ ${SegmentFile}
 				${InvalidValueError} [Launch]:${Value} $0
 			${EndIf}
 	${EndSelect}
-
 	${If} $2 == bad-os
 		${If} ${IsWin2000}
 			StrCpy $1 2000
@@ -39,17 +37,22 @@ ${SegmentFile}
 			StrCpy $1 2008
 		${ElseIf} ${IsWin7}
 			StrCpy $1 7
+		${ElseIf} ${IsWin8}
+			StrCpy $1 8
 		${ElseIf} ${IsWin2008R2}
 			StrCpy $1 "2008 R2"
 		${Else}
 			StrCpy $1 ? ; I wonder what it is.
 		${EndIf}
-		MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LauncherIncompatible${Value})"
+		MessageBox MB_ICONSTOP|MB_TOPMOST|MB_SETFOREGROUND "$(LauncherIncompatible${Value})"
 		Quit
 	${EndIf}
 !macroend
-
+${SegmentFile}
 ${Segment.onInit}
+	!ifmacrodef OS
+		!insertmacro OS
+	!endif
 	!insertmacro _OperatingSystem_CheckOS Least MinOS
 	!insertmacro _OperatingSystem_CheckOS Most MaxOS
 !macroend
