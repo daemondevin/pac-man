@@ -148,4 +148,4 @@ I should convey that some of the code I've added here was written by FukenGruven
 [3]: https://portableapps.com/node/56500 "A Superfluous Discussion"
 [4]: https://portableapps.com/apps/development/nsis_portable "NSIS Portable"
 [5]: http://johnhaller.com/useful-stuff/dot-net-portable-apps ".NET Availability and Viability With Portable Apps"
-[author]: https://softables.tk/ "Softables.tk/"
+[author]: http://softables.tk/ "Softables.tk/"
