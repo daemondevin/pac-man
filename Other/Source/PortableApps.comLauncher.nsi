@@ -622,7 +622,8 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 	!macro _Finalize::Sign _CMD
 		!finalize `${_CMD}`
 	!macroend
-	!define CERT		`${DEVELOPER}.p12`
+	!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `CertificateType=` CertExtention
+	!define CERT		`${DEVELOPER}.${CertExtention}`
 	!define SHA1		`"signtool.exe" sign /f "${CERT}" /p "" /t "http://timestamp.comodoca.com" /v "${PACKAGE}\${OUTFILE}"`
 	!define SHA256		`"signtool.exe" sign /f "${CERT}" /p "" /fd sha256 /tr http://timestamp.comodoca.com/?td=sha256 /td sha256 /as /v "${PACKAGE}\${OUTFILE}"`
 	;=== Sign
