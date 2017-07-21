@@ -164,7 +164,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!define PLUGINSDIR
 		!AddPluginDir Plugins
 	!endif
-!endif
 !else
 	!ifdef UAC
 		!undef UAC
