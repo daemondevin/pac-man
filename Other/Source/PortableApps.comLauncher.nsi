@@ -251,6 +251,14 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef SERVICES
 	!endif
 !endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `InstallINF= ` INF_Install	;=== For .inf install support.
+!if ${INF_Install} == true
+	!define /REDEF INF_Install
+!else
+	!ifdef INF_Install
+		!undef INF_Install
+	!endif
+!endif
 !searchparse /NOERRORS /FILE `${APPINFO}` `RegisterDLLs= ` REGISTERDLL	
 !if ${REGISTERDLL} == true
 	!define /REDEF REGISTERDLL ;=== Enable support for registering library (DLLs) files
