@@ -57,17 +57,19 @@
 
 !searchreplace APP "${APPNAME}" "Portable" ""
 
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `ProgramExecutable64=` APPEXE64
-
-!if ! "${APPEXE64}" == ""
-	!searchreplace APP64 "${APPNAME}" "Portable" "64"
-!endif
-!undef APPEXE64
-
 !searchparse /NOERRORS /FILE `${APPINFO}` `Name=` PORTABLEAPPNAME
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 
 !define APPDIR			`$EXEDIR\App\${APP}`
+
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `ProgramExecutable64=` APPEXE64
+!if ! "${APPEXE64}" == ""
+	!searchreplace APP64 "${APPNAME}" "Portable" "64"
+!else
+	!ifdef APPEXE64
+		!undef APPEXE64
+	!endif
+!endif
 
 !ifdef APP64
 	!define APPDIR64	`$EXEDIR\App\${APP64}`
@@ -425,10 +427,19 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 !ifdef GetLocale.nsh
 	!include GetLocale.nsh
 !endif
+!ifdef 64.nsh
+	!include x64.nsh
+!endif
 !ifdef IsFileLocked
 	!ifndef 64.nsh
 		!include x64.nsh
 	!endif
+!endif
+!ifdef Include_LineWrite.nsh
+	!include LineWrite.nsh
+!endif
+!ifdef Include_WinMessages.nsh
+	!include WinMessages.nsh
 !endif
 !ifdef DIRECTORIES_MOVE
 	!ifndef GET_ROOT
@@ -454,7 +465,6 @@ ${!echo} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 
 ;=== Variables {{{1
 ${!echo} "${NEWLINE}Initialising variables and macros...${NEWLINE}${NEWLINE}"
-Var Bit
 Var AppID
 Var BaseName
 Var MissingFileOrPath
