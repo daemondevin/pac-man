@@ -1,58 +1,86 @@
 ${SegmentFile}
-
-Var UsesContainedTempDirectory
-Var TempDirectory
-Var TMP ; $TEMP is read-only but may be "wrong", as we see it, after launcher nesting
-
+Function RemoveLastDirectoryFromPath
+	!macro _RemoveLastDirectoryFromPath _PATH
+		Push ${_PATH}
+		Call RemoveLastDirectoryFromPath
+		Pop ${_PATH}
+	!macroend
+	!define RemoveLastDirectoryFromPath "!insertmacro _RemoveLastDirectoryFromPath"
+	Exch $R0
+	Push $R1
+	Push $R2
+	StrLen $R1 $R0
+	IntOp $R1 $R1 - 1
+	StrCpy $R2 $R0 1 $R1
+	StrCmp $R2 ":" +4
+	StrCmp $R2 "\" +2
+	Goto -4
+	StrCpy $R0 $R0 $R1
+	Pop $R2
+	Pop $R1
+	Exch $R0
+FunctionEnd
 ${Segment.onInit}
 	ClearErrors
-	ReadEnvStr $TMP PAL:_TEMP
+	ReadEnvStr $R0 PAL:_TEMP
 	${If} ${Errors}
-		StrCpy $TMP $TEMP
+		!if ${RequestLevel} == ADMIN
+			GetTempFileName $R0
+			${RemoveLastDirectoryFromPath} $R0
+			${SetEnvironmentVariable} TEMP $R0
+			${SetEnvironmentVariable} TMP $R0
+		!else
+			!ifdef UAC
+				GetTempFileName $R0
+				${RemoveLastDirectoryFromPath} $R0
+				${SetEnvironmentVariable} TEMP $R0
+				${SetEnvironmentVariable} TMP $R0
+			!else
+				${SetEnvironmentVariable} TEMP $TEMP
+				${SetEnvironmentVariable} TMP $TEMP
+			!endif
+		!endif
 	${Else}
-		${SetEnvironmentVariable} TEMP $TMP
-		${SetEnvironmentVariable} TMP $TMP
+		${SetEnvironmentVariable} TEMP $R0
+		${SetEnvironmentVariable} TMP $R0
 	${EndIf}
 !macroend
-
 ${SegmentInit}
 	ClearErrors
-	${ReadLauncherConfig} $UsesContainedTempDirectory Launch CleanTemp
+	${ReadLauncherConfig} $R0 Launch CleanTemp
 	${IfNot} ${Errors}
-	${AndIf} $UsesContainedTempDirectory != true
-	${AndIf} $UsesContainedTempDirectory != false
-		${InvalidValueError} [Launch]:CleanTemp $UsesContainedTempDirectory
+	${AndIf} $R0 != true
+	${AndIf} $R0 != false
+		${InvalidValueError} [Launch]:CleanTemp $R0
 	${EndIf}
 !macroend
-
 ${SegmentPre}
-	${If} $UsesContainedTempDirectory != false
-		ClearErrors
-		${If} $WaitForProgram == false
-			StrCpy $TempDirectory $DataDirectory\Temp
-		${Else}
-			StrCpy $TempDirectory $TMP\$AppIDTemp
-		${EndIf}
-		${DebugMsg} "Creating temporary directory $TempDirectory"
-		${If} $SecondaryLaunch != true
-		${AndIf} ${FileExists} $TempDirectory
-			RMDir /r $TempDirectory
-		${EndIf}
-		CreateDirectory $TempDirectory
-	${Else}
-		StrCpy $TempDirectory $TMP
-	${EndIf}
-
-	${DebugMsg} "Setting %TEMP% and %TMP% to $TempDirectory"
-	${SetEnvironmentVariablesPath} TEMP $TempDirectory
-	${SetEnvironmentVariable} TMP $TempDirectory
-	${SetEnvironmentVariable} PAL:_TEMP $TMP
+	${ReadLauncherConfig} $R0 Launch CleanTemp
+	StrCmp $R0 false +12
+	ClearErrors
+	StrCmp $WaitForProgram false 0 +3
+	StrCpy $R1 ${DATA}\Temp
+	Goto +3
+	ReadEnvStr $R0 TMP
+	StrCpy $R1 $R0\${APPNAME}Temp
+	StrCmpS $SecondaryLaunch true +3
+	IfFileExists $R1 0 +2
+	RMDir /r $R1
+	CreateDirectory $R1
+	Goto +3
+	ReadEnvStr $R0 TMP
+	StrCpy $R1 $R0
+	${SetEnvironmentVariablesPath} TEMP $R1
+	${SetEnvironmentVariable} TMP $R1
+	${SetEnvironmentVariable} PAL:_TEMP $R0
 !macroend
-
 ${SegmentPostPrimary}
-	${If} $UsesContainedTempDirectory != false
-	${AndIf} $TempDirectory != "" ; may occur if status = running
-		${DebugMsg} "Removing contained temporary directory $TempDirectory."
-		RMDir /r $TempDirectory
-	${EndIf}
+	!ifmacrodef TEMP
+		!insertmacro TEMP
+	!endif
+	ReadEnvStr $R0 TMP
+	${ReadLauncherConfig} $R1 Launch CleanTemp
+	StrCmp $R1 false +3
+	StrCmp $R0 "" +2
+	RMDir /r $R0
 !macroend

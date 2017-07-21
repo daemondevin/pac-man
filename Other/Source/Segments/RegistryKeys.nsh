@@ -1,72 +1,97 @@
+!ifndef PAF
+	!define PAF HKCU\Software\PortableApps.com
+!endif
+!ifndef PAFKEYS
+	!define PAFKEYS ${PAF}\Keys
+!endif
 ${SegmentFile}
-
 ${SegmentPrePrimary}
-	${If} $UsesRegistry == true
-		${ForEachINIPair} RegistryKeys $0 $1
-			;=== Backup the registry
-			${ValidateRegistryKey} $1
-			${IfNot} ${RegistryKeyExists} HKEY_CURRENT_USER\Software\PortableApps.com\Keys\$1
-			${AndIf} ${RegistryKeyExists} $1
-				${DebugMsg} "Backing up registry key $1 to HKEY_CURRENT_USER\Software\PortableApps.com\Keys\$1"
-				${registry::MoveKey} $1 HKEY_CURRENT_USER\Software\PortableApps.com\Keys\$1 $R9
-				${If} $R9 == -1 ; failure (probably HKLM without admin)
-					${WriteRuntimeData} FailedRegistryKeys $0 true
-				${EndIf}
+	!ifmacrodef PreReg
+		!insertmacro PreReg
+	!endif
+	${If} $Registry == true
+		${ForEachINIPair} RegistryKeys $R0 $R1
+			${ValidateRegistryKey} $R1
+			ExpandEnvStrings $R1 $R1
+			${IfNot} ${RegistryKeyExists} `${PAFKEYS}\$R1`
+			${AndIf} ${RegistryKeyExists} $R1
+				StrCpy $R2 $R1 4
+				StrCmp $R2 HKLM 0 +2
+				StrCmpS $ADMIN true 0 +3
+				Registry::_MoveKey /NOUNLOAD $R1 `${PAFKEYS}\$R1`
+				Pop $R2
 			${EndIf}
-
-			${If} $0 == -
-				${DebugMsg} "File name -, not data to import."
-			${ElseIf} ${FileExists} $DataDirectory\settings\$0.reg
-				${DebugMsg} "Loading $DataDirectory\settings\$0.reg into the registry."
-				${registry::RestoreKey} $DataDirectory\settings\$0.reg $R9
-				${If} $R9 != 0 ; -1 = failure (probably HKLM without admin), 0 = success
-					${WriteRuntimeData} FailedRegistryKeys $0 true
-					${!getdebug}
-					!ifdef DEBUG
-						StrCpy $R9 $1 4
-						${If} $R9 == HKLM
-						${AndIf} $RunAsAdmin != force
-							StrCpy $R9 " Note for developers: to always be able to write to HKLM, you will need to set [Launch]:RunAsAdmin to force."
-						${Else}
-							StrCpy $R9 ""
-						${EndIf}
-					!endif
-					${DebugMsg} "Failed to load $DataDirectory\settings\$0.reg into the registry.$R9"
-				${EndIf}
-			${Else}
-				${DebugMsg} "File $DataDirectory\settings\$0.reg doesn't exist, not loaded into the registry."
-			${EndIf}
+			StrCmpS $R0 - +11
+			ExpandEnvStrings $R0 $R0
+			IfFileExists `${SET}\$R0.reg` 0 +9
+			IfFileExists `${REGEDIT}` 0 +5
+			!ifdef DisableFSR
+				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEDIT}" /s "${SET}\$R0.reg"`
+			!else
+				ExecDos::exec /TOSTACK `"${REGEDIT}" /s "${SET}\$R0.reg"`
+			!endif
+			Pop $R1
+			Pop $R2
+			StrCmp $R1 0 +4
+			!ifdef DisableFSR
+				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEXE}" IMPORT "${SET}\$R0.reg"`
+			!else
+				ExecDos::exec /TOSTACK `"${REGEXE}" IMPORT "${SET}\$R0.reg"`
+			!endif
+			Pop $R1
+			Pop $R2
 		${NextINIPair}
 	${EndIf}
+	!ifmacrodef UnPreReg
+		!insertmacro UnPreReg
+	!endif
 !macroend
-
 ${SegmentPostPrimary}
-	${If} $UsesRegistry == true
-		${ForEachINIPair} RegistryKeys $0 $1
-			${ValidateRegistryKey} $1
-			${If} $0 == -
-				${DebugMsg} "Registry key $1 will not be saved."
-			${Else}
-				ClearErrors
-				${ReadRuntimeData} $R9 FailedRegistryKeys $0
-				${If} ${Errors} ; didn't fail
-				${AndIf} $RunLocally != true
-					${DebugMsg} "Saving registry key $1 to $DataDirectory\settings\$0.reg."
-					${registry::SaveKey} $1 $DataDirectory\settings\$0.reg "" $R9
-				${EndIf}
-			${EndIf}
-
-			${DebugMsg} "Deleting registry key $1."
-			${registry::DeleteKey} $1 $R9
-			${If} ${RegistryKeyExists} HKEY_CURRENT_USER\Software\PortableApps.com\Keys\$1
-				${DebugMsg} "Moving registry key HKEY_CURRENT_USER\Software\PortableApps.com\Keys\$1 to $1."
-				${registry::MoveKey} HKEY_CURRENT_USER\Software\PortableApps.com\Keys\$1 $1 $R9
+	!ifmacrodef PostReg
+		!insertmacro PostReg
+	!endif
+	${If} $REGISTRY == true
+		${ForEachINIPair} RegistryKeys $R0 $R1
+			${ValidateRegistryKey} $R1
+			ExpandEnvStrings $R1 $R1
+			StrCmpS $R0 - +14
+			StrCmpS $RunLocally true +13
+			ExpandEnvStrings $R0 $R0
+			Registry::_SaveKey /NOUNLOAD $R1 `${SET}\$R0.reg` ""
+			Pop $R2
+			StrCmpS $R2 0 +9
+			IfFileExists `${REGEDIT}` 0 +5
+			!ifdef DisableFSR
+				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEDIT}" /e "${SET}\$R0.reg" "$R1"`
+			!else
+				ExecDos::exec /TOSTACK `"${REGEDIT}" /e "${SET}\$R0.reg" "$R1"`
+			!endif
+			Pop $R2
+			Pop $R3
+			StrCmpS $R2 0 +4
+			!ifdef DisableFSR
+				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEXE}" SAVE "$R1" "${SET}\$R0.reg"`
+			!else
+				ExecDos::exec /TOSTACK `"${REGEXE}" SAVE "$R1" "${SET}\$R0.reg"`
+			!endif
+			Pop $R2
+			Pop $R3
+			Registry::_DeleteKey /NOUNLOAD $R1
+			Pop $R2
+			${If} ${RegistryKeyExists} `${PAFKEYS}\$R1`
+				Registry::_MoveKey /NOUNLOAD `${PAFKEYS}\$R1` $R1
+				Pop $R2
 				${Do}
-					${GetParent} $1 $1
-					${registry::DeleteKeyEmpty} HKEY_CURRENT_USER\Software\PortableApps.com\Keys\$1 $R9
-				${LoopUntil} $1 == ""
+					${GetParent} $R1 $R1
+					Registry::_DeleteKeyEmpty /NOUNLOAD `${PAFKEYS}\$R1`
+					Pop $R2
+				${LoopUntil} $R1 == ""
 			${EndIf}
 		${NextINIPair}
-		${registry::DeleteKeyEmpty} HKEY_CURRENT_USER\Software\PortableApps.com $R9
+		Registry::_DeleteKeyEmpty /NOUNLOAD `${PAF}`
+		Pop $R2
 	${EndIf}
+	!ifmacrodef UnPostReg
+		!insertmacro UnPostReg
+	!endif
 !macroend

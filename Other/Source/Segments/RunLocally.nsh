@@ -1,60 +1,38 @@
-${SegmentFile}
-
 Var RunLocally
-
+${SegmentFile}
 ${SegmentInit}
 	${ReadUserConfig} $RunLocally RunLocally
 !macroend
-
 ${SegmentPre}
 	${If} $RunLocally == true
-		${DebugMsg} "Live mode enabled"
+		ReadEnvStr $R0 TMP
 		ClearErrors
 		${ReadLauncherConfig} $0 LiveMode CopyApp
 		${If} $0 == true
 		${OrIf} ${Errors}
-			${If} $SecondaryLaunch != true
-				${DebugMsg} "Live mode: copying $EXEDIR\App to $TMP\$AppIDLive\App"
-				CreateDirectory $TMP\$AppIDLive
-				CopyFiles /SILENT $EXEDIR\App $TMP\$AppIDLive
-			${EndIf}
-			StrCpy $AppDirectory $TMP\$AppIDLive\App
+			StrCmpS $SecondaryLaunch true +3
+			CreateDirectory `$R0\${APPNAME}Live`
+			CopyFiles /SILENT `$EXEDIR\App` `$R0\${APPNAME}Live`
+			StrCpy $AppDirectory `$R0\${APPNAME}Live\App`
 		${ElseIf} $0 != false
 			${InvalidValueError} [LiveMode]:CopyApp $0
 		${EndIf}
-		;For the time being at least, I've disabled the option of not copying Data, as it makes file moving etc. from %DataDirectory% break
-		;ClearErrors
-		;${ReadLauncherConfig} $0 LiveMode CopyData
-		;${If} $0 == true
-		;${OrIf} ${Errors}
-			${If} $SecondaryLaunch != true
-				${DebugMsg} "Live mode: copying $EXEDIR\Data to $TMP\$AppIDLive\Data"
-				CreateDirectory $TMP\$AppIDLive
-				CopyFiles /SILENT $EXEDIR\Data $TMP\$AppIDLive
-			${EndIf}
-			StrCpy $DataDirectory $TMP\$AppIDLive\Data
-		;${ElseIf} $0 != false
-		;	${InvalidValueError} [LiveMode]:CopyData $0
-		;${EndIf}
-		${If} ${FileExists} $TMP\$AppIDLive
-			${SetFileAttributesDirectoryNormal} $TMP\$AppIDLive
+		StrCmpS $SecondaryLaunch true +3
+		CreateDirectory `$R0\${APPNAME}Live`
+		CopyFiles /SILENT `${DATA}` `$R0\${APPNAME}Live`
+		StrCpy $DataDirectory `$R0\${APPNAME}Live\Data`
+		${If} ${FileExists} `$R0\${APPNAME}Live`
+			${SetFileAttributesDirectoryNormal} `$R0\${APPNAME}Live`
 		${EndIf}
-
 		${SetEnvironmentVariablesPath} PAL:AppDir $AppDirectory
 		${SetEnvironmentVariablesPath} PAL:DataDir $DataDirectory
-
-		; Wait for the program to finish if we are a primary instance
-		${If} $SecondaryLaunch != true
-			StrCpy $WaitForProgram true
-		${EndIf}
+		StrCmpS $SecondaryLaunch true +2
+		StrCpy $WaitForProgram true
 	${EndIf}
-
 	CreateDirectory $DataDirectory
 !macroend
-
 ${SegmentPostPrimary}
-	${If} $RunLocally == true
-		${DebugMsg} "Removing Live mode directory $TMP\$AppIDLive."
-		RMDir /r $TMP\$AppIDLive
-	${EndIf}
+	StrCmp $RunLocally true +3
+	ReadEnvStr $R0 TMP
+	RMDir /r `$R0\${APPNAME}Live`
 !macroend

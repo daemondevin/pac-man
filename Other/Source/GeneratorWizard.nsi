@@ -69,7 +69,7 @@ SetDatablockOptimize On
 
 ;(NSIS Plugins)
 !include NewTextReplace.nsh
-!addplugindir Plugins
+!AddPluginDir Plugins
 
 ;(Custom)
 !include ReplaceInFileWithTextReplace.nsh

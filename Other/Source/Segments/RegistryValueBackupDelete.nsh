@@ -1,52 +1,48 @@
 ${SegmentFile}
-
 ${SegmentPrePrimary}
-	${If} $UsesRegistry == true
+	!ifmacrodef PreRegistryValue
+		!insertmacro PreRegistryValue
+	!endif
+	${If} $Registry == true
 		StrCpy $R0 1
 		${Do}
 			ClearErrors
-			${ReadLauncherConfig} $1 RegistryValueBackupDelete $R0
+			${ReadLauncherConfig} $R1 RegistryValueBackupDelete $R0
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			${ValidateRegistryKey} $1
-			StrCpy $2 $1 "" -1
-			${If} $2 == "\"
-				StrCpy $2 $1 -1
-				StrCpy $3 "" ; default value
-			${Else}
-				${GetParent} $1 $2 ; key
-				${GetFileName} $1 $3 ; item
-			${EndIf}
-			${DebugMsg} "Backing up registry value $1 to HKEY_CURRENT_USER\Software\PortableApps.com\Values\$1"
-			${registry::MoveValue} $2 $3 HKEY_CURRENT_USER\Software\PortableApps.com\Values $1 $R9
+			${ValidateRegistryKey} $R1
+			${ParseLocations} $R1
+			${GetParent} $R1 $R2
+			${GetFilename} $R1 $R3
+			${registry::MoveValue} $R2 $R3 HKCU\Software\PortableApps.com\Values $R1 $R4
 			IntOp $R0 $R0 + 1
 		${Loop}
 	${EndIf}
+	!ifmacrodef UnPreRegistryValue
+		!insertmacro UnPreRegistryValue
+	!endif
 !macroend
-
 ${SegmentPostPrimary}
-	${If} $UsesRegistry == true
+	!ifmacrodef PostRegistryValue
+		!insertmacro PostRegistryValue
+	!endif
+	${If} $Registry == true
 		StrCpy $R0 1
 		${Do}
 			ClearErrors
-			${ReadLauncherConfig} $1 RegistryValueBackupDelete $R0
+			${ReadLauncherConfig} $R1 RegistryValueBackupDelete $R0
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			${ValidateRegistryKey} $1
-			StrCpy $2 $1 "" -1
-			${If} $2 == "\"
-				StrCpy $2 $1 -1
-				StrCpy $3 "" ; default value
-			${Else}
-				${GetParent} $1 $2 ; key
-				${GetFileName} $1 $3 ; item
-			${EndIf}
-			${DebugMsg} "Deleting registry value $1, then restoring from HKEY_CURRENT_USER\Software\PortableApps.com\Values\$2"
-			${registry::DeleteValue} $2 $3 $R9
-			${registry::MoveValue} HKEY_CURRENT_USER\Software\PortableApps.com\Values $1 $2 $3 $R9
+			${ValidateRegistryKey} $R1
+			${ParseLocations} $R1
+			${GetParent} $R1 $R2
+			${GetFilename} $R1 $R3
+			${registry::DeleteValue} $R2 $R3 $R4
+			${registry::MoveValue} HKCU\Software\PortableApps.com\Values $R1 $R2 $R3 $R4
 			IntOp $R0 $R0 + 1
 		${Loop}
-		${If} $R0 > 1
-			${registry::DeleteKeyEmpty} HKEY_CURRENT_USER\Software\PortableApps.com\Values $R9
-			${registry::DeleteKeyEmpty} HKEY_CURRENT_USER\Software\PortableApps.com $R9
-		${EndIf}
+		${registry::DeleteKeyEmpty} HKCU\Software\PortableApps.com\Values $R4
+		${registry::DeleteKeyEmpty} HKCU\Software\PortableApps.com $R4
 	${EndIf}
+	!ifmacrodef UnPostRegistryValue
+		!insertmacro UnPostRegistryValue
+	!endif
 !macroend
