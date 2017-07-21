@@ -466,11 +466,12 @@ ${!echo} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 ;=== Variables {{{1
 ${!echo} "${NEWLINE}Initialising variables and macros...${NEWLINE}${NEWLINE}"
 Var Bit
+Var Admin
 Var AppID
 Var BaseName
 Var MissingFileOrPath
-Var AppNamePortable
 Var AppName
+Var AppNamePortable
 Var ProgramExecutable
 Var StatusMutex
 Var WaitForProgram
