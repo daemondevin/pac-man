@@ -14,11 +14,12 @@ Here's a small list of a few ideas that I want to try and implement with this pr
 * __Support for NSIS3__
 Well, support for [NSISPortable][4] rather which is packaged with the latest release of NSIS. The current official release of PAL is using NSIS v2.46.5-Unicode which is actually packaged with the project. So I would like to completely remove the need for this dependency entirely.
 
-* __Manifest Support__
+* __Manifest Support __
 The correct way to mark a program in regards for UAC permissions is to embed an _application manifest_. This lets the host PC know how to handle what the program needs in regards for permission levels. Developers can specify their programs level of execution or better known as `requested execution level`.
 
 * __.NET Handling__
-I'll just be adding a means for checking a system for the required version of the .NET Framework because John T. Haller [explains][5] in great detail how the .NET Framework has no real practical means for portability when it comes to Portable Apps. He ends his article with, "_...applications based on .NET simply can't be considered portable due to the fact that the files they need can't be bundled portably and won't be on a large number of PCs you encounter in the wild._"
+I'll just be adding a means for checking a system for the required version of the .NET Framework because John T. Haller [explains][5] in great detail how the .NET Framework has no real practical means for portability when it comes to Portable Apps. He ends his article with,
+>"_...applications based on .NET simply can't be considered portable due to the fact that the files they need can't be bundled portably and won't be on a large number of PCs you encounter in the wild._"
 
 * __Support Registering Libraries__
 The official release of PAL has no native support for registering libraries (DLLs), so I will try to add support for registering files. Be aware though that a program developer has complete control over what happens when you call _RegSvr32_ which is what is used by `RegDLL` (the native command used by NSIS for registering files). With that being said, my ideas on this topic may be buggy.
@@ -31,7 +32,59 @@ Other things could follow depending on my availability, interest.. and of course
 
 ## Added Features
 
-I've only just forked this project and have barely started writing this little readme file so nothing has been added to this project just yet but bare with me and be patient!
+#### __AppInfo.ini__
+Along with the normal keys in the `[Dependencies]` section, I've add the support for the following (a short description of what each key means or does can be found further below):
+> Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
+```INI
+[Dependencies]
+ExecAsUser=true
+UseStdUtils=true
+DisableRedirection=true
+ForceDisableRedirection=true
+FontsFolder=true
+FileLocking=true
+Junctions=true
+ACLRegSupport=true
+ACLDirSupport=true
+```
+* __ExecAsUser__
+For applications which need to run as normal user but need the launcher to have elevated privileges.
+
+* __UseStdUtils__
+Include the StdUtils plug-in without `ExecAsUser`
+
+* __DisableRedirection__
+Enable support for enabling/disabling file system redirection.
+
+* __ForceDisableRedirection__
+Checks using the variable `$Bit` to disable/enable file system redirection.
+
+* __FontsFolder__
+Allows the portable application to support fonts within the directory `..\Data\Fonts`. Any fonts added in this folder will be added and are available for usage during runtime. Be aware, the more fonts to process the longer it will take for the launcher to load and unload these fonts.
+> Supported Fonts: 
+> - .fon
+> - .fnt
+> - .ttf
+> - .ttc
+> - .fot
+> - .otf
+> - .mmm
+> - .pfb
+> - .pfm.
+
+* __FileLocking__
+Enable this to prevent ejection/unplugging problems for USB devices. Windows Explorer tend to lock application's DLL(s). 
+__Note:__ As of right now, this only enables support for using `${If} ${FileLocked}` and/or `${IfNot} ${FileLocked}` in the `custom.nsh` file. 
+__ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. Check back soon.)
+
+* __Junctions__
+Enable support for Junctions (_SymLinks_) functionality.
+
+* __ACLRegSupport__
+Enable support for AccessControl on registry keys.
+
+* __ACLDirSupport__
+Enable support for AccessControl on directories.
 
 ## Contributors
 
