@@ -425,19 +425,10 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 !ifdef GetLocale.nsh
 	!include GetLocale.nsh
 !endif
-!ifdef 64.nsh
-	!include x64.nsh
-!endif
 !ifdef IsFileLocked
 	!ifndef 64.nsh
 		!include x64.nsh
 	!endif
-!endif
-!ifdef Include_LineWrite.nsh
-	!include LineWrite.nsh
-!endif
-!ifdef Include_WinMessages.nsh
-	!include WinMessages.nsh
 !endif
 !ifdef DIRECTORIES_MOVE
 	!ifndef GET_ROOT
@@ -463,6 +454,7 @@ ${!echo} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 
 ;=== Variables {{{1
 ${!echo} "${NEWLINE}Initialising variables and macros...${NEWLINE}${NEWLINE}"
+Var Bit
 Var AppID
 Var BaseName
 Var MissingFileOrPath
