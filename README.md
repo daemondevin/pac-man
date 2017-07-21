@@ -53,7 +53,7 @@ The name of the developer that created the portable application.
 Specify here anyone who has helped with the creation of the portable application.
 
 * __CertSigning__
-If set to true, the `Launcher.exe` will be signed automatically. __Note:__ As it is written right now, the `LauncherGenerator.exe` expects the certificate to be the developer's name (same as the above key's value) and located in `..\Other\Source\Contrib\Certs`. 
+If set to true, the `Launcher.exe` will be signed automatically. __Note:__ As it is written right now, the `LauncherGenerator.exe` expects the certificate to be the developer's name (same as the above key's value) and located in `..\Other\Source\Contrib\certificates`. 
 
 * __CertExtention__
 If the key `CertSigning` is set to true then this should be set to the certificate's file extention without the period (e.g. "_pfx_" not "_.pfx_").
