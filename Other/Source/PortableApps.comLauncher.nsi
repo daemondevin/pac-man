@@ -465,6 +465,7 @@ ${!echo} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 
 ;=== Variables {{{1
 ${!echo} "${NEWLINE}Initialising variables and macros...${NEWLINE}${NEWLINE}"
+Var Bit
 Var AppID
 Var BaseName
 Var MissingFileOrPath
