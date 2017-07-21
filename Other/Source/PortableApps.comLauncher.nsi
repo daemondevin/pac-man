@@ -179,7 +179,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !endif
 !searchparse /NOERRORS /FILE `${LAUNCHER}` `[DirectoriesMove` DIRECTORIES_MOVE
 !if "${DIRECTORIES_MOVE}" == "]"
-	!define /REDEF DIRECTORIES_MOVE	;=== enable for the [DirectoriesMove] section in launcher.ini and added macros. See DirectoriesMove.nsh in Segments
+	!define /REDEF DIRECTORIES_MOVE	;=== Enable for added macros for the [DirectoriesMove] section in launcher.ini. See DirectoriesMove.nsh in the Segments directory.
 !else
 	!ifdef DIRECTORIES_MOVE
 		!undef DIRECTORIES_MOVE
@@ -187,10 +187,18 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !endif
 !searchparse /NOERRORS /FILE `${LAUNCHER}` `[DirectoriesCleanupIfEmpty` RMEMPTYDIRECTORIES
 !if "${RMEMPTYDIRECTORIES}" == "]"
-	!define /REDEF RMEMPTYDIRECTORIES	;=== enable for the [DirectoriesCleanupIfEmpty] section in launcher.ini
+	!define /REDEF RMEMPTYDIRECTORIES	;=== Enable for the [DirectoriesCleanupIfEmpty] section in launcher.ini
 !else
 	!ifdef RMEMPTYDIRECTORIES
 		!undef RMEMPTYDIRECTORIES
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `[FilesMove` FILES_MOVE
+!if "${FILES_MOVE}" == "]"
+	!define /REDEF FILES_MOVE	;=== Enable for added macros for the [FilesMove] section in launcher.ini. See FilesMove.nsh in the Segments directory.
+!else
+	!ifdef FILES_MOVE
+		!undef FILES_MOVE
 	!endif
 !endif
 !searchparse /NOERRORS /FILE `${APPINFO}` `UseStdUtils= ` StdUtils	;=== Include StndUtils without ExecAsUser
