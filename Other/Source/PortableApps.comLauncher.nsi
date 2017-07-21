@@ -91,7 +91,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 						`"${Reshacker}" -addoverwrite "%TEMP%\exehead.tmp", "%TEMP%\exehead.tmp", "${ManifDir}\${Manifest}_${RequestLevel}.manifest", 24,1,1033`
 
 ;=== Certificate
-!searchparse /NOERRORS /FILE `${APPINFO}` `DeveloperCertificate=` Certificate
+!searchparse /NOERRORS /FILE `${APPINFO}` `CertSigning=` Certificate
 !if "${Certificate}" == true
 	!define /REDEF Certificate
 !else
@@ -622,10 +622,11 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 	!macro _Finalize::Sign _CMD
 		!finalize `${_CMD}`
 	!macroend
-	!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `CertificateType=` CertExtention
-	!define CERT		`${DEVELOPER}.${CertExtention}`
-	!define SHA1		`"signtool.exe" sign /f "${CERT}" /p "" /t "http://timestamp.comodoca.com" /v "${PACKAGE}\${OUTFILE}"`
-	!define SHA256		`"signtool.exe" sign /f "${CERT}" /p "" /fd sha256 /tr http://timestamp.comodoca.com/?td=sha256 /td sha256 /as /v "${PACKAGE}\${OUTFILE}"`
+	!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `CertExtention=` CertExtention
+	!define CERT		`Contrib\certificates\${DEVELOPER}.${CertExtention}`
+	!define SIGNTOOL	`Contrib\bin\signtool.exe`
+	!define SHA1		`"${SIGNTOOL}" sign /f "${CERT}" /p "" /t "http://timestamp.comodoca.com" /v "${PACKAGE}\${OUTFILE}"`
+	!define SHA256		`"${SIGNTOOL}" sign /f "${CERT}" /p "" /fd sha256 /tr http://timestamp.comodoca.com/?td=sha256 /td sha256 /as /v "${PACKAGE}\${OUTFILE}"`
 	;=== Sign
 	${Finalize::Sign} `${SHA1}`
 	${Finalize::Sign} `${SHA256}`
