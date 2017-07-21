@@ -14,7 +14,7 @@ Here's a small list of a few ideas that I want to try and implement with this pr
 * __Support for NSIS3__
 Well, support for [NSISPortable][4] rather which is packaged with the latest release of NSIS. The current official release of PAL is using NSIS v2.46.5-Unicode which is actually packaged with the project. So I would like to completely remove the need for this dependency entirely.
 
-* __Manifest Support __
+* __Manifest Support__
 The correct way to mark a program in regards for UAC permissions is to embed an _application manifest_. This lets the host PC know how to handle what the program needs in regards for permission levels. Developers can specify their programs level of execution or better known as `requested execution level`.
 
 * __.NET Handling__
