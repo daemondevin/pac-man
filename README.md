@@ -11,28 +11,29 @@ I should say that what I'm going to be adding to this variant of PAL is what wor
 
 Here's a small list of a few ideas that I want to try and implement with this project. These are just things I plan on working on in my spare time and while the ideas listed below are not recognized by PortableApps.com please be aware that using some of the things you find in this variant of PAL can and most likely will be buggy. 
 
-* __Support for NSIS3__
+* __Support for NSIS3:__
 Well, support for [NSISPortable][4] rather which is packaged with the latest release of NSIS. The current official release of PAL is using NSIS v2.46.5-Unicode which is actually packaged with the project. So I would like to completely remove the need for this dependency entirely.
 
-* __Manifest Support__
-The correct way to mark a program in regards for UAC permissions is to embed an _application manifest_. This lets the host PC know how to handle what the program needs in regards for permission levels. Developers can specify their programs level of execution or better known as `requested execution level`.
+* __Manifest Support:__
+With the release of NSIS3, support for adding an application manifest is done automatically and defaults to supporting Windows 7 and later versions.  
 
-* __.NET Handling__
-I'll just be adding a means for checking a system for the required version of the .NET Framework because John T. Haller [explains][5] in great detail how the .NET Framework has no real practical means for portability when it comes to Portable Apps. He ends his article with,
+* __.NET Handling:__
+I'll just be adding a means for checking a system for the required version of the .NET Framework because John T. Haller [explains][5] in great detail how the .NET Framework has no real practical means for portability when it comes to Portable Apps. He ends his article with, 
 >"_...applications based on .NET simply can't be considered portable due to the fact that the files they need can't be bundled portably and won't be on a large number of PCs you encounter in the wild._"
 
-* __Support Registering Libraries__
+* __Support Registering Libraries:__
 The official release of PAL has no native support for registering libraries (DLLs), so I will try to add support for registering files. Be aware though that a program developer has complete control over what happens when you call _RegSvr32_ which is what is used by `RegDLL` (the native command used by NSIS for registering files). With that being said, my ideas on this topic may be buggy.
 
-* __Support Services__
+* __Support Services:__
 The support for services is by default disabled in the official builds of PAL. In the source code it states that they might be unstable and the plugin is large in size. I plan on not using a plugin to support services, instead I plan on dealing with this by using the command line with a few functions and macros to try and keep things simple.
 
-* __Etc. Etc. And So On__
+* __Etc. Etc. And So On:__
 Other things could follow depending on my availability, interest.. and of course the interest and support from others. So with that being said, this little project might not even see the light of day. Lol.
 
 ## Added Features
 #### __PortableApps.comLauncher.nsi__
- - Added code to add a manifest file to the Launcher.exe for better user privileges support. Refer to line 80 for referance.
+ - <del>Added code to add a manifest file to the Launcher.exe for better user privileges support. Refer to line 80 for referance.</del> 
+ - Adding an application manifest is now handled by default since NSIS3. The code has been commented out.
  - Added support for using new NSISPortable which is the new NSIS3 with Unicode support. Removed NSIS in the App directory.
  - Added support for automatic code signing. Refer to lines 93 and 617 for referance.
 
