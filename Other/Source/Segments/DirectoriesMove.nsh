@@ -1,170 +1,201 @@
+!ifdef DIRECTORIES_MOVE
+	!define Directory::BackupLocal `!insertmacro Directory::BackupLocal`
+	!macro Directory::BackupLocal _LOCALDIR _SUBDIR
+		RMDir /r `${_LOCALDIR}\${_SUBDIR}.BackupBy${APPNAME}`
+		Rename `${_LOCALDIR}\${_SUBDIR}` `${_LOCALDIR}\${_SUBDIR}.BackupBy${APPNAME}`
+	!macroend
+	!define Directory::RestoreLocal `!insertmacro Directory::RestoreLocal`
+	!macro Directory::RestoreLocal _LOCALDIR _SUBDIR
+		RMDir /r `${_LOCALDIR}\${_SUBDIR}`
+		Rename `${_LOCALDIR}\${_SUBDIR}.BackupBy${APPNAME}` `${_LOCALDIR}\${_SUBDIR}`
+		RMDir `${_LOCALDIR}`
+	!macroend
+	!define Directory::BackupPortable `!insertmacro Directory::BackupPortable`
+	!macro Directory::BackupPortable _LOCALDIR _SUBDIR _PORTABLEDIR _VAR1 _VAR2
+		IfFileExists `${_LOCALDIR}\${_SUBDIR}` 0 +17
+		Push `${_PORTABLEDIR}`
+		Call Root
+		Pop ${_VAR1}
+		Push `${_LOCALDIR}`
+		Call Root
+		Pop ${_VAR2}
+		RMDir /r `${_PORTABLEDIR}`
+		RMDir `${_LOCALDIR}\${_SUBDIR}`
+		IfFileExists `${_LOCALDIR}\${_SUBDIR}` 0 +7
+		StrCmp ${_VAR1} ${_VAR2} 0 +4
+		ClearErrors
+		Rename `${_LOCALDIR}\${_SUBDIR}` `${_PORTABLEDIR}`
+		IfErrors 0 +3
+		CreateDirectory `${_PORTABLEDIR}`
+		CopyFiles /SILENT `${_LOCALDIR}\${_SUBDIR}\*.*` `${_PORTABLEDIR}`
+		RMDir `${_LOCALDIR}`
+	!macroend
+	!define Directory::RestorePortable `!insertmacro Directory::RestorePortable`
+	!macro Directory::RestorePortable _LOCALDIR _SUBDIR _PORTABLEDIR _VAR1 _VAR2
+		IfFileExists `${_PORTABLEDIR}` 0 +14
+		Push `${_PORTABLEDIR}`
+		Call Root
+		Pop ${_VAR1}
+		Push `${_LOCALDIR}`
+		Call Root
+		Pop ${_VAR2}
+		StrCmp ${_VAR1} ${_VAR2} 0 +5
+		CreateDirectory `${_LOCALDIR}`
+		ClearErrors
+		Rename `${_PORTABLEDIR}` `${_LOCALDIR}\${_SUBDIR}`
+		IfErrors 0 +3
+		CreateDirectory `${_LOCALDIR}\${_SUBDIR}`
+		CopyFiles /SILENT `${_PORTABLEDIR}\*.*` `${_LOCALDIR}\${_SUBDIR}`
+	!macroend
+!endif
+Function Root
+	!macro _Root _PATH _RET
+		Push `${_PATH}`
+		Call Root
+		Pop ${_RET}
+	!macroend
+	!define Root `!insertmacro _Root`
+	Exch $0
+	Push $1
+	Push $2
+	Push $3
+	StrCpy $1 $0 2
+	StrCmp $1 '\\' +5
+	StrCpy $2 $1 1 1
+	StrCmp $2 ':' 0 +16
+	StrCpy $0 $1
+	goto +15
+	StrCpy $2 1
+	StrCpy $3 ''
+	IntOp $2 $2 + 1
+	StrCpy $1 $0 1 $2
+	StrCmp $1$3 '' +9
+	StrCmp $1 '' +5
+	StrCmp $1 '\' 0 -4
+	StrCmp $3 '1' +3
+	StrCpy $3 '1'
+	goto -7
+	StrCpy $0 $0 $2
+	StrCpy $2 $0 1 -1
+	StrCmp $2 '\' 0 +2
+	StrCpy $0 ''
+	Pop $3
+	Pop $2
+	Pop $1
+	Exch $0
+FunctionEnd
 ${SegmentFile}
-
-; Explanation of the in-package stuff: In Post, if the target was in the
-; package, and the Rename back fails (path is open), instead of killing it
-; badly, we copy it (so it won't be destroyed if the app is upgraded between
-; runs, or missed if backed up) and on next launch delete the Data version (as
-; it's a duplicate).
-
 !macro _DirectoriesMove_Start
-	${IfThen} $0 != - ${|} StrCpy $0 $DataDirectory\$0 ${|}
-	${ParseLocations} $1
+	StrCmpS $0 - +3
+	ExpandEnvStrings $0 $0
+	StrCpy $0 ${DATA}\$0
+	ExpandEnvStrings $1 $1
 !macroend
-
 ${SegmentPrePrimary}
+	!ifmacrodef PreDirMove
+		!insertmacro PreDirMove
+	!endif
 	${ForEachINIPair} DirectoriesMove $0 $1
 		!insertmacro _DirectoriesMove_Start
-
-		${If} $0 == $DataDirectory\settings
-			MessageBox MB_ICONSTOP "DON'T YOU DARE DO THAT! (You can't [DirectoriesMove] settings)"
-		${EndIf}
-
-		; Is the target inside the package?
+		StrCmp $0 ${SET} 0 +2
+		MessageBox MB_ICONSTOP|MB_TOPMOST `You can't [DirectoriesMove] settings`
 		StrLen $R0 $EXEDIR
 		StrCpy $R0 $1 $R0
-		${If} $R0 == $EXEDIR
-			StrCpy $7 in-package
-		${Else}
-			StrCpy $7 not-in-package
-		${EndIf}
-
+		StrCmp $R0 $EXEDIR 0 +3
+		StrCpy $7 in-package
+		Goto +2
+		StrCpy $7 not-in-package
 		${If} $7 != in-package
-			; Backup data from a local installation
 			${ForEachDirectory} $4 $3 $1
-				${DebugMsg} "Backing up $4 to $4.BackupBy$AppID"
-				Rename $4 $4.BackupBy$AppID
+				RMDir /r $4.BackupBy${APPNAME}
+				Rename $4 $4.BackupBy${APPNAME}
 			${NextDirectory}
 		${ElseIf} $0 != -
 			${ForEachDirectory} $4 $3 $1
-				${Break} ; Done this way as we can't nest ForEachPaths
+				${Break}
 			${NextDirectory}
 			${IfNot} ${Errors}
-				; Target directories existed, so the Rename back failed; clear out the stuff in Data.
-				${DebugMsg} "Matching directories for $1 discovered, deleting $0"
 				${ForEachDirectory} $4 $3 $0
 					RMDir /r $4
 				${NextDirectory}
 				StrCpy $7 in-package-done
 			${EndIf}
 		${EndIf}
-
-		; If the key is -, don't move/copy to the target directory.
-		; If portable data exists move/copy it to the target directory.
 		${If} $0 == -
-			${IfNot} ${WildCardFlag} ; can not create folders with wild-cards (obviously)
+			${IfNot} ${WildCardFlag}
 				CreateDirectory $1
-				${DebugMsg} "DirectoriesMove key -, so only creating the directory $1 (no file copy)."
 			${EndIf}
-		; If in-package-done, the target directory existed and so we know that the copy back failed;
 		${ElseIf} $7 != in-package-done
-			; See if the parent local directory exists. If not, create it and
-			; note down to delete it at the end if it's empty.
 			${GetParent} $1 $4
-			${IfNot} ${FileExists} $4
-				CreateDirectory $4
-				${WriteRuntimeData} DirectoriesMove RemoveIfEmpty:$4 true
-			${EndIf}
-
+			IfFileExists $4 +4
+			CreateDirectory $4
+			${WriteRuntimeData} DirectoriesMove RemoveIfEmpty:$4 true
 			${ForEachDirectory} $3 $2 $0
-				${IfNotThen} ${WildCardFlag} ${|} ${GetFileName} $1 $2 ${|} ; do not inherit the filename
-				${GetRoot} $0 $5 ; compare
-				${GetRoot} $1 $6 ; drive
-				${If} $5 == $6   ; letters
-					${DebugMsg} "Renaming directory $3 to $4\$2"
-					Rename $3 $4\$2 ; same volume, rename OK
-				${Else}
-					${DebugMsg} "Copying $3\*.* to $4\$2\*.*"
-					CreateDirectory $4\$2
-					CopyFiles /SILENT $3\*.* $4\$2
+				${IfNot} ${WildCardFlag}
+					${GetFileName} $1 $2
 				${EndIf}
+				${GetRoot} $0 $5
+				${GetRoot} $1 $6
+				StrCmp $5 $6 0 +3
+				Rename $3 $4\$2
+				Goto +3
+				CreateDirectory $4\$2
+				CopyFiles /SILENT $3\*.* $4\$2
 			${NextDirectory}
 			${If} ${Errors}
-				${IfNotThen} ${WildCardFlag} ${|} CreateDirectory $1 ${|}
-				; Nothing to copy, so just create the directory, ready for use.
-${!getdebug}
-!ifdef DEBUG
-				StrLen $2 "$DataDirectory\"
-				StrCpy $0 $0 "" $2
-				${DebugMsg} "$DataDirectory\$0\*.* does not exist, so not copying it to $1.$\r$\n(Note for developers: if you want default data, remember to put files in App\DefaultData\$0)"
-!endif
+				${IfNot} ${WildCardFlag}
+					CreateDirectory $1
+				${EndIf}
 			${EndIf}
 		${EndIf}
 	${NextINIPair}
+	!ifmacrodef UnPreDirMove
+		!insertmacro UnPreDirMove
+	!endif
 !macroend
-
 ${SegmentPostPrimary}
+	!ifmacrodef PostDirMove
+		!insertmacro PostDirMove
+	!endif
 	${ForEachINIPair} DirectoriesMove $0 $1
 		!insertmacro _DirectoriesMove_Start
-
-		; Is the target inside the package?
 		StrLen $R0 $EXEDIR
 		StrCpy $R0 $1 $R0
-		${If} $R0 == $EXEDIR
-			StrCpy $7 in-package
-		${EndIf}
-
-		; If the key is "-", don't copy it back
-		; Also if not in Live mode, copy the data back to the Data directory.
+		StrCmp $R0 $EXEDIR 0 +2
+		StrCpy $7 in-package
 		${GetParent} $0 $3
 		${ForEachDirectory} $4 $2 $1
-			${IfNotThen} ${WildCardFlag} ${|} ${GetFileName} $0 $2 ${|} ; do not inherit the filename
-			${If} $0 == -
-				${DebugMsg} "DirectoriesMove key -, so not keeping data from $1."
-			${ElseIf} $RunLocally != true
-				${GetRoot} $0 $5 ; compare
-				${GetRoot} $1 $6 ; drive
-				${If} $5 == $6   ; letters
-					${DebugMsg} "Renaming directory $4 to $3\$2"
-					ClearErrors
-					Rename $4 $3\$2 ; same volume, rename OK
-					${If} ${Errors}
-						${DebugMsg} "Rename failed, directory handle presumably open. Trying to recover with copy."
-						RMDir /R $3\$2
-						CreateDirectory $3\$2
-						CopyFiles /SILENT $4\*.* $3\$2
-					${EndIf}
-				${Else}
-					${DebugMsg} "Copying $4\*.* to $3\$2\*.*"
-					RMDir /R $3\$2
-					CreateDirectory $3\$2
-					CopyFiles /SILENT $4\*.* $3\$2
-				${EndIf}
+			${IfNot} ${WildCardFlag}
+				${GetFileName} $0 $2
 			${EndIf}
-			; And then remove it from the runtime location
-${!getdebug}
-!ifdef DEBUG
-			${If} $7 != in-package
-			${AndIf} ${FileExists} $4
-				ClearErrors
-				${DebugMsg} "Removing portable settings directory from run location ($4)."
-			${EndIf}
-!endif
-			RMDir /R $4
-!ifdef DEBUG
-			${If} $7 != in-package
-			${AndIf} ${FileExists} $4
-			${AndIf} ${Errors}
-				${DebugMsg} "Failed to remove directory. Internal state is probably messed up."
-				; In the future we may alert the user and request that they
-				; close it themselves but I've added enough strings for 2.1
-				; (bad excuse, I know).
-			${EndIf}
-!endif
+			StrCmpS $0 - +16
+			StrCmpS $RunLocally true +15
+			Push $0
+			Call Root
+			Pop $5
+			Push $1
+			Call Root
+			Pop $6
+			RMDir $4
+			IfFileExists $4 0 +7
+			StrCmp $5 $6 0 +4
+			ClearErrors
+			Rename $4 $3\$2
+			IfErrors 0 +3
+			CreateDirectory $3\$2
+			CopyFiles /SILENT $4\*.* $3\$2
+			RMDir /r $4
 		${NextDirectory}
-
-		; If the parent directory we put the directory in locally didn't exist
-		; before, delete it if it's empty.
 		${GetParent} $1 $4
 		${ReadRuntimeData} $2 DirectoriesMove RemoveIfEmpty:$4
-		${If} $2 == true
-			RMDir $4
-		${EndIf}
-
-		; And move that backup of any local data from earlier if it exists.
-		${ForEachDirectory} $3 $2 $1.BackupBy$AppID
+		StrCmpS $2 true 0 +2
+		RMDir $4
+		${ForEachDirectory} $3 $2 $1.BackupBy${APPNAME}
 			${GetBaseName} $2 $2
-			${DebugMsg} "Moving local settings from $3 to $4\$2"
 			Rename $3 $4\$2
 		${NextDirectory}
 	${NextINIPair}
+	!ifmacrodef UnPostDirMove
+		!insertmacro UnPostDirMove
+	!endif
 !macroend
