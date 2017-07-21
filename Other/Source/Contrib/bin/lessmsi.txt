@@ -1,0 +1,1 @@
+lessmsi -x <inputfile> <output directory>

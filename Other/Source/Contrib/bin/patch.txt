@@ -1,0 +1,23 @@
+
+Hexadecimal patcher for files, find and replaces.
+
+HEXPATCHER hexsource [hexreplace] [-max n] [-query] [-noBackup] [-quiet]
+[-startFrom start] [-startWith hex] [-verbose] [-help] file
+
+  hexsource		Hex string to find
+  hexreplace		Hex string to replace
+  -max n		Don't replace more than n times
+  -query		Query user before each replacement
+  -noBackup		Don't create any backup file
+  -quiet		Hide messages and errors
+  -startFrom start	First match to begin replacements
+  -startWith hex	Find this hex string and begin from there
+  -verbose		Show debug messages and alerts
+  -help			Display this help
+  file			Input file path
+
+ExecDos::Exec /TOSTACK `"${APPDIR}\patch.exe" 740AB8FEFFFFFF 9090B800000000 FreeRIP3.exe`
+
+You may set wildcards in hexsource, hexreplace and hex strings. Just use
+an "??" if you want to match any hex value in some part of your strings.
+Wildcards inside hexreplace string just represents original file data.

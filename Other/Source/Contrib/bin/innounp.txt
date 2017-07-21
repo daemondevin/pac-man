@@ -1,0 +1,42 @@
+innounp, the Inno Setup Unpacker. Version 0.43
+Usage: innounp [command] [options] <setup.exe or setup.0> [@filelist] [filemask ...]
+Commands:
+  (no)   display general installation info
+  -v     verbosely list the files (with sizes and timestamps)
+  -x     extract the files from the installation (to the current directory, also see -d)
+  -e     extract files without paths
+  -t     test files for integrity
+Options:
+  -b     batch (non-interactive) mode - will not prompt for password or disk changes
+  -q     do not indicate progress while extracting
+  -m     extract internal embedded files (such as license and uninstall.exe)
+  -pPASS decrypt the installation with a password
+  -dDIR  extract the files into DIR (can be absolute or relative path)
+  -cDIR  specifies that DIR is the current directory in the installation
+  -n     don't attempt to unpack new versions
+  -fFILE same as -p but reads the password from FILE
+  -a     extract all copies of duplicate files
+  -y     assume Yes on all queries (e.g. overwrite files)
+
+http://innounp.sourceforge.net/
+
+;=== ExecDos causes inounp to freeze.
+	SetOutPath `$PLUGINSDIR\Downloaded`
+	File `${NSISDIR}\..\7zip\innounp.exe`
+	CreateDirectory `$INSTDIR\TEMP`
+	nsExec::Exec `"$PLUGINSDIR\innounp.exe" -x -a "$DOWNLOADEDFILE" -d"$INSTDIR\TEMP"`
+	Sleep 1000
+	Rename `$INSTDIR\TEMP\{app}` `$INSTDIR\App\iUnlocker`
+
+NOTE: use -a to avoid extraction problems. innounp can leave out files. 
+-a process all copies of duplicate files
+================================================================================
+nsExec::Exec `"$PLUGINSDIR\innounp.exe" -x -a "$DOWNLOADEDFILE" -d"$INSTDIR\TEMP"`
+
+
+# HAD TO USE THIS FOR ASHAMPOO.. ELSE DUPLICATES WEREN'T REPLACED CAUSING APP ERRORS.
+================================================================================
+	CreateDirectory `$INSTDIR\TEMP`
+	nsExec::Exec `"$PLUGINSDIR\innounp.exe" -x -m -y -q -n "$DOWNLOADEDFILE" -d"$INSTDIR\TEMP"`
+	Sleep 1000
+	Rename `$INSTDIR\TEMP\{app}` `${APPDIR}`

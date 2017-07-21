@@ -19,6 +19,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
+  /**
+  * This is a modified version of the official release
+  * The modifacations to this file were added by Devin Gaul
+  * For support on this variant visit the GitHub project page below.
+  *
+  * https://github.com/demondevin/portableapps.comlauncher
+  *
+  */
 
 !verbose 3
 
@@ -74,8 +82,8 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else 
 	!define /REDEF RequestLevel USER
 !endif
-!define ResHacker		`Tools\bin\ResHacker.exe`
-!define ManifDir		`Tools\manifests`
+!define ResHacker		`Contrib\bin\ResHacker.exe`
+!define ManifDir		`Contrib\manifests`
 !define Manifest		`NSIS_3.01_Win8`
 !packhdr				`$%TEMP%\exehead.tmp` \ 
 						`"${Reshacker}" -addoverwrite "%TEMP%\exehead.tmp", "%TEMP%\exehead.tmp", "${ManifDir}\${Manifest}_${RequestLevel}.manifest", 24,1,1033`
@@ -90,9 +98,9 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!if "${RegValueWrite}" == "]"
 		!define RegSleep 50	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
 	!endif
-	!searchparse /NOERRORS /FILE `${LAUNCHER}` `Type=Replace` Replace
-	!if "${RegValueWrite}" == "]"
-		!define RegSleep 50	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
+	!searchparse /NOERRORS /FILE `${LAUNCHER}` `Type=Rep` REPLACE
+	!if "${REPLACE}" == "lace"
+		!define /REDEF REPLACE ;=== Enables Replace functionality in [FileWrite]
 	!endif
 	!ifdef APP64
 		;= TODO: Figure out a better way to handle this.
@@ -101,6 +109,18 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!ifdef REGISTRY
 		!undef REGISTRY
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `UsesDotNetVersion=` dotNET_Version
+!ifdef dotNET_Version
+	!if ! ${dotNET_Version} == ""
+		!define DOTNET
+	!else
+		!error "The key 'UsesDotNetVersion' in AppInfo.ini is set but has no value! If this PAF does not require the .NET Framework please omit this key entirely."
+	!endif
+!else
+	!ifdef dotNET_Version
+		!undef dotNET_Version
 	!endif
 !endif
 !searchparse /NOERRORS /FILE `${LAUNCHER}` `Java=` JAVA
@@ -112,6 +132,25 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!ifdef JAVA
 		!undef JAVA
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `XML=` XML_PLUGIN
+!if "${XML_PLUGIN}" == true
+	!define /REDEF XML_PLUGIN
+	!include XML.nsh
+!else
+	!ifdef XML_PLUGIN
+		!undef XML_PLUGIN
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `Ghostscript=` GHOSTSCRIPT
+!if "${GHOSTSCRIPT}" == "find"
+	!define /REDEF GHOSTSCRIPT
+!else if "${GHOSTSCRIPT}" == "require"
+	!define /REDEF GHOSTSCRIPT
+!else
+	!ifdef GHOSTSCRIPT
+		!undef GHOSTSCRIPT
 	!endif
 !endif
 !if "${RequestLevel}" == "ADMIN"
@@ -129,22 +168,85 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef UAC
 	!endif
 !endif
-
-;=== ExecAsUser
-!searchparse /noerrors /file `${APPINFO}` `UseStdUtils= ` StdUtils	;=== Include StndUtils without ExecAsUser
-!searchparse /noerrors /file `${APPINFO}` `ExecAsUser= ` ExecAsUser	;=== For applications which need to run as normal user.
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `[DirectoriesCleanupIfEmpty` RMEMPTYDIRECTORIES
+!if "${RMEMPTYDIRECTORIES}" == "]"
+	!define /REDEF RMEMPTYDIRECTORIES	;=== enable for the [DirectoriesCleanupIfEmpty] section in launcher.ini
+!else
+	!ifdef RMEMPTYDIRECTORIES
+		!undef RMEMPTYDIRECTORIES
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `UseStdUtils= ` StdUtils	;=== Include StndUtils without ExecAsUser
 !if ${StdUtils} == true
-	!define /redef StdUtils
+	!define /REDEF StdUtils
 !else
 	!ifdef StdUtils
 		!undef StdUtils
 	!endif
 !endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `ExecAsUser= ` ExecAsUser	;=== For applications which need to run as normal user.
 !if ${ExecAsUser} == true
-	!define /redef ExecAsUser
+	!define /REDEF ExecAsUser
 !else
 	!ifdef ExecAsUser
 		!undef ExecAsUser
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `DisableRedirection= ` SYSTEMWIDE_DISABLEREDIR
+!if ${SYSTEMWIDE_DISABLEREDIR} == true
+	!define /REDEF SYSTEMWIDE_DISABLEREDIR
+!else
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!undef SYSTEMWIDE_DISABLEREDIR
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `ForceDisableRedirection= ` FORCE_SYSTEMWIDE_DISABLEREDIR
+!if ${FORCE_SYSTEMWIDE_DISABLEREDIR} == true
+	!define /REDEF FORCE_SYSTEMWIDE_DISABLEREDIR
+!else
+	!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+		!undef FORCE_SYSTEMWIDE_DISABLEREDIR
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `FontsFolder= ` FONTS_ENABLE	;=== Adds font support in ..\Data\Fonts
+!if ${FONTS_ENABLE} == true
+	!define /REDEF FONTS_ENABLE
+!else
+	!ifdef FONTS_ENABLE
+		!undef FONTS_ENABLE
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `FileLocking= ` IsFileLocked	
+!if ${IsFileLocked} == true
+	!define /REDEF IsFileLocked ;=== If enabled, PortableApp will ensure DLL(s) are unlocked.
+	!define CloseWindow
+!else
+	!ifdef IsFileLocked
+		!undef IsFileLocked
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `Junctions= ` NTFS	
+!if ${NTFS} == true
+	!define /REDEF NTFS ;=== Enable support for Junctions
+!else
+	!ifdef NTFS
+		!undef NTFS
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `ACLSupport= ` ACL	
+!if ${ACL} == true
+	!define /REDEF ACL ;=== Enable AccessControl support 
+!else
+	!ifdef ACL
+		!undef ACL
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `ACLDirSupport= ` ACL_DIR	
+!if ${ACL_DIR} == true
+	!define /REDEF ACL_DIR ;=== Enable AccessControl support for directories
+!else
+	!ifdef ACL_DIR
+		!undef ACL_DIR
 	!endif
 !endif
 
@@ -297,7 +399,6 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 	!endif
 !endif
 !ifdef XML_PLUGIN
-	!include XML.nsh
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
 		!AddPluginDir Plugins
@@ -379,221 +480,592 @@ ${!echo} "${NEWLINE}Loading segments...${NEWLINE}${NEWLINE}"
 !include Debug.nsh
 
 ;=== Program Details {{{1
-${!echo} "${NEWLINE}Specifying program details and setting options...${NEWLINE}${NEWLINE}"
+${!echo}	`${NewLine}Specifying program details and setting options...${NewLine}${NewLine}`
 
-Name "${NamePortable} (PortableApps.com Launcher)"
-OutFile "${PACKAGE}\${AppID}.exe"
-Icon "${PACKAGE}\App\AppInfo\appicon.ico"
-Caption "${NamePortable} (PortableApps.com Launcher)"
-VIProductVersion ${Version}
-VIAddVersionKey ProductName "${NamePortable}"
-VIAddVersionKey Comments "A build of the PortableApps.com Launcher for ${NamePortable}, allowing it to be run from a removable drive.  For additional details, visit PortableApps.com"
-VIAddVersionKey CompanyName PortableApps.com
-VIAddVersionKey LegalCopyright PortableApps.com
-VIAddVersionKey FileDescription "${NamePortable} (PortableApps.com Launcher)"
-VIAddVersionKey FileVersion ${Version}
-VIAddVersionKey ProductVersion ${Version}
-VIAddVersionKey InternalName "PortableApps.com Launcher"
-VIAddVersionKey LegalTrademarks "PortableApps.com is a Trademark of Rare Ideas, LLC."
-VIAddVersionKey OriginalFilename "${AppID}.exe"
+### BRANDING ###
+!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Trademarks=` TRADEMARK
+!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Developer=` DEVELOPER
+!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Publisher=` PUBLISHER
+!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `PackageVersion=` PACKAGE_VERSION
+!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Start=` OUTFILE
+
+Name		`${PORTABLEAPPNAME}`
+OutFile		`${PACKAGE}\${APPNAME}.exe`
+Icon		`${PACKAGE}\App\AppInfo\appicon.ico`
+Caption		`${FULLNAME}`
+
+!ifdef PACKAGE_VERSION
+	!if ! ${PACKAGE_VERSION} == ""
+		VIProductVersion	${PACKAGE_VERSION}
+		VIAddVersionKey /LANG=${LANG_ENGLISH} FileVersion      ${PACKAGE_VERSION}
+	!else
+		!error "The key 'PackageVersion' in AppInfo.ini needs a value! (i.e. 0.0.0.0)"
+	!endif
+!else
+	!error "The key 'PackageVersion' in AppInfo.ini is missing!"
+!endif
+!ifdef PUBLISHER
+	!if ! "${PUBLISHER}" == ""
+		VIAddVersionKey /LANG=${LANG_ENGLISH} CompanyName      `${PUBLISHER}`
+		VIAddVersionKey /LANG=${LANG_ENGLISH} LegalCopyright   `Copyright © ${PUBLISHER} ${YEAR}`
+	!else
+		!error "The key 'Publisher' in AppInfo.ini needs a value!"
+	!endif
+!else
+	!error "The key 'Publisher' in AppInfo.ini is missing!"
+!endif
+!ifdef APPNAME
+	!if ! "${APPNAME}" == ""
+		VIAddVersionKey /LANG=${LANG_ENGLISH} InternalName     `${APPNAME}Portable.exe`
+		VIAddVersionKey /LANG=${LANG_ENGLISH} OriginalFilename `${APPNAME}.exe`
+	!else
+		!error "The key 'AppID' in AppInfo.ini needs a value!"
+	!endif
+!else
+	!error "The key 'AppID' in AppInfo.ini is missing!"
+!endif
+!ifdef FULLNAME
+	!if ! "${FULLNAME}" == ""
+		VIAddVersionKey /LANG=${LANG_ENGLISH} ProductName      `${FULLNAME}`
+		VIAddVersionKey /LANG=${LANG_ENGLISH} FileDescription  `${FULLNAME}`
+	!else
+		!error "The key 'Name' in AppInfo.ini needs a value!"
+	!endif
+!else
+	!error "The key 'Name' in AppInfo.ini is missing!"
+!endif
+!ifdef TRADEMARK
+	!if ! "${TRADEMARK}" == ""
+		VIAddVersionKey /LANG=${LANG_ENGLISH} LegalTrademarks  `${TRADEMARK}`
+	!else
+		!ifdef TRADEMARK
+			!undef TRADEMARK
+		!endif
+	!endif
+!endif
+!ifdef DEVELOPER
+	!if ! "${DEVELOPER}" == ""
+		VIAddVersionKey /LANG=${LANG_ENGLISH} Comments         `Developed by ${DEVELOPER} (http://softables.tk/)`
+	!else
+		VIAddVersionKey /LANG=${LANG_ENGLISH} Comments         `A portable build of ${FULLNAME} using the PortableApps.com Launcher`
+		!ifdef DEVELOPER
+			!undef DEVELOPER
+		!endif
+	!endif
+!endif
+VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 
 !verbose 4
 
 Function .onInit           ;{{{1
-	${RunSegment} Custom
+	Push $0
+	CreateDirectory `${SET}`
+	!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+		!ifndef SYSTEMWIDE_DISABLEREDIR
+			!define SYSTEMWIDE_DISABLEREDIR
+		!endif
+	!endif
+	System::Call `kernel32::GetModuleHandle(t 'shell32.dll') i .s`
+	System::Call `kernel32::GetProcAddress(i s, i 680) i .r0`
+	System::Call `::$0() i .r0`
+	StrCmpS $0 1 "" +2
+	StrCpy $Admin true
+	System::Call `${GETCURRPROC}`
+	System::Call `${WOW}`
+	StrCmpS $0 0 +3
+	StrCpy $Bit 64
+	Goto +2
+	StrCpy $Bit 32
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
 	${RunSegment} Core
+	${RunSegment} Custom
 	${RunSegment} Temp
 	${RunSegment} Language
 	${RunSegment} OperatingSystem
-	${RunSegment} RunAsAdmin
+	!ifdef UAC
+		${RunSegment} RunAsAdmin
+	!endif
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
+	Pop $0
 FunctionEnd
-
-Function Init              ;{{{1
-	${RunSegment} Custom
+Function Init           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
+	${If} $SecondaryLaunch != true
+		${RunSegment} Language
+		${RunSegment} Environment
+		${RunSegment} Custom
+	${EndIf}
 	${RunSegment} Core
-	${RunSegment} PathChecks
-	${RunSegment} Settings
-	${RunSegment} DriveLetter
+	${If} $SecondaryLaunch != true
+		${RunSegment} PathChecks
+		${RunSegment} DriveLetter
+	${EndIf}
 	${RunSegment} DirectoryMoving
 	${RunSegment} Variables
-	${RunSegment} Language
-	${RunSegment} Registry
-	${RunSegment} Java
-	${RunSegment} DotNet
-	${RunSegment} Ghostscript
+	!ifdef JAVA
+		${RunSegment} Java
+	!endif
+	!ifdef DOTNET
+		${RunSegment} DotNet
+	!endif
+	!ifdef GHOSTSCRIPT
+		${RunSegment} Ghostscript
+	!endif
 	${RunSegment} RunLocally
-	${RunSegment} Temp
+	${If} $SecondaryLaunch != true
+		${RunSegment} Temp
+	${EndIf}
 	${RunSegment} InstanceManagement
-	${RunSegment} SplashScreen
-	${RunSegment} RefreshShellIcons
+	${If} $SecondaryLaunch != true
+		${RunSegment} Settings
+	${EndIf}
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
-Function Pre               ;{{{1
+Function Pre           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
+	${If} $SecondaryLaunch != true
+		!ifdef SERVICES
+			${RunSegment} Services
+		!endif
+		!ifdef REGISTERDLL
+			${RunSegment} RegisterDLL
+		!endif
+	${EndIf}
+	!ifdef REGISTRY
+		${RunSegment} Registry
+	!endif
 	${RunSegment} Custom
 	${RunSegment} RunLocally
 	${RunSegment} Temp
-	${RunSegment} LastRunEnvironment
 	${RunSegment} Environment
 	${RunSegment} ExecString
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
-Function PrePrimary        ;{{{1
+Function PrePrimary           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
+	${If} $SecondaryLaunch != true
+		!ifdef FileCleanup
+			${RunSegment} FilesCleanup
+		!endif
+	${EndIf}
 	${RunSegment} Custom
 	${RunSegment} DriveLetter
 	${RunSegment} Variables
 	${RunSegment} DirectoryMoving
-	${RunSegment} LastRunEnvironment
 	${RunSegment} FileWrite
 	${RunSegment} FilesMove
 	${RunSegment} DirectoriesMove
-	;${RunSegment} RegisterDLL
-	${RunSegment} RegistryKeys
-	${RunSegment} RegistryValueBackupDelete
-	${RunSegment} RegistryValueWrite
-	${RunSegment} Services
+	!ifdef REGISTRY
+		${RunSegment} RegistryKeys
+		!ifdef RegCopy
+			${If} $SecondaryLaunch != true
+				${RunSegment} RegistryCopyKeys
+			${EndIf}
+		!endif
+		${RunSegment} RegistryValueBackupDelete
+	!endif
+	${If} $SecondaryLaunch != true
+		!ifdef REGISTERDLL
+			${RunSegment} RegisterDLL
+		!endif
+	${EndIf}
+	!ifdef REGISTRY
+		;=== this belongs here after Registering DLLs.
+		${RunSegment} RegistryValueWrite
+	!endif
+	${If} $SecondaryLaunch != true
+		!ifdef SERVICES
+			${RunSegment} Services
+		!endif
+	${EndIf}
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
-Function PreSecondary      ;{{{1
+Function PreSecondary           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
 	${RunSegment} Custom
-	;${RunSegment} *
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
 Function PreExec           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
 	${RunSegment} Custom
+	${If} $SecondaryLaunch != true
+		!ifdef REGISTERDLL
+			${RunSegment} RegisterDLL
+		!endif
+	${EndIf}
 	${RunSegment} RefreshShellIcons
 	${RunSegment} WorkingDirectory
-	${RunSegment} RunBeforeAfter
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
-Function PreExecPrimary    ;{{{1
+Function PreExecPrimary           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
 	${RunSegment} Custom
 	${RunSegment} Core
-	${RunSegment} LastRunEnvironment
-	${RunSegment} SplashScreen
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
-Function PreExecSecondary  ;{{{1
+Function PreExecSecondary           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
 	${RunSegment} Custom
-	;${RunSegment} *
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
 Function Execute           ;{{{1
-	; Users can override this function in Custom.nsh
-	; like this (see Segments.nsh for the OverrideExecute define):
-	;
-	;   ${OverrideExecute}
-	;       [code to replace this function]
-	;   !macroend
-
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
 	!ifmacrodef OverrideExecuteFunction
 		!insertmacro OverrideExecuteFunction
 	!else
-	${!getdebug}
-	!ifdef DEBUG
-		${If} $WaitForProgram != false
-			${DebugMsg} "About to execute the following string and wait till it's done: $ExecString"
-		${Else}
-			${DebugMsg} "About to execute the following string and finish: $ExecString"
-		${EndIf}
-	!endif
-	${EmptyWorkingSet}
-	ClearErrors
-	${ReadLauncherConfig} $0 Launch HideCommandLineWindow
-	${If} $0 == true
-		; TODO: do this without a plug-in or at least some way it won't wait with secondary
-		ExecDos::exec $ExecString
-		Pop $0
-	${Else}
-		${IfNot} ${Errors}
-		${AndIf} $0 != false
-			${InvalidValueError} [Launch]:HideCommandLineWindow $0
-		${EndIf}
-		${If} $WaitForProgram != false
-			ExecWait $ExecString
-		${Else}
-			Exec $ExecString
-		${EndIf}
-	${EndIf}
-	${DebugMsg} "$ExecString has finished."
-
-	${If} $WaitForProgram != false
-		; Wait till it's done
+		!ifmacrodef PreExecExecute
+			!insertmacro PreExecExecute
+		!endif
+		${EmptyWorkingSet}
 		ClearErrors
-		${ReadLauncherConfig} $0 Launch WaitForOtherInstances
+		${ReadLauncherConfig} $0 Launch HideCommandLineWindow
 		${If} $0 == true
-		${OrIf} ${Errors}
-			${GetFileName} $ProgramExecutable $1
-			${DebugMsg} "Waiting till any other instances of $1 and any [Launch]:WaitForEXE[N] values are finished."
-			${EmptyWorkingSet}
-			${Do}
-				${ProcessWaitClose} $1 -1 $R9
-				${IfThen} $R9 > 0 ${|} ${Continue} ${|}
-				StrCpy $0 1
-				${Do}
-					ClearErrors
-					${ReadLauncherConfig} $2 Launch WaitForEXE$0
-					${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-					${ProcessWaitClose} $2 -1 $R9
-					${IfThen} $R9 > 0 ${|} ${ExitDo} ${|}
-					IntOp $0 $0 + 1
-				${Loop}
-			${LoopWhile} $R9 > 0
-			${DebugMsg} "All instances are finished."
-		${ElseIf} $0 != false
-			${InvalidValueError} [Launch]:WaitForOtherInstances $0
+			StrCpy $ExecString "$ExecString $Parameters"
+			ExecDos::exec /TOSTACK $ExecString
+			Pop $0
+		${Else}
+			${IfNot} ${Errors}
+			${AndIf} $0 != false
+				${InvalidValueError} [Launch]:HideCommandLineWindow $0
+			${EndIf}
+			${If} $WaitForProgram != false
+				!ifdef ExecAsUser
+					${ConfigReads} `${CONFIG}` ExecAsAdmin= $0
+					${If} $0 == true
+						StrCpy $ExecString "$ExecString $Parameters"
+						ExecWait $ExecString
+					${Else}
+						${StdUtils.ExecShellAsUser} $0 "$ExecString" "" "$Parameters"
+						${EmptyWorkingSet}
+						Sleep 1000
+						${GetFileName} $ProgramExecutable $1
+						${EmptyWorkingSet}
+						${Do}
+							${ProcessWaitClose} $1 -1 $R9
+							${IfThen} $R9 > 0 ${|} ${Continue} ${|}
+						${LoopWhile} $R9 > 0
+					${EndIf}
+				!else
+					ExecWait $ExecString
+				!endif
+			${Else}
+				!ifdef ExecAsUser
+					${StdUtils.ExecShellAsUser} $0 "$ExecString" "" "$Parameters"
+				!else
+					Exec $ExecString
+				!endif
+			${EndIf}
 		${EndIf}
-	${EndIf}
+		!ifmacrodef PostExecWaitCommand
+			!insertmacro PostExecWaitCommand
+		!endif
+		${If} $WaitForProgram != false
+			ClearErrors
+			${ReadLauncherConfig} $0 Launch WaitForOtherInstances
+			${If} $0 == true
+			${OrIf} ${Errors}
+				${GetFileName} $ProgramExecutable $1
+				${EmptyWorkingSet}
+				${Do}
+					!ifdef Sleep
+						Sleep ${Sleep}
+					!endif
+					${ProcessWaitClose} $1 -1 $R9
+					${IfThen} $R9 > 0 ${|} ${Continue} ${|}
+					StrCpy $0 1
+					${Do}
+						!ifdef Sleep
+							Sleep ${Sleep}
+						!endif
+						ClearErrors
+						${ConfigReadS} `${LAUNCHER}` WaitForEXE$0= $2
+						${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+						ExpandEnvStrings $2 $2
+						${ProcessWaitClose} $2 -1 $R9
+						${IfThen} $R9 > 0 ${|} ${ExitDo} ${|}
+						IntOp $0 $0 + 1
+					${Loop}
+				${LoopWhile} $R9 > 0
+			${ElseIf} $0 != false
+				${InvalidValueError} [Launch]:WaitForOtherInstances $0
+			${EndIf}
+		${EndIf}
+	!endif
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
 	!endif
 FunctionEnd
-
-Function PostExecPrimary   ;{{{1
-	${RunSegment} Custom
-FunctionEnd
-
-Function PostExecSecondary ;{{{1
-	${RunSegment} Custom
-FunctionEnd
-
-Function PostExec          ;{{{1
-	${RunSegment} RunBeforeAfter
-	${RunSegment} Custom
-FunctionEnd
-
-Function PostPrimary       ;{{{1
-	${RunSegment} Services
-	${RunSegment} RegistryValueBackupDelete
-	${RunSegment} RegistryKeys
-	${RunSegment} RegistryCleanup
-	;${RunSegment} RegisterDLL
-	${RunSegment} Qt
+Function PostPrimary           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
+	${If} $SecondaryLaunch != true
+		!ifdef REGISTERDLL
+			${RunSegment} RegisterDLL
+		!endif
+		!ifdef SERVICES
+			${RunSegment} Services
+		!endif
+	${EndIf}
+	!ifdef REGISTRY
+		${RunSegment} RegistryValueBackupDelete
+		${If} $SecondaryLaunch != true
+			!ifdef RegCopy
+				${RunSegment} RegistryCopyKeys
+			!endif
+		${EndIf}
+		${RunSegment} RegistryKeys
+		${RunSegment} RegistryCleanup
+	!endif
+	${If} $SecondaryLaunch != true
+		${RunSegment} Qt
+		!ifdef FileCleanup
+			${RunSegment} FilesCleanup
+		!endif
+	${EndIf}
+	${RunSegment} DirectoriesCleanup
 	${RunSegment} DirectoriesMove
 	${RunSegment} FilesMove
-	${RunSegment} DirectoriesCleanup
 	${RunSegment} RunLocally
 	${RunSegment} Temp
 	${RunSegment} Custom
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
-Function PostSecondary     ;{{{1
-	;${RunSegment} *
+Function PostSecondary           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
 	${RunSegment} Custom
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
-Function Post              ;{{{1
-	${RunSegment} Ghostscript
+Function Post           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
+	!ifdef GHOSTSCRIPT
+		${RunSegment} Ghostscript
+	!endif
 	${RunSegment} RefreshShellIcons
 	${RunSegment} Custom
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
-Function Unload            ;{{{1
-	${RunSegment} XML
-	${RunSegment} Registry
-	${RunSegment} SplashScreen
+Function Unload           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
+	${If} $SecondaryLaunch != true
+		!ifdef REGISTERDLL
+			${RunSegment} RegisterDLL
+		!endif
+		!ifdef SERVICES
+			${RunSegment} Services
+		!endif
+		${RunSegment} FilesCleanup
+		${RunSegment} DirectoriesCleanup
+	${EndIf}
 	${RunSegment} Core
 	${RunSegment} Custom
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 FunctionEnd
-
-; Call a segment-calling function with primary/secondary variants as well {{{1
+!define CallPS `!insertmacro CallPS`
 !macro CallPS _func _rev
 	!if ${_rev} == +
 		Call ${_func}
@@ -607,30 +1079,35 @@ FunctionEnd
 		Call ${_func}
 	!endif
 !macroend
-!define CallPS `!insertmacro CallPS`
-
 Section           ;{{{1
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
 	Call Init
-
-	System::Call 'Kernel32::OpenMutex(i1048576, b0, t"PortableApps.comLauncher$AppID-$BaseName::Starting") i.R0 ?e'
+	System::Call 'Kernel32::OpenMutex(i1048576, b0, t"PortableApps.comLauncher${APPNAME}-${APPNAME}::Starting") i.R0 ?e'
 	System::Call 'Kernel32::CloseHandle(iR0)'
 	Pop $R9
 	${If} $R9 <> 2
 		MessageBox MB_ICONSTOP $(LauncherAlreadyStarting)
 		Quit
 	${EndIf}
-	System::Call 'Kernel32::OpenMutex(i1048576, i0, t"PortableApps.comLauncher$AppID-$BaseName::Stopping") i.R0 ?e'
+	System::Call 'Kernel32::OpenMutex(i1048576, i0, t"PortableApps.comLauncher${APPNAME}-${APPNAME}::Stopping") i.R0 ?e'
 	System::Call 'Kernel32::CloseHandle(iR0)'
 	Pop $R9
 	${If} $R9 <> 2
 		MessageBox MB_ICONSTOP $(LauncherAlreadyStopping)
 		Quit
 	${EndIf}
-
-	${IfNot} ${FileExists} $DataDirectory\PortableApps.comLauncherRuntimeData-$BaseName.ini
+	${IfNot} ${FileExists} `${RUNTIME}`
 	${OrIf} $SecondaryLaunch == true
 		${If} $SecondaryLaunch != true
-			System::Call 'Kernel32::CreateMutex(i0, i0, t"PortableApps.comLauncher$AppID-$BaseName::Starting") i.r0'
+			System::Call 'Kernel32::CreateMutex(i0, i0, t"PortableApps.comLauncher${APPNAME}-${APPNAME}::Starting") i.r0'
 			StrCpy $StatusMutex $0
 		${EndIf}
 		${CallPS} Pre +
@@ -640,32 +1117,27 @@ Section           ;{{{1
 			System::Call 'Kernel32::CloseHandle(ir0) ?e'
 			Pop $R9
 		${EndIf}
-		; File gets deleted in segment Core, hook Unload, so it'll only exist
-		; in case of power-outage, disk removal while running or something like that.
 		Call Execute
 	${Else}
-		; After doing Post, we don't do restart automatically as the variables
-		; and environment are all altered and this may affect what happens
-		; (some variables are checked against "" rather than initialising every
-		; variable, and some may depend on environment variables, so spawing a
-		; new instance isn't safe either)
 		MessageBox MB_ICONSTOP $(LauncherCrashCleanup)
-		; One possible solution: ExecWait another copy of self to do cleanup
 	${EndIf}
 	${If} $SecondaryLaunch != true
-		System::Call 'Kernel32::CreateMutex(i0, i0, t"PortableApps.comLauncher$AppID-$BaseName::Stopping")'
+		System::Call 'Kernel32::CreateMutex(i0, i0, t"PortableApps.comLauncher${APPNAME}-${APPNAME}::Stopping")'
 	${EndIf}
 	${If} $WaitForProgram != false
-		${CallPS} PostExec -
 		${CallPS} Post -
 	${EndIf}
 	Call Unload
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
 SectionEnd
-
-Function .onInstFailed ;{{{1
-	; If Abort is called
+Function .onInstFailed           ;{{{1
 	Call Unload
-FunctionEnd ;}}}1
-
-; This file has been optimised for use in Vim with folding.
-; (If you can't cope, :set nofoldenable) vim:foldenable:foldmethod=marker
+FunctionEnd

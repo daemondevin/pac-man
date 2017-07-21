@@ -17,6 +17,14 @@
 ;You should have received a copy of the GNU General Public License
 ;along with this program; if not, write to the Free Software
 ;Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+/**
+ * This is a modified version of the official release
+ * The modifacations to this file were added by Devin Gaul
+ * For support on this variant visit the GitHub project page below.
+ *
+ * https://github.com/demondevin/portableapps.comlauncher
+ *
+ */
 
 ;=== For NSIS3
 Unicode true 
@@ -129,7 +137,12 @@ Function .onInit
 		StrCpy $PACKAGE $0$PACKAGE
 	${EndIf}
 
-	StrCpy $NSIS "$EXEDIR\App\NSIS\makensis.exe"
+	;StrCpy $NSIS "$EXEDIR\App\NSIS\makensis.exe"
+	ReadINIStr $NSIS $EXEDIR\Data\settings.ini GeneratorWizard makensis
+	${If} $NSIS == ""
+		StrCpy $NSIS ..\NSISPortable\App\NSIS\makensis.exe
+		WriteINIStr $EXEDIR\Data\settings.ini GeneratorWizard makensis $NSIS
+	${EndIf}	
 
 	${GetParameters} $R0
 	StrCmp $R0 "" PreFillForm
@@ -226,7 +239,7 @@ Section Main
 	${IfNot} ${FileExists} $NSIS
 		StrCpy $ERROROCCURED true
 		${WriteErrorToLog} "NSIS not found at $NSIS."
-		MessageBox MB_ICONSTOP "NSIS was not found! (Looked for it in $NSIS)"
+		MessageBox MB_ICONSTOP "NSIS was not found! (Looked for it in $NSIS)$\r$\n$\r$\nYou can specify a custom path to makensis.exe in $EXEDIR\Data\settings.ini, [GeneratorWizard]:makensis"
 		Abort
 	${EndIf}
 

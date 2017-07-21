@@ -95,7 +95,7 @@
 	!endif
 	!verbose pop
 	${DebugMsg} "Setting environment variable ${_VAR} to ${_VAL} (internal representations: ${VAR}, ${VAL})"
-	System::Call Kernel32::SetEnvironmentVariable(t${VAR},t${VAL})
+	System::Call `Kernel32::SetEnvironmentVariable(t${VAR},t${VAL})`
 	!verbose push
 	!verbose 3
 	!undef VAR
