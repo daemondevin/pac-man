@@ -65,6 +65,7 @@ Alongside the already provided keys in the `[Dependencies]` section, I've added 
 ExecAsUser=true
 UseStdUtils=true
 Services=true
+InstallINF=true
 RegisterDLLs=true
 DisableRedirection=true
 ForceDisableRedirection=true
@@ -85,6 +86,9 @@ Include the StdUtils plug-in without `ExecAsUser`
 
 * __Services__
 Add support for Windows Services
+
+* __InstallINF__
+Add support and macros for INF installation. Refer to the `Services.nsh` file in the Segments directory for reference.
 
 * __RegisterDLLs__
 Add support for handling library (DLLs) file registration.
