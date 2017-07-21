@@ -84,11 +84,11 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else 
 	!define /REDEF RequestLevel USER
 !endif
-!define ResHacker		`Contrib\bin\ResHacker.exe`
-!define ManifDir		`Contrib\manifests`
-!define Manifest		`NSIS_3.01_Win8`
-!packhdr				`$%TEMP%\exehead.tmp` \ 
-						`"${Reshacker}" -addoverwrite "%TEMP%\exehead.tmp", "%TEMP%\exehead.tmp", "${ManifDir}\${Manifest}_${RequestLevel}.manifest", 24,1,1033`
+; !define ResHacker		`Contrib\bin\ResHacker.exe`
+; !define ManifDir		`Contrib\manifests`
+; !define Manifest		`NSIS_3.01_Win8`
+; !packhdr				`$%TEMP%\exehead.tmp` \ 
+						; `"${Reshacker}" -addoverwrite "%TEMP%\exehead.tmp", "%TEMP%\exehead.tmp", "${ManifDir}\${Manifest}_${RequestLevel}.manifest", 24,1,1033`
 
 ;=== Certificate
 !searchparse /NOERRORS /FILE `${APPINFO}` `CertSigning=` Certificate
@@ -104,8 +104,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /NOERRORS /FILE `${LAUNCHER}` `Registry=` REGISTRY
 !if "${REGISTRY}" == true
 	!define /REDEF REGISTRY
-	!define REGEXE		`$SYSDIR\reg.exe`
-	!define REGEDIT		`$SYSDIR\regedit.exe`
 	Var Registry
 	!searchparse /NOERRORS /FILE `${LAUNCHER}` `[RegistryValueWrite` RegValueWrite
 	!if "${RegValueWrite}" == "]"
@@ -333,6 +331,18 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 !endif
 
+!define DATA            `$EXEDIR\Data`
+!define SET             `${DATA}\settings`
+!define DEFDATA         `$EXEDIR\App\DefaultData`
+!define DEFSET          `${DEFDATA}\settings`
+!define LAUNCHDIR       `${APPINFO}\Launcher`
+!define LAUNCHER2       `$PLUGINSDIR\launcher.ini`
+!define RUNTIME         `${DATA}\PortableApps.comLauncherRuntimeData-${APPNAME}.ini`
+!define RUNTIME2        `$PLUGINSDIR\runtimedata.ini`
+!define SETINI          `${SET}\${APPNAME}Settings.ini`
+!define CONFIG          `$EXEDIR\${APPNAME}.ini`
+!define OTHER           `$EXEDIR\Other`
+
 ;=== Runtime Switches {{{1
 Unicode true	;=== NSIS3 Support
 ManifestDPIAware true
@@ -491,7 +501,18 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 	!include NSISRegistry.nsh
 	!insertmacro MOVEREGKEY
 !endif
+!ifdef REGISTRY
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
 ;(Custom) {{{2
+!ifdef REGISTRY
+	!include Registry.nsh
+	!define REGEXE `$SYSDIR\reg.exe`
+	!define REGEDIT `$SYSDIR\regedit.exe`
+!endif
 !ifdef REPLACE
 	!include ReplaceInFileWithTextReplace.nsh
 !endif
@@ -768,7 +789,7 @@ Function Pre           ;{{{1
 	${RunSegment} Custom
 	${RunSegment} RunLocally
 	${RunSegment} Temp
-	${RunSegment} LastRunEnvironment
+	;${RunSegment} LastRunEnvironment
 	${RunSegment} Environment
 	${RunSegment} ExecString
 	!ifdef SYSTEMWIDE_DISABLEREDIR
@@ -800,7 +821,7 @@ Function PrePrimary           ;{{{1
 	${RunSegment} DriveLetter
 	${RunSegment} Variables
 	${RunSegment} DirectoryMoving
-	${RunSegment} LastRunEnvironment
+	;${RunSegment} LastRunEnvironment
 	${RunSegment} FileWrite
 	${RunSegment} FilesMove
 	${RunSegment} DirectoriesMove
@@ -900,7 +921,7 @@ Function PreExecPrimary           ;{{{1
 	!endif
 	${RunSegment} Custom
 	${RunSegment} Core
-	${RunSegment} LastRunEnvironment
+	;${RunSegment} LastRunEnvironment
 	;${RunSegment} SplashScreen
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
