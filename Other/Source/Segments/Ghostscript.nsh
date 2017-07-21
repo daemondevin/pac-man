@@ -9,24 +9,24 @@ Function _Ghostscript_ValidateInstall
 	${If} $Bits = 64
 		${If} ${FileExists} $GSDirectory\bin\gswin64c.exe
 			StrCpy $GSExecutable $GSDirectory\bin\gswin64c.exe
-			${DebugMsg} "Found valid 64-bit Ghostscript install at $GSDirectory."
+			;${DebugMsg} "Found valid 64-bit Ghostscript install at $GSDirectory."
 			Push true
 			Goto End
 		${Else}
-			${DebugMsg} "64-bit Windows but gswin64c.exe not found; trying gswin32c.exe instead."
+			;${DebugMsg} "64-bit Windows but gswin64c.exe not found; trying gswin32c.exe instead."
 		${EndIf}
 	${EndIf}
 
 	${IfNot} ${FileExists} $GSDirectory\bin\gswin32c.exe
 		StrCpy $GSDirectory ""
 		StrCpy $GSExecutable ""
-		${DebugMsg} "No valid Ghostscript install found at $GSDirectory."
+		;${DebugMsg} "No valid Ghostscript install found at $GSDirectory."
 		Push false
 		Goto End
 	${EndIf}
 
 	StrCpy $GSExecutable $GSDirectory\bin\gswin32c.exe
-	${DebugMsg} "Found valid 32-bit Ghostscript install at $GSDirectory."
+	;${DebugMsg} "Found valid 32-bit Ghostscript install at $GSDirectory."
 	Push true
 	Goto End
 
@@ -34,7 +34,7 @@ Function _Ghostscript_ValidateInstall
 FunctionEnd
 !macro _Ghostscript_ValidateInstall _a _b _t _f
 	!insertmacro _LOGICLIB_TEMP
-	${DebugMsg} "Checking for Ghostscript in $GSDirectory..."
+	;${DebugMsg} "Checking for Ghostscript in $GSDirectory..."
 	Call _Ghostscript_ValidateInstall
 	Pop $_LOGICLIB_TEMP
 	!insertmacro _== $_LOGICLIB_TEMP true `${_t}` `${_f}`
@@ -83,8 +83,8 @@ ${SegmentInit}
 		; This may be created; check if it exists before: 0 = exists
 		${registry::KeyExists} "HKCU\Software\GPL Ghostscript" $GSRegExists
 
-		${DebugMsg} "Selected Ghostscript path: $GSDirectory"
-		${DebugMsg} "Selected Ghostscript executable: $GSExecutable"
+		;${DebugMsg} "Selected Ghostscript path: $GSDirectory"
+		;${DebugMsg} "Selected Ghostscript executable: $GSExecutable"
 		ReadEnvStr $0 PATH
 		StrCpy $0 "$0;$GSDirectory\bin"
 		${SetEnvironmentVariablesPath} PATH $0
