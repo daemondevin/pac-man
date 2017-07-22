@@ -366,18 +366,18 @@ SetCompressorDictSize 32
 !define ENABLEREDIR		`kernel32::Wow64EnableWow64FsRedirection(i1)`
 !define GETCURRPROC		`kernel32::GetCurrentProcess()i.s`
 !define WOW				`kernel32::IsWow64Process(is,*i.r0)`
-Function IsWOW64
-	!macro _IsWOW64 _RETURN
-		Push ${_RETURN}
-		Call IsWOW64
-		Pop ${_RETURN}
-	!macroend
-	!define IsWOW64 `!insertmacro _IsWOW64`
-	Exch $0
-	System::Call `${GETCURRPROC}`
-	System::Call `${WOW}`
-	Exch $0
-FunctionEnd
+;Function IsWOW64
+;	!macro _IsWOW64 _RETURN
+;		Push ${_RETURN}
+;		Call IsWOW64
+;		Pop ${_RETURN}
+;	!macroend
+;	!define IsWOW64 `!insertmacro _IsWOW64`
+;	Exch $0
+;	System::Call `${GETCURRPROC}`
+;	System::Call `${WOW}`
+;	Exch $0
+;FunctionEnd
 !define ReadLauncherConfig `!insertmacro ReadLauncherConfig`
 !macro ReadLauncherConfig _RETURN _SECTION _ENTRY
 	ReadINIStr ${_RETURN} `${LAUNCHER}` `${_SECTION}` `${_ENTRY}`
