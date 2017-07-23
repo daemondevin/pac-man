@@ -187,15 +187,17 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef GHOSTSCRIPT
 	!endif
 !endif
-!if "${RequestLevel}" == "ADMIN"
+!searchparse /NOERRORS /FILE `${LAUNCHER}` `RunAsAdmin=` UAC
+!if "${UAC}" == "force"
 	Var RunAsAdmin
-	!define UAC
+	!define /REDEF UAC
 	!define TrimString
 	!include UAC.nsh
-	!ifndef PLUGINSDIR
-		!define PLUGINSDIR
-		!AddPluginDir Plugins
-	!endif
+!else if  "${UAC}" == "compile-force"
+	Var RunAsAdmin
+	!define /REDEF UAC
+	!define TrimString
+	!include UAC.nsh
 !else
 	!ifdef UAC
 		!undef UAC
@@ -352,6 +354,8 @@ SilentInstall Silent
 AutoCloseWindow True
 !ifdef RUNASADMIN_COMPILEFORCE
 	RequestExecutionLevel admin
+!else if "${RequestLevel}" == "ADMIN"
+		RequestExecutionLevel admin
 !else
 	RequestExecutionLevel user
 !endif
@@ -366,18 +370,18 @@ SetCompressorDictSize 32
 !define ENABLEREDIR		`kernel32::Wow64EnableWow64FsRedirection(i1)`
 !define GETCURRPROC		`kernel32::GetCurrentProcess()i.s`
 !define WOW				`kernel32::IsWow64Process(is,*i.r0)`
-;Function IsWOW64
-;	!macro _IsWOW64 _RETURN
-;		Push ${_RETURN}
-;		Call IsWOW64
-;		Pop ${_RETURN}
-;	!macroend
-;	!define IsWOW64 `!insertmacro _IsWOW64`
-;	Exch $0
-;	System::Call `${GETCURRPROC}`
-;	System::Call `${WOW}`
-;	Exch $0
-;FunctionEnd
+; Function IsWOW64
+	; !macro _IsWOW64 _RETURN
+		; Push ${_RETURN}
+		; Call IsWOW64
+		; Pop ${_RETURN}
+	; !macroend
+	; !define IsWOW64 `!insertmacro _IsWOW64`
+	; Exch $0
+	; System::Call `${GETCURRPROC}`
+	; System::Call `${WOW}`
+	; Exch $0
+; FunctionEnd
 !define ReadLauncherConfig `!insertmacro ReadLauncherConfig`
 !macro ReadLauncherConfig _RETURN _SECTION _ENTRY
 	ReadINIStr ${_RETURN} `${LAUNCHER}` `${_SECTION}` `${_ENTRY}`
@@ -486,6 +490,12 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 !endif
 !ifdef REPLACE
 	!include NewTextReplace.nsh
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
+!ifdef UAC
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
 		!AddPluginDir Plugins
