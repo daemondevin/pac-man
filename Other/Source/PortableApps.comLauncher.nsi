@@ -104,14 +104,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !if "${REGISTRY}" == true
 	!define /REDEF REGISTRY
 	Var Registry
-	!searchparse /NOERRORS /FILE `${LAUNCHER}` `[RegistryValueWrite` RegValueWrite
-	!if "${RegValueWrite}" == "]"
-		!define RegSleep 50	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
-	!endif
-	!searchparse /NOERRORS /FILE `${LAUNCHER}` `Type=Rep` REPLACE
-	!if "${REPLACE}" == "lace"
-		!define /REDEF REPLACE ;=== Enables Replace functionality in [FileWrite]
-	!endif
 	!ifdef APP64
 		!searchparse /NOERRORS /FILE `${APPINFO}` `RegDisableRedirection= ` DISABLEFSR	;=== Disable Registry redirection for x64 machines.
 		!if ${DISABLEFSR} == true
@@ -224,6 +216,22 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!ifdef FILES_MOVE
 		!undef FILES_MOVE
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `FileWriteReplace=` REPLACE
+!if "${REPLACE}" == true
+	!define /REDEF REPLACE	;=== Enables Replace functionality in [FileWrite]
+!else
+	!ifdef REPLACE
+		!undef REPLACE
+	!endif
+!endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `RegistryValueWrite=` RegValueWrite
+!if "${RegValueWrite}" == true
+	!define /REDEF RegValueWrite 50	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
+!else
+	!ifdef RegValueWrite
+		!undef RegValueWrite
 	!endif
 !endif
 !searchparse /NOERRORS /FILE `${APPINFO}` `UseStdUtils= ` StdUtils	;=== Include StndUtils without ExecAsUser
