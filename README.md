@@ -78,6 +78,7 @@ FontsFolder=true
 FileWriteReplace=true
 FileCleanup=true
 FileLocking=true
+Firewall=true
 Junctions=true
 ACLRegSupport=true
 ACLDirSupport=true
@@ -135,6 +136,9 @@ Enable support for adding the section `[FilesCleanup]` in `Launcher.ini`. See `F
 Enable this to prevent ejection/unplugging problems for USB devices. Windows Explorer tend to lock application's DLL(s). 
 __Note:__ As of right now, this only enables support for using `${If} ${FileLocked}` and/or `${IfNot} ${FileLocked}` in the `custom.nsh` file. 
 __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. Check back soon.)
+
+* __Firewall__
+Enable Firewall support.
 
 * __Junctions__
 Enable support for Junctions (_SymLinks_) functionality.
