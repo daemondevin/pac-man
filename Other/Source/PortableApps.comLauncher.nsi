@@ -78,12 +78,12 @@
 ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
 
 ;=== Manifest
-!searchparse /NOERRORS /FILE `${APPINFO}` `ElevatedPrivileges= ` RequestLevel
-!if "${RequestLevel}" == true
-	!define /REDEF RequestLevel ADMIN
-!else 
-	!define /REDEF RequestLevel USER
-!endif
+;!searchparse /NOERRORS /FILE `${APPINFO}` `ElevatedPrivileges= ` RequestLevel
+;!if "${RequestLevel}" == true
+;	!define /REDEF RequestLevel ADMIN
+;!else 
+;	!define /REDEF RequestLevel USER
+;!endif
 ; !define ResHacker		`Contrib\bin\ResHacker.exe`
 ; !define ManifDir		`Contrib\manifests`
 ; !define Manifest		`NSIS_3.01_Win8`
@@ -354,7 +354,7 @@ SilentInstall Silent
 AutoCloseWindow True
 !ifdef RUNASADMIN_COMPILEFORCE
 	RequestExecutionLevel admin
-!else if "${RequestLevel}" == "ADMIN"
+!else ifdef UAC
 		RequestExecutionLevel admin
 !else
 	RequestExecutionLevel user
