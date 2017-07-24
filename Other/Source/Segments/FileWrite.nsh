@@ -83,7 +83,7 @@ ${SegmentPrePrimary}
 			${EndIf}
 !else
 		${ElseIf} $0 == Replace
-			MessageBox MB_OK|MB_ICONSTOP "To use Replace features please uncomment !define REPLACE"
+			MessageBox MB_OK|MB_ICONSTOP "To use Replace features for [FileWrite$R0] please add 'FileWriteReplace=true' to the AppInfo.ini"
 			${Continue}
 !endif
 		${Else}
