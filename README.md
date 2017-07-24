@@ -71,9 +71,11 @@ InstallINF=true
 RegisterDLLs=true
 DisableRedirection=true
 ForceDisableRedirection=true
+RegistryValueWrite=true
 RegistryCopyKeys=true
 RegDisableRedirection=true
 FontsFolder=true
+FileWriteReplace=true
 FileCleanup=true
 FileLocking=true
 Junctions=true
@@ -101,6 +103,9 @@ Enable support for enabling/disabling file system redirection.
 * __ForceDisableRedirection__
 Checks using the variable `$Bit` to disable/enable file system redirection.
 
+* __RegistryValueWrite__
+Set this to true to set a sleep value for `[RegistryValueWrite]` otherwise the function is inaccurate.
+
 * __RegistryCopyKeys__
 Enable support for adding the section `[RegistryCopyKeys]` in `Launcher.ini`. See `RegistryCopyKeys.nsh` in the Segments directory.
 
@@ -119,6 +124,9 @@ Allows the portable application to support fonts within the directory `..\Data\F
 > - .mmm
 > - .pfb
 > - .pfm.
+
+* __FileWriteReplace__
+Enables the Replace functionality in `[FileWrite]`
 
 * __FileCleanup__
 Enable support for adding the section `[FilesCleanup]` in `Launcher.ini`. See `FilesCleanup.nsh` in the Segments directory.
