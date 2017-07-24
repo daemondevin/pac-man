@@ -52,10 +52,9 @@
 !define NEWLINE			`$\r$\n`
 
 !searchparse /NOERRORS /FILE `${APPINFO}` `AppID=` APPNAME
+!searchreplace APP "${APPNAME}" "Portable" ""
 
 !define LAUNCHER		`${PACKAGE}\App\AppInfo\Launcher\${APPNAME}.ini`
-
-!searchreplace APP "${APPNAME}" "Portable" ""
 
 !searchparse /NOERRORS /FILE `${APPINFO}` `Name=` PORTABLEAPPNAME
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
