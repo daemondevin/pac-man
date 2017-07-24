@@ -315,6 +315,14 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef NTFS
 	!endif
 !endif
+!searchparse /NOERRORS /FILE `${APPINFO}` `Firewall= ` Firewall	
+!if ${FIREWALL} == true
+	!define /redef FIREWALL
+!else
+	!ifdef FIREWALL
+		!undef FIREWALL
+	!endif
+!endif
 !searchparse /NOERRORS /FILE `${APPINFO}` `ACLRegSupport= ` ACL	
 !if ${ACL} == true
 	!define /REDEF ACL ;=== Enable AccessControl support for the registry
@@ -503,6 +511,12 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 	!endif
 !endif
 !ifdef UAC
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
+!ifdef FIREWALL
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
 		!AddPluginDir Plugins
