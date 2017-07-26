@@ -45,23 +45,50 @@
 ;=== Require at least Unicode NSIS 2.46 {{{1
 ;!include RequireLatestNSIS.nsh
 
+${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
+
 ;= DEFINES
 ;= ################
-!define APPINFO			`${PACKAGE}\App\AppInfo\appinfo.ini`
+!define APPINFOINI			`${PACKAGE}\App\AppInfo\appinfo.ini`
 !define CUSTOM			`${PACKAGE}\App\AppInfo\Launcher\custom.nsh`
+!define LAUNCHERINI		`${PACKAGE}\App\AppInfo\Launcher\${AppID}.ini`
 !define NEWLINE			`$\r$\n`
 
-!searchparse /NOERRORS /FILE `${APPINFO}` `AppID=` APPNAME
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `ProgramExecutable64=` APPEXE64
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Registry=` REGISTRY
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `[RegistryValueWrite` RegValueWrite
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Java=` JAVA
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `JDK=` JDK
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `XML=` XML_PLUGIN
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Ghostscript=` GHOSTSCRIPT
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `RunAsAdmin=` UAC
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `[DirectoriesMove` DIRECTORIES_MOVE
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `[DirectoriesCleanupIfEmpty` RMEMPTYDIRECTORIES
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `[FilesMove` FILES_MOVE
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `AppID=` APPNAME
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `Name=` PORTABLEAPPNAME
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `CertSigning=` Certificate
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `RegDisableRedirection= ` DISABLEFSR
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `UsesDotNetVersion=` dotNET_Version
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `FileWriteReplace=` REPLACE
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `RegistryValueWrite=` RegValueWrite
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `UseStdUtils= ` StdUtils
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `ExecAsUser= ` ExecAsUser
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `Services= ` SERVICES
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `InstallINF= ` INF_Install
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `RegisterDLLs= ` REGISTERDLL
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `DisableRedirection= ` SYSTEMWIDE_DISABLEREDIR
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `ForceDisableRedirection= ` FORCE_SYSTEMWIDE_DISABLEREDIR
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `FontsFolder= ` FONTS_ENABLE
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `FileLocking= ` IsFileLocked
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `Junctions= ` NTFS
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `ACLRegSupport= ` ACL
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `ACLDirSupport= ` ACL_DIR
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `FileCleanup= ` FileCleanup
 !searchreplace APP "${APPNAME}" "Portable" ""
-
-!define LAUNCHER		`${PACKAGE}\App\AppInfo\Launcher\${APPNAME}.ini`
-
-!searchparse /NOERRORS /FILE `${APPINFO}` `Name=` PORTABLEAPPNAME
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
-
 !define APPDIR			`$EXEDIR\App\${APP}`
 
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `ProgramExecutable64=` APPEXE64
 !if ! "${APPEXE64}" == ""
 	!searchreplace APP64 "${APPNAME}" "Portable" "64"
 !else
@@ -74,23 +101,7 @@
 	!define APPDIR64	`$EXEDIR\App\${APP64}`
 !endif
 
-${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
-
-;=== Manifest
-;!searchparse /NOERRORS /FILE `${APPINFO}` `ElevatedPrivileges= ` RequestLevel
-;!if "${RequestLevel}" == true
-;	!define /REDEF RequestLevel ADMIN
-;!else 
-;	!define /REDEF RequestLevel USER
-;!endif
-; !define ResHacker		`Contrib\bin\ResHacker.exe`
-; !define ManifDir		`Contrib\manifests`
-; !define Manifest		`NSIS_3.01_Win8`
-; !packhdr				`$%TEMP%\exehead.tmp` \ 
-						; `"${Reshacker}" -addoverwrite "%TEMP%\exehead.tmp", "%TEMP%\exehead.tmp", "${ManifDir}\${Manifest}_${RequestLevel}.manifest", 24,1,1033`
-
 ;=== Certificate
-!searchparse /NOERRORS /FILE `${APPINFO}` `CertSigning=` Certificate
 !if "${Certificate}" == true
 	!define /REDEF Certificate
 !else
@@ -100,14 +111,15 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !endif
 
 ;=== Custom Defines
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `Registry=` REGISTRY
 !if "${REGISTRY}" == true
 	!define /REDEF REGISTRY
 	Var Registry
+	!if "${RegValueWrite}" == "]"
+		!define RegSleep 50	
+	!endif
 	!ifdef APP64
-		!searchparse /NOERRORS /FILE `${APPINFO}` `RegDisableRedirection= ` DISABLEFSR	;=== Disable Registry redirection for x64 machines.
 		!if ${DISABLEFSR} == true
-			!define /REDEF DISABLEFSR
+			!define /REDEF DISABLEFSR	;=== Disable Registry redirection for x64 machines.
 		!endif
 	!endif
 !else
@@ -115,7 +127,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef REGISTRY
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `UsesDotNetVersion=` dotNET_Version
 !ifdef dotNET_Version
 	!if ! ${dotNET_Version} == ""
 		!define DOTNET
@@ -127,7 +138,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef dotNET_Version
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `Java=` JAVA
 !if "${JAVA}" == "find"
 	!define /REDEF JAVA
 	Var UsingJavaExecutable
@@ -143,7 +153,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef JAVA
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `JDK=` JDK
 !if "${JDK}" == "find"
 	!define /REDEF JDK
 	Var UsingJavaExecutable
@@ -159,7 +168,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef JDK
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `XML=` XML_PLUGIN
 !if "${XML_PLUGIN}" == true
 	!define /REDEF XML_PLUGIN
 	!include XML.nsh
@@ -168,7 +176,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef XML_PLUGIN
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `Ghostscript=` GHOSTSCRIPT
 !if "${GHOSTSCRIPT}" == "find"
 	!define /REDEF GHOSTSCRIPT
 !else if "${GHOSTSCRIPT}" == "require"
@@ -178,7 +185,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef GHOSTSCRIPT
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `RunAsAdmin=` UAC
 !if "${UAC}" == "force"
 	Var RunAsAdmin
 	!define /REDEF UAC
@@ -194,7 +200,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef UAC
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `[DirectoriesMove` DIRECTORIES_MOVE
 !if "${DIRECTORIES_MOVE}" == "]"
 	!define /REDEF DIRECTORIES_MOVE	;=== Enable for added macros for the [DirectoriesMove] section in launcher.ini. See DirectoriesMove.nsh in the Segments directory.
 !else
@@ -202,7 +207,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef DIRECTORIES_MOVE
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `[DirectoriesCleanupIfEmpty` RMEMPTYDIRECTORIES
 !if "${RMEMPTYDIRECTORIES}" == "]"
 	!define /REDEF RMEMPTYDIRECTORIES	;=== Enable for the [DirectoriesCleanupIfEmpty] section in launcher.ini
 !else
@@ -210,7 +214,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef RMEMPTYDIRECTORIES
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${LAUNCHER}` `[FilesMove` FILES_MOVE
 !if "${FILES_MOVE}" == "]"
 	!define /REDEF FILES_MOVE	;=== Enable for added macros for the [FilesMove] section in launcher.ini. See FilesMove.nsh in the Segments directory.
 !else
@@ -218,7 +221,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef FILES_MOVE
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `FileWriteReplace=` REPLACE
 !if "${REPLACE}" == true
 	!define /REDEF REPLACE	;=== Enables Replace functionality in [FileWrite]
 !else
@@ -226,7 +228,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef REPLACE
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `RegistryValueWrite=` RegValueWrite
 !if "${RegValueWrite}" == true
 	!define /REDEF RegValueWrite 50	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
 !else
@@ -234,23 +235,20 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef RegValueWrite
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `UseStdUtils= ` StdUtils	;=== Include StndUtils without ExecAsUser
 !if ${StdUtils} == true
-	!define /REDEF StdUtils
+	!define /REDEF StdUtils	;=== Include StndUtils without ExecAsUser
 !else
 	!ifdef StdUtils
 		!undef StdUtils
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `ExecAsUser= ` ExecAsUser	;=== For applications which need to run as normal user.
 !if ${ExecAsUser} == true
-	!define /REDEF ExecAsUser
+	!define /REDEF ExecAsUser	;=== For applications which need to run as normal user.
 !else
 	!ifdef ExecAsUser
 		!undef ExecAsUser
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `Services= ` SERVICES	
 !if ${SERVICES} == true
 	!define /REDEF SERVICES ;=== Enable support for Services
 !else
@@ -258,15 +256,13 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef SERVICES
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `InstallINF= ` INF_Install	;=== For .inf install support.
 !if ${INF_Install} == true
-	!define /REDEF INF_Install
+	!define /REDEF INF_Install	;=== For .inf install support.
 !else
 	!ifdef INF_Install
 		!undef INF_Install
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `RegisterDLLs= ` REGISTERDLL	
 !if ${REGISTERDLL} == true
 	!define /REDEF REGISTERDLL ;=== Enable support for registering library (DLLs) files
 !else
@@ -274,7 +270,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef REGISTERDLL
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `DisableRedirection= ` SYSTEMWIDE_DISABLEREDIR
 !if ${SYSTEMWIDE_DISABLEREDIR} == true
 	!define /REDEF SYSTEMWIDE_DISABLEREDIR
 !else
@@ -282,7 +277,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef SYSTEMWIDE_DISABLEREDIR
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `ForceDisableRedirection= ` FORCE_SYSTEMWIDE_DISABLEREDIR
 !if ${FORCE_SYSTEMWIDE_DISABLEREDIR} == true
 	!define /REDEF FORCE_SYSTEMWIDE_DISABLEREDIR
 !else
@@ -290,15 +284,13 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef FORCE_SYSTEMWIDE_DISABLEREDIR
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `FontsFolder= ` FONTS_ENABLE	;=== Adds font support in ..\Data\Fonts
 !if ${FONTS_ENABLE} == true
-	!define /REDEF FONTS_ENABLE
+	!define /REDEF FONTS_ENABLE	;=== Adds font support in ..\Data\Fonts
 !else
 	!ifdef FONTS_ENABLE
 		!undef FONTS_ENABLE
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `FileLocking= ` IsFileLocked	
 !if ${IsFileLocked} == true
 	!define /REDEF IsFileLocked ;=== If enabled, PortableApp will ensure DLL(s) are unlocked.
 	!define CloseWindow
@@ -307,7 +299,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef IsFileLocked
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `Junctions= ` NTFS	
 !if ${NTFS} == true
 	!define /REDEF NTFS ;=== Enable support for Junctions
 !else
@@ -315,15 +306,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef NTFS
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `Firewall= ` Firewall	
-!if ${FIREWALL} == true
-	!define /redef FIREWALL
-!else
-	!ifdef FIREWALL
-		!undef FIREWALL
-	!endif
-!endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `ACLRegSupport= ` ACL	
 !if ${ACL} == true
 	!define /REDEF ACL ;=== Enable AccessControl support for the registry
 !else
@@ -331,15 +313,13 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef ACL
 	!endif
 !endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `ACLDirSupport= ` ACL_DIR	
 !if ${ACL_DIR} == true
 	!define /REDEF ACL_DIR ;=== Enable AccessControl support for directories
 !else
 	!ifdef ACL_DIR
 		!undef ACL_DIR
 	!endif
-!endif
-!searchparse /NOERRORS /FILE `${APPINFO}` `FileCleanup= ` FileCleanup	
+!endif	
 !if ${FileCleanup} == true
 	!define /REDEF FileCleanup ;=== Enable FileCleanup segment
 !else
@@ -348,11 +328,13 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 !endif
 
+!define APPINFO         `$EXEDIR\App\AppInfo`
 !define DATA            `$EXEDIR\Data`
 !define SET             `${DATA}\settings`
 !define DEFDATA         `$EXEDIR\App\DefaultData`
 !define DEFSET          `${DEFDATA}\settings`
 !define LAUNCHDIR       `${APPINFO}\Launcher`
+!define LAUNCHER        `${LAUNCHDIR}\${APPNAME}.ini`
 !define LAUNCHER2       `$PLUGINSDIR\launcher.ini`
 !define RUNTIME         `${DATA}\PortableApps.comLauncherRuntimeData-${APPNAME}.ini`
 !define RUNTIME2        `$PLUGINSDIR\runtimedata.ini`
