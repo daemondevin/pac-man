@@ -49,7 +49,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 
 ;= DEFINES
 ;= ################
-!define APPINFOINI			`${PACKAGE}\App\AppInfo\appinfo.ini`
+!define APPINFOINI		`${PACKAGE}\App\AppInfo\appinfo.ini`
 !define CUSTOM			`${PACKAGE}\App\AppInfo\Launcher\custom.nsh`
 !define LAUNCHERINI		`${PACKAGE}\App\AppInfo\Launcher\${AppID}.ini`
 !define NEWLINE			`$\r$\n`
@@ -669,8 +669,8 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 	!macro _Finalize::Sign _CMD
 		!finalize `${_CMD}`
 	!macroend
-	!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `CertExtention=` CertExtention
-	!define CERT		`Contrib\certificates\${DEVELOPER}.${CertExtention}`
+	!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `CertExtension=` CertExtension
+	!define CERT		`Contrib\certificates\${DEVELOPER}.${CertExtension}`
 	!define SIGNTOOL	`Contrib\bin\signtool.exe`
 	!define SHA1		`"${SIGNTOOL}" sign /f "${CERT}" /p "" /t "http://timestamp.comodoca.com" /v "${PACKAGE}\${OUTFILE}"`
 	!define SHA256		`"${SIGNTOOL}" sign /f "${CERT}" /p "" /fd sha256 /tr http://timestamp.comodoca.com/?td=sha256 /td sha256 /as /v "${PACKAGE}\${OUTFILE}"`
