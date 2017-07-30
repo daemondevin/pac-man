@@ -45,7 +45,7 @@ Added the section `[Team]` for use with code signing and application specificati
 Developer=demon.devin
 Contributors=FukenGruven and DoomStorm
 CertSigning=true
-CertExtention=p12
+CertExtension=p12
 ```
 * __Developer__
 The name of the developer that created the portable application.
@@ -57,8 +57,8 @@ Specify here anyone who has helped with the creation of the portable application
 If set to true, the `Launcher.exe` will be signed automatically. __Note:__ As it is written right now, the `LauncherGenerator.exe` expects the certificate to be the developer's name (same as the above key's value) and located in `..\Other\Source\Contrib\certificates`. 
 > Note: If your certificate requires you to use a password, refer to lines 672 and 673 and input your password on column 62.
 > Be sure it is similiar to something like this: `/p "PASSWORD"` where "PASSWORD" is your password.
-* __CertExtention__
-If the key `CertSigning` is set to true then this should be set to the certificate's file extention without the period (e.g. "_pfx_" not "_.pfx_").
+* __CertExtension__
+If the key `CertSigning` is set to true then this should be set to the certificate's file Extension without the period (e.g. "_pfx_" not "_.pfx_").
 
 Alongside the already provided keys in the `[Dependencies]` section, I've added the support for the following (a short description of what each key means or does can be found further below):
 > Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
