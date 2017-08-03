@@ -474,6 +474,17 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 !include TextFunc.nsh
 !include WordFunc.nsh
 
+;=== Prevent Win Shutdown
+!include nsDialogs.nsh
+!define /ifndef WS_POPUP 0x80000000
+Function CreateShutdownBlockReason
+	StrCpy $1 $hwndParent
+	${If} $1 Z= 0 ; $hwndParent is 0, create a new window for silent installers
+		System::Call 'USER32::CreateWindowEx(i0,t"STATIC",t"$(^Name)",i${WS_CHILD}|${WS_POPUP},i0,i0,i0,i0,pr1,i0,i0,i0)p.r1'
+	${EndIf}
+	System::Call 'USER32::ShutdownBlockReasonCreate(pr1,w"${PORTABLEAPPNAME} is running and still needs to clean up before shutting down!")'
+FunctionEnd
+
 ;(NSIS Plugins) {{{
 !ifdef ExecAsUser
 	!include StdUtils.nsh
@@ -581,6 +592,7 @@ ${!echo} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 ;=== Variables {{{1
 ${!echo} "${NEWLINE}Initialising variables and macros...${NEWLINE}${NEWLINE}"
 Var Bit
+Var Admin
 Var AppID
 Var BaseName
 Var MissingFileOrPath
@@ -593,7 +605,6 @@ Var WaitForProgram
 	Var Registry
 !endif
 !ifdef UAC
-	Var Admin
 	Var RunAsAdmin
 !endif
 !ifdef JAVA
@@ -716,6 +727,7 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 !verbose 4
 
 Function .onInit           ;{{{1
+	Call CreateShutdownBlockReason
 	Push $0
 	CreateDirectory `${SET}`
 	!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR

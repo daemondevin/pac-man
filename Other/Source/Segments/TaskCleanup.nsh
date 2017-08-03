@@ -27,14 +27,14 @@ Function DeleteTask
     Exch $3
 FunctionEnd
 
-LangString LauncherTaskCleanupFailed ${LANG_ENGLISH}      "The Windows Task "$R1" was created during your use of ${PORTABLEAPPNAME} and has failed to be removed.${NewLine}${NewLine}Manual removal is required."
+LangString LauncherTaskCleanupFailed ${LANG_ENGLISH}      "The Windows Task '$R1' was created during your use of ${PORTABLEAPPNAME} and has failed to be removed.${NewLine}${NewLine}Manual removal is required."
 LangString LauncherTaskCleanupFailed ${LANG_SIMPCHINESE}  "Windows任务“$R1”是在您使用${PORTABLEAPPNAME}期间创建的，并且无法被删除。${NewLine}${NewLine}需要手动删除。"
-LangString LauncherTaskCleanupFailed ${LANG_FRENCH}       "La tâche de Windows "$R1" a été créée pendant votre utilisation de ${PORTABLEAPPNAME} et n'a pas été supprimé. ${NewLine}${NewLine}L'enlèvement manuel est requis."
-LangString LauncherTaskCleanupFailed ${LANG_GERMAN}       "Die Windows-Task "$R1" wurde während deiner Benutzung von ${PORTABLEAPPNAME} erstellt und konnte nicht entfernt werden.${NewLine}${NewLine}Manuelle Entfernung ist erforderlich."
-LangString LauncherTaskCleanupFailed ${LANG_ITALIAN}      "L'operazione di Windows "$R1" è stata creata durante l'utilizzo di ${PORTABLEAPPNAME} e non è stato rimosso. ${NewLine}${NewLine}Rimozione manuale è necessaria."
-LangString LauncherTaskCleanupFailed ${LANG_JAPANESE}     "${PABLEABLEAPPNAME}の使用中にWindowsタスク "$R1"が作成され、削除に失敗しました${NewLine}${NewLine}手動での削除が必要です。"
-LangString LauncherTaskCleanupFailed ${LANG_PORTUGUESEBR} "A Tarefa do Windows "$R1" foi criada durante o uso de ${PORTABLEAPPNAME} e não foi removida.${NewLine}${NewLine}A remoção manual é necessária."
-LangString LauncherTaskCleanupFailed ${LANG_SPANISH}      "La tarea de Windows "$R1" se creó durante el uso de ${PORTABLEAPPNAME} y no se ha podido eliminar.${NewLine}${NewLine}Se requiere la eliminación manual."
+LangString LauncherTaskCleanupFailed ${LANG_FRENCH}       "La tâche de Windows '$R1' a été créée pendant votre utilisation de ${PORTABLEAPPNAME} et n'a pas été supprimé. ${NewLine}${NewLine}L'enlèvement manuel est requis."
+LangString LauncherTaskCleanupFailed ${LANG_GERMAN}       "Die Windows-Task '$R1' wurde während deiner Benutzung von ${PORTABLEAPPNAME} erstellt und konnte nicht entfernt werden.${NewLine}${NewLine}Manuelle Entfernung ist erforderlich."
+LangString LauncherTaskCleanupFailed ${LANG_ITALIAN}      "L'operazione di Windows '$R1' è stata creata durante l'utilizzo di ${PORTABLEAPPNAME} e non è stato rimosso. ${NewLine}${NewLine}Rimozione manuale è necessaria."
+LangString LauncherTaskCleanupFailed ${LANG_JAPANESE}     "${PABLEABLEAPPNAME}の使用中にWindowsタスク '$R1'が作成され、削除に失敗しました${NewLine}${NewLine}手動での削除が必要です。"
+LangString LauncherTaskCleanupFailed ${LANG_PORTUGUESEBR} "A Tarefa do Windows '$R1' foi criada durante o uso de ${PORTABLEAPPNAME} e não foi removida.${NewLine}${NewLine}A remoção manual é necessária."
+LangString LauncherTaskCleanupFailed ${LANG_SPANISH}      "La tarea de Windows '$R1' se creó durante el uso de ${PORTABLEAPPNAME} y no se ha podido eliminar.${NewLine}${NewLine}Se requiere la eliminación manual."
 
 ${SegmentFile}
 ${SegmentPostPrimary}

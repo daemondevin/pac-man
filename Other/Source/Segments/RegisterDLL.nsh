@@ -37,14 +37,6 @@ ${SegmentPostPrimary}
 	${Loop}
 !macroend*/
 
-/**
- * Below added by demon.devin with original help from FukenGruven
- *
- * TODO: 
- *  Use below code and incoorperate it with above code to eliminate the
- *  need for using the custom.nsh for this functionality.
- */
-
 !define SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i ${SHCNF_IDLIST}, i 0, i 0)`
 !define UNLOADFREELIB  `Ole32::CoFreeUnusedLibraries()`
 !define W              CabinetWClass
@@ -130,21 +122,60 @@ ${SegmentPostPrimary}
 	Pop ${_ERR1}
 	Pop ${_ERR2}
 !macroend
+!define DLL::GetGUID "!insertmacro _DLL::GetGUID"
+!macro _DLL::GetGUID _RETURN _ProgID
+	System::Call `ole32::CLSIDFromProgID(w,&g16)i("${_ProgID}",.r0).r2`
+	StrCmp $2 "-2147221005" 0 +4
+	SetErrors
+	StrCpy ${_RETURN} ""
+	Goto +2
+	StrCpy ${_RETURN} $0
+!macroend
 ${SegmentFile}
 ${SegmentPre}
 	# Uninstall Local DLL
 	!ifmacrodef PreDLL
 		!insertmacro PreDLL
 	!endif
+	StrCpy $R0 1
+	${Do}
+		ClearErrors
+		${ReadLauncherConfig} $1 RegisterDLL$R0 ProgID
+		${ReadLauncherConfig} $0 RegisterDLL$R0 File
+		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+		${DLL::GetGUID} $2 $1
+		${DLL::Backup} $2 /DISABLEFSR "RegDLLs" "$R0[$1]" $8 $9
+		IntOp $R0 $R0 + 1
+	${Loop}
 !macroend
 ${SegmentPrePrimary}
 	# Install Portable DLL
 	!ifmacrodef PrePrimaryDLL
 		!insertmacro PrePrimaryDLL
 	!endif
+	StrCpy $R0 1
+	${Do}
+		ClearErrors
+		${ReadLauncherConfig} $1 RegisterDLL$R0 ProgID
+		${ReadLauncherConfig} $0 RegisterDLL$R0 File
+		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+		${ParseLocations} $0
+		${DLL::Register} "$0" /DISABLEFSR $8 $9
+		IntOp $R0 $R0 + 1
+	${Loop}
 !macroend
 ${SegmentPostPrimary}
 	# Uninstall Portable DLL
+	StrCpy $R0 1
+	${Do}
+		ClearErrors
+		${ReadLauncherConfig} $1 RegisterDLL$R0 ProgID
+		${ReadLauncherConfig} $0 RegisterDLL$R0 File
+		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+		${ParseLocations} $0
+		${DLL::UnRegister} "$0" /DISABLEFSR $8 $9
+		IntOp $R0 $R0 + 1
+	${Loop}
 	!ifmacrodef PostPrimaryDLL
 		!insertmacro PostPrimaryDLL
 		!ifndef SegUnloadLib
@@ -155,6 +186,15 @@ ${SegmentPostPrimary}
 !macroend
 ${SegmentUnload}
 	# Restore Local DLL
+	StrCpy $R0 1
+	${Do}
+		ClearErrors
+		${ReadLauncherConfig} $1 RegisterDLL$R0 ProgID
+		${ReadLauncherConfig} $0 RegisterDLL$R0 File
+		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+		${DLL::Restore} /DISABLEFSR "RegDLLs" "$R0[$1]" $8 $9
+		IntOp $R0 $R0 + 1
+	${Loop}	
 	!ifmacrodef UnloadDLL
 		!insertmacro UnloadDLL
 		!ifndef SegPostLib
