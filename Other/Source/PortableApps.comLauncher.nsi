@@ -498,6 +498,18 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 		!AddPluginDir Plugins
 	!endif
 !endif
+!ifdef ACL
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
+!ifdef ACL_DIR
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
 !ifdef FIREWALL
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
