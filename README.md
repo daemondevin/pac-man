@@ -36,6 +36,7 @@ Other things could follow depending on my availability, interest.. and of course
  - Adding an application manifest is now handled by default since NSIS3. The code has been commented out.
  - Added support for using new NSISPortable which is the new NSIS3 with Unicode support. Removed NSIS in the App directory.
  - Added support for automatic code signing. Refer to lines 93 and 617 for referance.
+ - Added support to prevent a user from shutting down or at least allow enough time to cleanup before exiting then shutting down.
 
 #### __Launcher.ini__
 Added new keys to the `[Activate]` section. They are as follows (a short description of what each key means or does can be found further below):
