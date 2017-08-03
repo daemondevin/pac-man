@@ -45,14 +45,14 @@
 ;=== Require at least Unicode NSIS 2.46 {{{1
 ;!include RequireLatestNSIS.nsh
 
-${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
-
 ;= DEFINES
 ;= ################
 !define APPINFOINI		`${PACKAGE}\App\AppInfo\appinfo.ini`
 !define CUSTOM			`${PACKAGE}\App\AppInfo\Launcher\custom.nsh`
 !define LAUNCHERINI		`${PACKAGE}\App\AppInfo\Launcher\${AppID}.ini`
 !define NEWLINE			`$\r$\n`
+
+${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
 
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `ProgramExecutable64=` APPEXE64
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Registry=` REGISTRY
@@ -119,7 +119,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 	!ifdef APP64
 		!if ${DISABLEFSR} == true
-			!define /REDEF DISABLEFSR	;=== Disable Registry redirection for x64 machines.
+			!define /REDEF DISABLEFSR 	;=== Disable Registry redirection for x64 machines.
 		!endif
 	!endif
 !else
@@ -141,14 +141,8 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !endif
 !if "${JAVA}" == "find"
 	!define /REDEF JAVA
-	Var UsingJavaExecutable
-	Var JavaMode
-	Var JavaDirectory
 !else if "${JAVA}" == "require"
 	!define /REDEF JAVA
-	Var UsingJavaExecutable
-	Var JavaMode
-	Var JavaDirectory
 !else
 	!ifdef JAVA
 		!undef JAVA
@@ -156,14 +150,8 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !endif
 !if "${JDK}" == "find"
 	!define /REDEF JDK
-	Var UsingJavaExecutable
-	Var JDKMode
-	Var jdkDirectory
 !else if "${JDK}" == "require"
 	!define /REDEF JDK
-	Var UsingJavaExecutable
-	Var JDKMode
-	Var jdkDirectory
 !else
 	!ifdef JDK
 		!undef JDK
@@ -187,12 +175,10 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 !endif
 !if "${UAC}" == "force"
-	Var RunAsAdmin
 	!define /REDEF UAC
 	!define TrimString
 	!include UAC.nsh
 !else if  "${UAC}" == "compile-force"
-	Var RunAsAdmin
 	!define /REDEF UAC
 	!define TrimString
 	!include UAC.nsh
@@ -202,49 +188,49 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 !endif
 !if "${DIRECTORIES_MOVE}" == "]"
-	!define /REDEF DIRECTORIES_MOVE	;=== Enable for added macros for the [DirectoriesMove] section in launcher.ini. See DirectoriesMove.nsh in the Segments directory.
+	!define /REDEF DIRECTORIES_MOVE 	;=== Enable for added macros for the [DirectoriesMove] section in launcher.ini. See DirectoriesMove.nsh in the Segments directory.
 !else
 	!ifdef DIRECTORIES_MOVE
 		!undef DIRECTORIES_MOVE
 	!endif
 !endif
 !if "${RMEMPTYDIRECTORIES}" == "]"
-	!define /REDEF RMEMPTYDIRECTORIES	;=== Enable for the [DirectoriesCleanupIfEmpty] section in launcher.ini
+	!define /REDEF RMEMPTYDIRECTORIES 	;=== Enable for the [DirectoriesCleanupIfEmpty] section in launcher.ini
 !else
 	!ifdef RMEMPTYDIRECTORIES
 		!undef RMEMPTYDIRECTORIES
 	!endif
 !endif
 !if "${FILES_MOVE}" == "]"
-	!define /REDEF FILES_MOVE	;=== Enable for added macros for the [FilesMove] section in launcher.ini. See FilesMove.nsh in the Segments directory.
+	!define /REDEF FILES_MOVE 			;=== Enable for added macros for the [FilesMove] section in launcher.ini. See FilesMove.nsh in the Segments directory.
 !else
 	!ifdef FILES_MOVE
 		!undef FILES_MOVE
 	!endif
 !endif
 !if "${REPLACE}" == true
-	!define /REDEF REPLACE	;=== Enables Replace functionality in [FileWrite]
+	!define /REDEF REPLACE 				;=== Enables Replace functionality in [FileWrite]
 !else
 	!ifdef REPLACE
 		!undef REPLACE
 	!endif
 !endif
 !if "${RegValueWrite}" == true
-	!define /REDEF RegValueWrite 50	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
+	!define /REDEF RegValueWrite 50 	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
 !else
 	!ifdef RegValueWrite
 		!undef RegValueWrite
 	!endif
 !endif
 !if ${SERVICES} == true
-	!define /REDEF SERVICES ;=== Enable support for Services
+	!define /REDEF SERVICES 			;=== Enable support for Services
 !else
 	!ifdef SERVICES
 		!undef SERVICES
 	!endif
 !endif
 !if ${REGISTERDLL} == true
-	!define /REDEF REGISTERDLL ;=== Enable support for registering library (DLLs) files
+	!define /REDEF REGISTERDLL 			;=== Enable support for registering library (DLLs) files
 !else
 	!ifdef REGISTERDLL
 		!undef REGISTERDLL
@@ -399,18 +385,6 @@ SetCompressorDictSize 32
 !define ENABLEREDIR		`kernel32::Wow64EnableWow64FsRedirection(i1)`
 !define GETCURRPROC		`kernel32::GetCurrentProcess()i.s`
 !define WOW				`kernel32::IsWow64Process(is,*i.r0)`
-; Function IsWOW64
-	; !macro _IsWOW64 _RETURN
-		; Push ${_RETURN}
-		; Call IsWOW64
-		; Pop ${_RETURN}
-	; !macroend
-	; !define IsWOW64 `!insertmacro _IsWOW64`
-	; Exch $0
-	; System::Call `${GETCURRPROC}`
-	; System::Call `${WOW}`
-	; Exch $0
-; FunctionEnd
 !define ReadLauncherConfig `!insertmacro ReadLauncherConfig`
 !macro ReadLauncherConfig _RETURN _SECTION _ENTRY
 	ReadINIStr ${_RETURN} `${LAUNCHER}` `${_SECTION}` `${_ENTRY}`
@@ -607,7 +581,6 @@ ${!echo} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 ;=== Variables {{{1
 ${!echo} "${NEWLINE}Initialising variables and macros...${NEWLINE}${NEWLINE}"
 Var Bit
-Var Admin
 Var AppID
 Var BaseName
 Var MissingFileOrPath
@@ -618,6 +591,20 @@ Var StatusMutex
 Var WaitForProgram
 !ifdef REGISTRY
 	Var Registry
+!endif
+!ifdef UAC
+	Var Admin
+	Var RunAsAdmin
+!endif
+!ifdef JAVA
+	Var UsingJavaExecutable
+	Var JavaMode
+	Var JavaDirectory
+!endif
+!ifdef JDK
+	Var UsingJavaExecutable
+	Var JDKMode
+	Var jdkDirectory
 !endif
 
 ; Load the segments {{{1
