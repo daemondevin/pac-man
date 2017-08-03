@@ -37,13 +37,37 @@ Other things could follow depending on my availability, interest.. and of course
  - Added support for using new NSISPortable which is the new NSIS3 with Unicode support. Removed NSIS in the App directory.
  - Added support for automatic code signing. Refer to lines 93 and 617 for referance.
 
+#### __Launcher.ini__
+Added new keys to the `[Activate]` section. They are as follows (a short description of what each key means or does can be found further below):
+> Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
+```INI
+[Activate]
+Services=true
+RegDLLs=true
+JDK=true
+Ghostscript=true
+```
+
+* __Services__
+Add support for Windows Services
+
+* __RegDLLs__
+Add support for handling library (DLLs) file registration.
+
+* __JDK__
+Add support for Java Development Kit.
+
+* __Ghostscript__
+Add Ghostscript support.
+
 #### __AppInfo.ini__
 Added the section `[Team]` for use with code signing and application specifications. New keys are as follows (a short description of what each key means or does can be found further below):
 > Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
 ```INI
 [Team]
 Developer=demon.devin
-Contributors=FukenGruven and DoomStorm
+Contributors=DoomStorm
+Creator=FukenGruven
 CertSigning=true
 CertExtension=p12
 ```
@@ -52,6 +76,9 @@ The name of the developer that created the portable application.
 
 * __Contributors__
 Specify here anyone who has helped with the creation of the portable application.
+
+* __Creator__
+Specify here the original developer of the PAF if you're updating someone elses work.
 
 * __CertSigning__
 If set to true, the `Launcher.exe` will be signed automatically. __Note:__ As it is written right now, the `LauncherGenerator.exe` expects the certificate to be the developer's name (same as the above key's value) and located in `..\Other\Source\Contrib\certificates`. 
@@ -66,9 +93,7 @@ Alongside the already provided keys in the `[Dependencies]` section, I've added 
 [Dependencies]
 ExecAsUser=true
 UseStdUtils=true
-Services=true
 InstallINF=true
-RegisterDLLs=true
 DisableRedirection=true
 ForceDisableRedirection=true
 RegistryValueWrite=true
@@ -82,6 +107,7 @@ Firewall=true
 Junctions=true
 ACLRegSupport=true
 ACLDirSupport=true
+TaskCleanup=true
 ```
 * __ExecAsUser__
 For applications which need to run as normal user but need the launcher to have elevated privileges.
@@ -89,14 +115,8 @@ For applications which need to run as normal user but need the launcher to have 
 * __UseStdUtils__
 Include the StdUtils plug-in without `ExecAsUser`
 
-* __Services__
-Add support for Windows Services
-
 * __InstallINF__
 Add support and macros for INF installation. Refer to the `Services.nsh` file in the Segments directory for reference.
-
-* __RegisterDLLs__
-Add support for handling library (DLLs) file registration.
 
 * __DisableRedirection__
 Enable support for enabling/disabling file system redirection.
@@ -148,6 +168,15 @@ Enable support for AccessControl on registry keys.
 
 * __ACLDirSupport__
 Enable support for AccessControl on directories.
+
+* __TaskCleanup__
+Enable the TaskCleanup segment for removing any Windows Tasks that was added during runtime.
+> To use this feature add the section `[TaskCleanup]` to the `Launcher.ini` file. Each entry should be the Windows Task name to be removed. Example usage:
+> ```INI
+> [TaskCleanup]
+> 1=MyAppTask1
+> 2=Another Task w/ Spaces
+> ```
 
 ## Contributors
 
