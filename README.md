@@ -53,7 +53,16 @@ Add support for Windows Services
 
 * __RegDLLs__
 Add support for handling library (DLLs) file registration.
-
+> To use this feature add the section `[RegisterDLL1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports two keys; _ProgID_ (The DLL's ProgID) and _File_ (The path to DLL. Supports environment variables). Example usage:
+> ```INI
+> [RegisterDLL1]
+> ProgID=MyAppControlPanel
+> File=${PAL:AppDir}\controller.cpl
+>
+> [RegisterDLL2]
+> ProgID=DynamicLibrary
+> File=${PAL:DataDir}\dynlib.dll
+> ```
 * __JDK__
 Add support for Java Development Kit.
 
