@@ -144,7 +144,7 @@ Allows the portable application to support fonts within the directory `..\Data\F
 > - .otf
 > - .mmm
 > - .pfb
-> - .pfm.
+> - .pfm
 
 * __FileWriteReplace__
 Enables the Replace functionality in `[FileWrite]`
