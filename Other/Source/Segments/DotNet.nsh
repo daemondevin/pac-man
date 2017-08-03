@@ -46,7 +46,6 @@ Function dotNETCheck
 FunctionEnd
 
 ${SegmentFile}
-;!include DotNet.nsh
 ${SegmentInit}
 	; If appinfo.ini\[Dependencies]:UsesDotNetVersion is not empty, search
 	; for a .NET Framework install of the specified version. Valid version
