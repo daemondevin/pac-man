@@ -130,6 +130,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !ifdef dotNET_Version
 	!if ! ${dotNET_Version} == ""
 		!define DOTNET
+		!include DotNetVer.nsh
 	!else
 		!error "The key 'UsesDotNetVersion' in AppInfo.ini is set but has no value! If this PAF does not require the .NET Framework please omit this key entirely."
 	!endif
