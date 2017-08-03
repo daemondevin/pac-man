@@ -60,6 +60,8 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Java=` JAVA
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `JDK=` JDK
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `XML=` XML_PLUGIN
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Services= ` SERVICES
+!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `RegDLLs= ` REGISTERDLL
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Ghostscript=` GHOSTSCRIPT
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `RunAsAdmin=` UAC
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `[DirectoriesMove` DIRECTORIES_MOVE
@@ -74,17 +76,16 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `RegistryValueWrite=` RegValueWrite
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `UseStdUtils= ` StdUtils
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `ExecAsUser= ` ExecAsUser
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `Services= ` SERVICES
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `InstallINF= ` INF_Install
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `RegisterDLLs= ` REGISTERDLL
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `DisableRedirection= ` SYSTEMWIDE_DISABLEREDIR
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `ForceDisableRedirection= ` FORCE_SYSTEMWIDE_DISABLEREDIR
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `FontsFolder= ` FONTS_ENABLE
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `FileLocking= ` IsFileLocked
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `FileLocking= ` FileLocking
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `Junctions= ` NTFS
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `ACLRegSupport= ` ACL
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `ACLDirSupport= ` ACL_DIR
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `FileCleanup= ` FileCleanup
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `TaskCleanup= ` TaskCleanup
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -113,7 +114,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 ;=== Custom Defines
 !if "${REGISTRY}" == true
 	!define /REDEF REGISTRY
-	Var Registry
 	!if "${RegValueWrite}" == "]"
 		!define RegSleep 50	
 	!endif
@@ -235,32 +235,11 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef RegValueWrite
 	!endif
 !endif
-!if ${StdUtils} == true
-	!define /REDEF StdUtils	;=== Include StndUtils without ExecAsUser
-!else
-	!ifdef StdUtils
-		!undef StdUtils
-	!endif
-!endif
-!if ${ExecAsUser} == true
-	!define /REDEF ExecAsUser	;=== For applications which need to run as normal user.
-!else
-	!ifdef ExecAsUser
-		!undef ExecAsUser
-	!endif
-!endif
 !if ${SERVICES} == true
 	!define /REDEF SERVICES ;=== Enable support for Services
 !else
 	!ifdef SERVICES
 		!undef SERVICES
-	!endif
-!endif
-!if ${INF_Install} == true
-	!define /REDEF INF_Install	;=== For .inf install support.
-!else
-	!ifdef INF_Install
-		!undef INF_Install
 	!endif
 !endif
 !if ${REGISTERDLL} == true
@@ -270,62 +249,114 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef REGISTERDLL
 	!endif
 !endif
-!if ${SYSTEMWIDE_DISABLEREDIR} == true
-	!define /REDEF SYSTEMWIDE_DISABLEREDIR
+!if ! ${StdUtils} == ""
+	!if ${StdUtils} == true
+		!define /REDEF StdUtils 		;=== Include StndUtils without ExecAsUser
+	!else if ${StdUtils} == false
+		!undef StdUtils
+	!endif
 !else
-	!ifdef SYSTEMWIDE_DISABLEREDIR
+	!error "The key 'UseStdUtils' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${ExecAsUser} == ""
+	!if ${ExecAsUser} == true
+		!define /REDEF ExecAsUser 		;=== For applications which need to run as normal user. 
+	!else if ${ExecAsUser} == false
+		!undef ExecAsUser
+	!endif
+!else
+	!error "The key 'ExecAsUser' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${INF_Install} == ""
+	!if ${INF_Install} == true
+		!define /REDEF INF_Install 		;=== Enable for INF installation support.
+	!else if ${INF_Install} == false
+		!undef INF_Install
+	!endif
+!else
+	!error "The key 'InstallINF' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${SYSTEMWIDE_DISABLEREDIR} == ""
+	!if ${SYSTEMWIDE_DISABLEREDIR} == true
+		!define /REDEF SYSTEMWIDE_DISABLEREDIR
+	!else if ${SYSTEMWIDE_DISABLEREDIR} == false
 		!undef SYSTEMWIDE_DISABLEREDIR
 	!endif
-!endif
-!if ${FORCE_SYSTEMWIDE_DISABLEREDIR} == true
-	!define /REDEF FORCE_SYSTEMWIDE_DISABLEREDIR
 !else
-	!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+	!error "The key 'DisableRedirection' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${FORCE_SYSTEMWIDE_DISABLEREDIR} == ""
+	!if ${FORCE_SYSTEMWIDE_DISABLEREDIR} == true
+		!define /REDEF FORCE_SYSTEMWIDE_DISABLEREDIR
+	!else if ${FORCE_SYSTEMWIDE_DISABLEREDIR} == false
 		!undef FORCE_SYSTEMWIDE_DISABLEREDIR
 	!endif
+!else
+	!error "The key 'ForceDisableRedirection' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
-!if ${FONTS_ENABLE} == true
-	!define /REDEF FONTS_ENABLE	;=== Adds font support in ..\Data\Fonts
-!else
-	!ifdef FONTS_ENABLE
-		!undef FONTS_ENABLE
+!if ! ${FONTS_ENABLE} == ""
+	!if ${FONTS_ENABLE} == true
+		!define /REDEF FONTS_ENABLE 	;=== Enable font support in ..\Data\Fonts
+	!else if ${FONTS_ENABLE} == false
+		!undef FONTS_ENABLE 
 	!endif
+!else
+	!error "The key 'FontsFolder' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
-!if ${IsFileLocked} == true
-	!define /REDEF IsFileLocked ;=== If enabled, PortableApp will ensure DLL(s) are unlocked.
-	!define CloseWindow
-!else
-	!ifdef IsFileLocked
-		!undef IsFileLocked
+!if ! ${FileLocking} == ""
+	!if ${FileLocking} == true
+		!define IsFileLocked 			;=== If enabled, PortableApp will ensure DLL(s) are unlocked.
+		!define CloseWindow
+	!else if ${FileLocking} == false
+		!undef FileLocking 				;=== Disable 
 	!endif
+!else
+	!error "The key 'FileLocking' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
-!if ${NTFS} == true
-	!define /REDEF NTFS ;=== Enable support for Junctions
-!else
-	!ifdef NTFS
-		!undef NTFS
+!if ! ${NTFS} == ""
+	!if ${NTFS} == true
+		!define /REDEF NTFS 			;=== Enable support for Junctions (Symlinks)
+	!else if ${NTFS} == false
+		!undef NTFS 					;=== Disable
 	!endif
+!else
+	!error "The key 'Junctions' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
-!if ${ACL} == true
-	!define /REDEF ACL ;=== Enable AccessControl support for the registry
-!else
-	!ifdef ACL
-		!undef ACL
+!if ! ${ACL} == ""
+	!if ${ACL} == true
+		!define /REDEF ACL 				;=== Enable AccessControl support for registry keys
+	!else if ${ACL} == false
+		!undef ACL 						;=== Disable AccessControl support for registry keys
 	!endif
+!else
+	!error "The key 'ACLRegSupport' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
-!if ${ACL_DIR} == true
-	!define /REDEF ACL_DIR ;=== Enable AccessControl support for directories
-!else
-	!ifdef ACL_DIR
-		!undef ACL_DIR
+!if ! ${ACL_DIR} == ""
+	!if ${ACL_DIR} == true
+		!define /REDEF ACL_DIR 			;=== Enable AccessControl support for directories
+	!else if ${ACL_DIR} == false
+		!undef ACL_DIR 					;=== Disable AccessControl support for directories
 	!endif
-!endif	
-!if ${FileCleanup} == true
-	!define /REDEF FileCleanup ;=== Enable FileCleanup segment
 !else
-	!ifdef FileCleanup
-		!undef FileCleanup
+	!error "The key 'ACLDirSupport' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${FileCleanup} == ""
+	!if ${FileCleanup} == true
+		!define /REDEF FileCleanup 		;=== Enable FileCleanup segment
+	!else if ${FileCleanup} == false
+		!undef FileCleanup 				;=== Disable FileCleanup segment
 	!endif
+!else
+	!error "The key 'FileCleanup' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${TaskCleanup} == ""
+	!if ${TaskCleanup} == true
+		!define /REDEF TaskCleanup 		;=== Enable TaskCleanup segment
+	!else if ${TaskCleanup} == false
+		!undef TaskCleanup 				;=== Disable TaskCleanup segment
+	!endif
+!else
+	!error "The key 'TaskCleanup' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
 
 !define APPINFO         `$EXEDIR\App\AppInfo`
@@ -584,6 +615,9 @@ Var AppNamePortable
 Var ProgramExecutable
 Var StatusMutex
 Var WaitForProgram
+!ifdef REGISTRY
+	Var Registry
+!endif
 
 ; Load the segments {{{1
 ${!echo} "${NEWLINE}Loading segments...${NEWLINE}${NEWLINE}"
@@ -1108,6 +1142,9 @@ Function PostPrimary           ;{{{1
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
+		!ifdef TaskCleanup
+			${RunSegment} TaskCleanUp
+		!endif
 	${EndIf}
 	!ifdef REGISTRY
 		${RunSegment} RegistryValueBackupDelete
@@ -1205,6 +1242,9 @@ Function Unload           ;{{{1
 		!endif
 		!ifdef SERVICES
 			${RunSegment} Services
+		!endif
+		!ifdef TaskCleanup
+			${RunSegment} TaskCleanUp
 		!endif
 		${RunSegment} FilesCleanup
 		${RunSegment} DirectoriesCleanup
