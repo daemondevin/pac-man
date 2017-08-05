@@ -296,7 +296,7 @@
 	Pop ${_ERR2}
 	StrCmp ${_ERR1} "1060" 0 +3
 	SetErrors
-	Goto +2
+	Goto +3
 	${WriteRuntimeData} "${_SVC}Service" LocalService true
 !macroend
 !define Service::QueryConfig `!insertmacro _Service::QueryConfig`
