@@ -158,7 +158,7 @@ TaskCleanup=true
 
 * __RegistryValueWrite:__ Set this to true to set a sleep value for `[RegistryValueWrite]` otherwise the function is inaccurate.
 
-* __RegistryCopyKeys:__ Enable support for copying registry keys to a special hive (`HKCU\Software\PortableApps.com`) before launchering the application and restoring the keys after the application exits. See `RegistryCopyKeys.nsh` in the Segments directory.
+* __RegistryCopyKeys:__ Enable support for copying registry keys to a special hive (`HKCU\Software\PortableApps.com`) before launching the application and restoring the keys after the application exits. See `RegistryCopyKeys.nsh` in the Segments directory.
 > To use this feature add the section `[RegistryCopyKeys]` to the `Launcher.ini` file. Each entry should be the path to the registry key to be copied back and forth. Example usage:
 > ```INI
 > [RegistryCopyKeys]
