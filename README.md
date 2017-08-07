@@ -31,6 +31,8 @@ The support for services is by default disabled in the official builds of PAL. I
 Other things could follow depending on my availability, interest.. and of course the interest and support from others. So with that being said, this little project might not even see the light of day. Lol.
 
 ## Added Features
+----------
+
 #### __PortableApps.comLauncher.nsi__
  - <del>Added code to add a manifest file to the Launcher.exe for better user privileges support. Refer to line 80 for referance.</del>
  - Added support for using new NSISPortable which is the new NSIS3 with Unicode support. Removed NSIS in the App directory.
@@ -38,6 +40,10 @@ Other things could follow depending on my availability, interest.. and of course
  - Added support for automatic code signing. Refer to the code block on line 709 for referance.
  - Added support to prevent a user from shutting down or at least allow enough time to cleanup before exiting then shutting down.
  - Added support for .NET checking from both 4.0 and below to 4.5 and above. See `DotNet.nsh` in the segments folder for referance. 
+
+
+----------
+
 
 #### __Launcher.ini__
 Added new keys to the `[Activate]` section. They are as follows (a short description of what each key means or does can be found further below):
@@ -50,11 +56,9 @@ JDK=true
 Ghostscript=true
 ```
 
-* __Services__
-Add support for Windows Services
+* __Services:__ Add support for Windows Services
 
-* __RegDLLs__
-Add support for handling library (DLLs) file registration.
+* __RegDLLs:__ Add support for handling library (DLLs) file registration.
 > To use this feature add the section `[RegisterDLL1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports two keys; _ProgID_ (The DLL's ProgID) and _File_ (The path to DLL. Supports environment variables). Example usage:
 > ```INI
 > [RegisterDLL1]
@@ -65,11 +69,13 @@ Add support for handling library (DLLs) file registration.
 > ProgID=DynamicLibrary
 > File=${PAL:DataDir}\dynlib.dll
 > ```
-* __JDK__
-Add support for Java Development Kit.
+* __JDK:__ Add support for Java Development Kit.
 
-* __Ghostscript__
-Add Ghostscript support.
+* __Ghostscript:__ Add Ghostscript support.
+
+
+----------
+
 
 #### __AppInfo.ini__
 Added the section `[Team]` for use with code signing and application specifications. New keys are as follows (a short description of what each key means or does can be found further below):
@@ -83,37 +89,38 @@ CertSigning=true
 CertExtension=p12
 CertTimestamp=VeriSign
 ```
-* __Developer__
-The name of the developer that created the portable application.
+* __Developer:__ The name of the developer that created the portable application.
 
-* __Contributors__
-Specify here anyone who has helped with the creation of the portable application.
+* __Contributors:__ Specify here anyone who has helped with the creation of the portable application.
 
-* __Creator__
-Specify here the original developer of the PAF if you're updating someone else's work.
+* __Creator:__ Specify here the original developer of the PAF if you're updating someone else's work.
 
-* __CertSigning__
-If set to true, the `Launcher.exe` will automatically be signed using dual signature hashing algorithm standards (_SHA256_ and _SHA1_). I decided to use dual signing because Windows 8 supports SHA256 Code Signing Certificates (SHA-2 hashing algorithm); whereas, Windows 7 may only support SHA-1 Code Signing Certificates (SHA-1 hashing algorithm). It should be noted that Windows 10 has stopped accepting SHA-1 certificates and certificate chains for Authenticode-signed binaries (unless a timestamp marked the binary as being signed before 1/1/2016). You can visit this [Microsoft Security Advisory article][MSAdvisory] on the availability of SHA-2 code signing support for Windows 7 and Windows Server 2008 R2 for more information about this topic.
->__ATTENTION:__ As it is written right now, the `PortableApps.comLauncherGenerator.exe` expects the certificate file to be the developer's name (same as the `[Team]Developer` key's value) and located in `..\Other\Source\Contrib\certificates`. 
+* __CertSigning:__ If set to true, the `Launcher.exe` will automatically be signed using dual signature hashing algorithm standards (_SHA256_ and _SHA1_). I decided to use dual signing because Windows 8 supports SHA256 Code Signing Certificates (SHA-2 hashing algorithm); whereas, Windows 7 may only support SHA-1 Code Signing Certificates (SHA-1 hashing algorithm). It should be noted that Windows 10 has stopped accepting SHA-1 certificates and certificate chains for Authenticode-signed binaries (unless a timestamp marked the binary as being signed before 1/1/2016). You can visit this [Microsoft Security Advisory article][MSAdvisory] on the availability of SHA-2 code signing support for Windows 7 and Windows Server 2008 R2 for more information about this topic.
+>__*ATTENTION:*__ As it is written right now, the `PortableApps.comLauncherGenerator.exe` expects the certificate file to be the developer's name (same as the `[Team]Developer` key's value) and located in `..\Other\Source\Contrib\certificates`. 
+> 
+> _NOTE_: If your certificate requires you to use a password, refer to lines 741 and 742 and input your password on column 62.
+> Be sure it is similar to something like this: `/p "PASSWORD"` where PASSWORD is your password.
+* __CertExtension:__ If the key `CertSigning` is set to true then this should be set to the certificate's file extension without the period (e.g. "_pfx_" not "_.pfx_").
+* __CertTimestamp:__ Here you can choose which time-stamping service you would like to use. Refer to the table below for a small list of available services and their available hashing algorithms. I would recommend using a service which uses both signature hashes. Be aware that this key is case-sensitive. If this key is omitted, the compiler will default to using _Comodo_.
 
-> Note: If your certificate requires you to use a password, refer to lines 741 and 742 and input your password on column 62.
-> Be sure it is similiar to something like this: `/p "PASSWORD"` where PASSWORD is your password.
-* __CertExtension__
-If the key `CertSigning` is set to true then this should be set to the certificate's file extension without the period (e.g. "_pfx_" not "_.pfx_").
-* __CertTimestamp__
-Here you can choose which time-stamping service you would like to use. Refer to the table below for a small list of available services and their available hashing algorithms. I would recommend using a service which uses both signature hashes. Be aware that this key is case-sensitive. If this key is omitted, the compiler will default to using _Comodo_.
-> | __Key=Value__ | __Service__ | __Hashing__|
-> | CertTimestamp=Comodo | Comodo Group, Inc. | _SHA-1_ & _SHA-2_ |
-> | CertTimestamp=Verisign | Verisign, Inc. | _SHA-1_ & _SHA-2_ |
-> | CertTimestamp=GlobalSign | GMO GlobalSign, Inc. | _SHA-1_ & _SHA-2_ |
-> | CertTimestamp=DigiCert | DigiCert, Inc. | _SHA-1_ & _SHA-2_ |
-> | CertTimestamp=Starfield | Starfield Technologies, LLC. | _SHA-1_ & _SHA-2_ |
-> | CertTimestamp=SwissSign | SwissSign AG | _SHA-2_ |
+> 
+>|       __CertTimestamp__=*`Value`*     	|     __Timestamp Service__    	| __Algorithms__ 	|
+|:------------------------	|:----------------------------	|:--------------------	|
+| `Comodo`     	| Comodo Group, Inc.           	| _SHA-1_ & _SHA-2_    	|
+| `Verisign`   	| Verisign, Inc.               	| _SHA-1_ & _SHA-2_    	|
+| `GlobalSign` 	| GMO GlobalSign, Inc.         	| _SHA-1_ & _SHA-2_    	|
+| `DigiCert`   	| DigiCert, Inc.               	| _SHA-1_ & _SHA-2_    	|
+| `Starfield`  	| Starfield Technologies, LLC. 	| _SHA-1_ & _SHA-2_    	|
+| `SwissSign`  	| SwissSign AG                 	| _SHA-2_              	|
 
-Alongside the already provided keys in the `[Dependencies]` section, I've added the support for the following (a short description of what each key means or does can be found further below):
+I've added several new keys to the `[Dependencies]` section. These newly added keys act like on/off switches to allow support for certain plugins and/or macros/functions (a short description of what each key means or does can be found further below):
 > Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
 ```INI
 [Dependencies]
+ElevatedPrivileges=true
+UsesJava=true
+UsesGhostscript=true
+UsesDotNetVersion=4.5
 ExecAsUser=true
 UseStdUtils=true
 InstallINF=true
@@ -132,32 +139,31 @@ ACLRegSupport=true
 ACLDirSupport=true
 TaskCleanup=true
 ```
-* __ExecAsUser__
-For applications which need to run as normal user but need the launcher to have elevated privileges.
+* __ElevatedPrivileges:__ For launchers which need to run with elevated privileges.
 
-* __UseStdUtils__
-Include the StdUtils plug-in without `ExecAsUser`
+* __UsesJava:__ Specifies whether the portable application makes use of [Java Portable][JavaPortable].
 
-* __InstallINF__
-Add support and macros for INF installation. Refer to the `Services.nsh` file in the Segments directory for reference.
+* __UsesGhostscript:__ Specifies whether the portable application makes use of [Ghostscript Portable][GhostscriptPortable].
 
-* __DisableRedirection__
-Enable support for enabling/disabling file system redirection.
+* __UsesDotNetVersion:__ Specify the minimum required version of the .NET framework the portable application needs. Values can be from `1.0` thru `4.7` (*e.g.* `UsesDotNetVersion=1.1` or `UsesDotNetVersion=4.6.2`).
 
-* __ForceDisableRedirection__
-Checks using the variable `$Bit` to disable/enable file system redirection.
+* __ExecAsUser:__ For applications which need to run as normal user but need the launcher to have elevated privileges.
 
-* __RegistryValueWrite__
-Set this to true to set a sleep value for `[RegistryValueWrite]` otherwise the function is inaccurate.
+* __UseStdUtils:__ Include the StdUtils plug-in without `ExecAsUser`
 
-* __RegistryCopyKeys__
-Enable support for adding the section `[RegistryCopyKeys]` in `Launcher.ini`. See `RegistryCopyKeys.nsh` in the Segments directory.
+* __InstallINF:__ Add support and macros for INF installation. Refer to the `Services.nsh` file in the Segments directory for reference.
 
-* __RegDisableRedirection__
-Enable support for enabling/disabling registry redirection (For use with `RegistryCopyKeys`)
+* __DisableRedirection:__ Enable support for enabling/disabling file system redirection.
 
-* __FontsFolder__
-Allows the portable application to support fonts within the directory `..\Data\Fonts`. Any fonts added in this folder will be added and are available for usage during runtime. Be aware, the more fonts to process the longer it will take for the launcher to load and unload these fonts.
+* __ForceDisableRedirection:__ Checks using the variable `$Bit` to disable/enable file system redirection.
+
+* __RegistryValueWrite:__ Set this to true to set a sleep value for `[RegistryValueWrite]` otherwise the function is inaccurate.
+
+* __RegistryCopyKeys:__ Enable support for adding the section `[RegistryCopyKeys]` in `Launcher.ini`. See `RegistryCopyKeys.nsh` in the Segments directory.
+
+* __RegDisableRedirection:__ Enable support for enabling/disabling registry redirection (For use with `RegistryCopyKeys`)
+
+* __FontsFolder:__ Allows the portable application to support fonts within the directory `..\Data\Fonts`. Any fonts added in this folder will be added and are available for usage during runtime. Be aware, the more fonts to process the longer it will take for the launcher to load and unload these fonts.
 > Supported Fonts: 
 > - .fon
 > - .fnt
@@ -169,31 +175,23 @@ Allows the portable application to support fonts within the directory `..\Data\F
 > - .pfb
 > - .pfm
 
-* __FileWriteReplace__
-Enables the Replace functionality in `[FileWrite]`
+* __FileWriteReplace:__ Enables the Replace functionality in `[FileWrite]`
 
-* __FileCleanup__
-Enable support for adding the section `[FilesCleanup]` in `Launcher.ini`. See `FilesCleanup.nsh` in the Segments directory.
+* __FileCleanup:__ Enable support for adding the section `[FilesCleanup]` in `Launcher.ini`. See `FilesCleanup.nsh` in the Segments directory.
 
-* __FileLocking__
-Enable this to prevent ejection/unplugging problems for USB devices. Windows Explorer tend to lock application's DLL(s). 
+* __FileLocking:__ Enable this to prevent ejection/unplugging problems for USB devices. Windows Explorer tend to lock application's DLL(s). 
 __Note:__ As of right now, this only enables support for using `${If} ${FileLocked}` and/or `${IfNot} ${FileLocked}` in the `custom.nsh` file. 
 __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. Check back soon.)
 
-* __Firewall__
-Enable Firewall support.
+* __Firewall:__ Enable Firewall support.
 
-* __Junctions__
-Enable support for Junctions (_SymLinks_) functionality.
+* __Junctions:__ Enable support for Junctions (_SymLinks_) functionality.
 
-* __ACLRegSupport__
-Enable support for AccessControl on registry keys.
+* __ACLRegSupport:__ Enable support for AccessControl on registry keys.
 
-* __ACLDirSupport__
-Enable support for AccessControl on directories.
+* __ACLDirSupport:__ Enable support for AccessControl on directories.
 
-* __TaskCleanup__
-Enable the TaskCleanup segment for removing any Windows Tasks that was added during runtime.
+* __TaskCleanup:__ Enable the TaskCleanup segment for removing any Windows Tasks that was added during runtime.
 > To use this feature add the section `[TaskCleanup]` to the `Launcher.ini` file. Each entry should be the Windows Task name to be removed. Example usage:
 > ```INI
 > [TaskCleanup]
@@ -214,4 +212,6 @@ I should convey that some of the code I've added here was written by FukenGruven
 [4]: https://portableapps.com/apps/development/nsis_portable "NSIS Portable"
 [5]: http://johnhaller.com/useful-stuff/dot-net-portable-apps ".NET Availability and Viability With Portable Apps"
 [MSAdvisory]: https://support.microsoft.com/en-us/kb/3033929 "MS Security Advisory: SHA2 support for Win7/Windows Server '08 R2: March 10, 2015"
+[JavaPortable]: http://portableapps.com/apps/utilities/java_portable "Java Portable"
+[GhostscriptPortable]: https://portableapps.com/apps/utilities/ghostscript_portable "Ghostscript Portable"
 [author]: http://softables.tk/ "Softables.tk/"
