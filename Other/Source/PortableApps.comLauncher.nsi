@@ -728,6 +728,9 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 		!else if "${CertTimestamp}" == "GlobalSign"
 			StrCpy $Timestamp "http://timestamp.globalsign.com/scripts/timstamp.dll"
 			StrCpy $TimestampSHA256 "http://timestamp.globalsign.com/?signature=sha2"
+		!else
+			StrCpy $Timestamp "http://timestamp.comodoca.com"
+			StrCpy $TimestampSHA256 "http://timestamp.comodoca.com/?td=sha256"
 		!endif
 	!else
 		StrCpy $Timestamp "http://timestamp.comodoca.com"
