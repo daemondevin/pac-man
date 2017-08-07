@@ -347,6 +347,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !endif
 
 !define APPINFO         `$EXEDIR\App\AppInfo`
+!define INFOINI			`${APPINFO}\appinfo.ini`
 !define DATA            `$EXEDIR\Data`
 !define SET             `${DATA}\settings`
 !define DEFDATA         `$EXEDIR\App\DefaultData`
@@ -370,7 +371,7 @@ AutoCloseWindow True
 !ifdef RUNASADMIN_COMPILEFORCE
 	RequestExecutionLevel admin
 !else ifdef UAC
-		RequestExecutionLevel admin
+	RequestExecutionLevel admin
 !else
 	RequestExecutionLevel user
 !endif
@@ -406,6 +407,10 @@ SetCompressorDictSize 32
 	ClearErrors
 	${ReadLauncherConfig} ${_RETURN} `${_SECTION}` `${_VALUE}`
 	${IfThen} ${Errors} ${|} StrCpy ${_OUTPUT} `${_DEFAULT}` ${|}
+!macroend
+!define ReadAppInfoConfig `!insertmacro ReadAppInfoConfig`
+!macro ReadAppInfoConfig _RETURN _SECTION _ENTRY
+	ReadINIStr ${_RETURN} `${INFOINI}` `${_SECTION}` `${_ENTRY}`
 !macroend
 !define ReadUserConfig `!insertmacro ReadUserConfig`
 !macro ReadUserConfig _RETURN _KEY
@@ -582,6 +587,23 @@ FunctionEnd
 !ifdef DIRECTORIES_MOVE
 	!ifndef GET_ROOT
 		!define GET_ROOT
+	!endif
+!endif
+!ifdef FONTS_ENABLED
+	!if ! /FileExists "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt"
+		!tempfile FONTFILE
+		!appendfile "${FONTFILE}" "Font(s) added here will be loaded on launch and accessible at runtime.$\n$\n"
+		!appendfile "${FONTFILE}" "NOTE:$\n"
+		!appendfile "${FONTFILE}" "$\tThe launcher will have to load and unload any fonts in this directory.$\n"
+		!appendfile "${FONTFILE}" "$\tThe more fonts you have will mean a longer work load for the launcher.$\n$\n"
+		!appendfile "${FONTFILE}" "Fonts Supported:$\n"
+		!appendfile "${FONTFILE}" " • .fon$\n • .fnt$\n • .ttf$\n • .ttc$\n • .fot$\n • .otf$\n • .mmm$\n • .pfb$\n • .pfm$\n"
+		!if ! /FileExists "${PACKAGE}\App\DefaultData\Fonts"
+			!system 'mkdir "${PACKAGE}\App\DefaultData\Fonts"'
+		!endif
+		!system 'copy /Y /A "${FONTFILE}" "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" /A'
+		!delfile "${FONTFILE}"
+		!undef FONTFILE
 	!endif
 !endif
 
@@ -927,6 +949,9 @@ Function PrePrimary           ;{{{1
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
+		!ifdef FONTS_ENABLE
+			${RunSegment} Fonts
+		!endif
 	${EndIf}
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
@@ -1266,6 +1291,9 @@ Function Unload           ;{{{1
 		!endif
 		!ifdef TaskCleanup
 			${RunSegment} TaskCleanUp
+		!endif
+		!ifdef FONTS_ENABLE
+			${RunSegment} Fonts
 		!endif
 		${RunSegment} FilesCleanup
 		${RunSegment} DirectoriesCleanup
