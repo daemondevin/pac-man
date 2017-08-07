@@ -103,8 +103,7 @@ CertTimestamp=VeriSign
 * __CertExtension:__ If the key `CertSigning` is set to true then this should be set to the certificate's file extension without the period (e.g. "_pfx_" not "_.pfx_").
 * __CertTimestamp:__ Here you can choose which time-stamping service you would like to use. Refer to the table below for a small list of available services and their available hashing algorithms. I would recommend using a service which uses both signature hashes. Be aware that this key is case-sensitive. If this key is omitted, the compiler will default to using _Comodo_.
 
-> 
->|       __CertTimestamp__=*`Value`*     	|     __Timestamp Service__    	| __Algorithms__ 	|
+|       __CertTimestamp__=*`Value`*     	|     __Timestamp Service__    	| __Algorithms__ 	|
 |:------------------------	|:----------------------------	|:--------------------	|
 | `Comodo`     	| Comodo Group, Inc.           	| _SHA-1_ & _SHA-2_    	|
 | `Verisign`   	| Verisign, Inc.               	| _SHA-1_ & _SHA-2_    	|
