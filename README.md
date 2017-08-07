@@ -202,7 +202,11 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 
 This forked project has been started by [demon.devin][author] and hopefully maintained on a regular basis. However, if you would like to be a part of this then please do not hesitate on getting involved! I'm always open to new ideas and a willingness for the betterment of all things code. =)
 
-I should convey that some of the code I've added here was written by FukenGruven. Without his codebase, most of this version of PAL would not be possible. So a round of applause is in order for FukenGruven! Thank you FG. =)
+A special thanks is expressed for [DoomStorm][TekSpert] for all the suggestions and heavily testing for bugs.
+
+Thank you to the following people; Dave Green, HandyPAF, and anyone else who makes use of this version to *port and let portable!*
+
+I should convey that some of the code I've added here was written by FukenGruven. Without his code-base, most of this version of PA.c Launcher would not be possible. So a round of applause is in order for FukenGruven! Thank you FukenGruven. =)
 
 
 [1]: https://github.com/GordCaswell/portableapps.comlauncher "PortableApps.com Launcher"
@@ -214,3 +218,4 @@ I should convey that some of the code I've added here was written by FukenGruven
 [JavaPortable]: http://portableapps.com/apps/utilities/java_portable "Java Portable"
 [GhostscriptPortable]: https://portableapps.com/apps/utilities/ghostscript_portable "Ghostscript Portable"
 [author]: http://softables.tk/ "Softables.tk/"
+[TekSpert]: http://tekspert.se/ "Webmaster of TekSpert.se/"
