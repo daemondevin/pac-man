@@ -84,6 +84,8 @@ Function HasDotNETFramework
 	Exch $0
 FunctionEnd
 
+!include DotNetVer.nsh
+
 ${SegmentFile}
 ${SegmentInit}
 	; If appinfo.ini\[Dependencies]:UsesDotNetVersion is not empty, search
@@ -96,41 +98,10 @@ ${SegmentInit}
 	; Added by demon.devin
 	;  - (4.7|4.6.2|4.6.1|4.6|4.5.2|4.5.1|4.5)
 	; 
-/*	ReadINIStr $0 $EXEDIR\App\AppInfo\appinfo.ini Dependencies UsesDotNetVersion
-	!define dotNETVersion "$0"
-	${If} $0 != ""
-		${CheckDOTNET} $1 "$0"
-		${If} ${Errors}
-			; ${IfNot} ${HasDotNet${dotNETVersion}}
-				; MessageBox MB_ICONSTOP|MB_TOPMOST `${PORTABLEAPPNAME} requires Microsoft .NET Framework 2.0 or newer`
-				; Call Unload
-				; Quit
-			; ${EndIf}
-			; ${If} ${HasDotNetFramework} $0
-			${If} ${HasDotNetFramework}
-				MessageBox MB_OK|MB_ICONSTOP `$0`
-				; Required .NET version found
-				${DebugMsg} ".NET Framework $0 found"
-			${ElseIf} ${Errors}
-				; Invalid .NET version
-				${InvalidValueError} [Dependencies]:UsesDotNetVersion $0
-			${Else}
-				; Required .NET version not found
-				${DebugMsg} "Unable to find .NET Framework $0"
-				MessageBox MB_OK|MB_ICONSTOP `$(LauncherNoDotNet)`
-				Quit
-			${EndIf}
-		${Else}
-			; Required .NET version found. Has 4.5 or above.
-			${DebugMsg} "The required .NET Framework was found."
-		${EndIf}
-	${EndIf}
-!macroend */
-
 	ReadINIStr $0 $EXEDIR\App\AppInfo\appinfo.ini Dependencies UsesDotNetVersion
 	${If} $0 <= "4.0"
 		!define dotNETVersion "$0"
-		${IfNot} ${HasDotNet${dotNETVersion}}
+		${IfNot} ${HasDotNet4.0}
 			${DebugMsg} "Unable to find .NET Framework ${dotNETVersion}." ; Required .NET version not found
 			MessageBox MB_OK|MB_ICONSTOP `$(LauncherNoDotNet)`
 			Quit
