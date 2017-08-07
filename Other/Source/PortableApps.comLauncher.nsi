@@ -714,32 +714,32 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 	!macro _Finalize::Sign _CMD
 		!finalize `${_CMD}`
 	!macroend
-	Var Timestamp
-	Var TimestampSHA256
+	!define Timestamp
+	!define TimestampSHA256
 	!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `CertExtension=` CertExtension
 	!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `CertTimestamp=` CertTimestamp
 	!if ! "${CertTimestamp}" == ""
 		!if "${CertTimestamp}" == "Comodo"
-			StrCpy $Timestamp "http://timestamp.comodoca.com"
-			StrCpy $TimestampSHA256 "http://timestamp.comodoca.com/?td=sha256"
+			!define /REDEF Timestamp "http://timestamp.comodoca.com"
+			!define /REDEF TimestampSHA256 "http://timestamp.comodoca.com/?td=sha256"
 		!else if "${CertTimestamp}" == "VeriSign"
-			StrCpy $Timestamp "http://timestamp.verisign.com/scripts/timstamp.dll"
-			StrCpy $TimestampSHA256 "http://sha256timestamp.ws.symantec.com/sha256/timestamp"
+			!define /REDEF Timestamp "http://timestamp.verisign.com/scripts/timstamp.dll"
+			!define /REDEF TimestampSHA256 "http://sha256timestamp.ws.symantec.com/sha256/timestamp"
 		!else if "${CertTimestamp}" == "GlobalSign"
-			StrCpy $Timestamp "http://timestamp.globalsign.com/scripts/timstamp.dll"
-			StrCpy $TimestampSHA256 "http://timestamp.globalsign.com/?signature=sha2"
+			!define /REDEF Timestamp "http://timestamp.globalsign.com/scripts/timstamp.dll"
+			!define /REDEF TimestampSHA256 "http://timestamp.globalsign.com/?signature=sha2"
 		!else
-			StrCpy $Timestamp "http://timestamp.comodoca.com"
-			StrCpy $TimestampSHA256 "http://timestamp.comodoca.com/?td=sha256"
+			!define /REDEF Timestamp "http://timestamp.comodoca.com"
+			!define /REDEF TimestampSHA256 "http://timestamp.comodoca.com/?td=sha256"
 		!endif
 	!else
-		StrCpy $Timestamp "http://timestamp.comodoca.com"
-		StrCpy $TimestampSHA256 "http://timestamp.comodoca.com/?td=sha256"
+		!define /REDEF Timestamp "http://timestamp.comodoca.com"
+		!define /REDEF TimestampSHA256 "http://timestamp.comodoca.com/?td=sha256"
 	!endif
 	!define CERT		`Contrib\certificates\${DEVELOPER}.${CertExtension}`
 	!define SIGNTOOL	`Contrib\bin\signtool.exe`
-	!define SHA1		`"${SIGNTOOL}" sign /f "${CERT}" /p "" /t "$Timestamp" /v "${PACKAGE}\${OUTFILE}"`
-	!define SHA256		`"${SIGNTOOL}" sign /f "${CERT}" /p "" /fd sha256 /tr "$TimestampSHA256" /td sha256 /as /v "${PACKAGE}\${OUTFILE}"`
+	!define SHA1		`"${SIGNTOOL}" sign /f "${CERT}" /p "" /t "${Timestamp}" /v "${PACKAGE}\${OUTFILE}"`
+	!define SHA256		`"${SIGNTOOL}" sign /f "${CERT}" /p "" /fd sha256 /tr "${TimestampSHA256}" /td sha256 /as /v "${PACKAGE}\${OUTFILE}"`
 	;=== Sign
 	${Finalize::Sign} `${SHA1}`
 	${Finalize::Sign} `${SHA256}`
