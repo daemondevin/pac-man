@@ -35,7 +35,7 @@ Other things could follow depending on my availability, interest.. and of course
  - <del>Added code to add a manifest file to the Launcher.exe for better user privileges support. Refer to line 80 for referance.</del> 
  - Adding an application manifest is now handled by default since NSIS3. The code has been commented out.
  - Added support for using new NSISPortable which is the new NSIS3 with Unicode support. Removed NSIS in the App directory.
- - Added support for automatic code signing. Refer to lines 93 and 617 for referance.
+ - Added support for automatic code signing. Refer to the code block on line 709 for referance.
  - Added support to prevent a user from shutting down or at least allow enough time to cleanup before exiting then shutting down.
 
 #### __Launcher.ini__
@@ -80,6 +80,7 @@ Contributors=DoomStorm
 Creator=FukenGruven
 CertSigning=true
 CertExtension=p12
+CertTimestamp=VeriSign
 ```
 * __Developer__
 The name of the developer that created the portable application.
@@ -91,11 +92,13 @@ Specify here anyone who has helped with the creation of the portable application
 Specify here the original developer of the PAF if you're updating someone elses work.
 
 * __CertSigning__
-If set to true, the `Launcher.exe` will be signed automatically. __Note:__ As it is written right now, the `LauncherGenerator.exe` expects the certificate to be the developer's name (same as the above key's value) and located in `..\Other\Source\Contrib\certificates`. 
-> Note: If your certificate requires you to use a password, refer to lines 721 and 722 and input your password on column 62.
+If set to true, the `Launcher.exe` will be signed automatically using both _sha1_ and _sha256_. __Note:__ As it is written right now, the `LauncherGenerator.exe` expects the certificate to be the developer's name (same as the above key's value) and located in `..\Other\Source\Contrib\certificates`. 
+> Note: If your certificate requires you to use a password, refer to lines 738 and 739 and input your password on column 62.
 > Be sure it is similiar to something like this: `/p "PASSWORD"` where PASSWORD is your password.
 * __CertExtension__
-If the key `CertSigning` is set to true then this should be set to the certificate's file Extension without the period (e.g. "_pfx_" not "_.pfx_").
+If the key `CertSigning` is set to true then this should be set to the certificate's file extension without the period (e.g. "_pfx_" not "_.pfx_").
+* __CertTimestamp__
+Here you can choose which timestamping service you would like to use. There are only 3 services to choose from as of right now; _Comodo_, _VeriSign_, and _GlobalSign_. Be aware that this key is case-sensitive. If this key is omitted, the compiler will default to using _Comodo_.
 
 Alongside the already provided keys in the `[Dependencies]` section, I've added the support for the following (a short description of what each key means or does can be found further below):
 > Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
