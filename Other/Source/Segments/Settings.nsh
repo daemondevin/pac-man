@@ -26,9 +26,6 @@
 !macroend
 ${SegmentFile}
 ${SegmentInit}
-	!ifmacrodef Init
-		!insertmacro Init
-	!endif
 	; Check for settings
 	${IfNot} ${FileExists} $EXEDIR\Data\settings
 		${DebugMsg} "$EXEDIR\Data\settings does not exist. Creating it."
@@ -38,7 +35,7 @@ ${SegmentInit}
 			CopyFiles /SILENT $EXEDIR\App\DefaultData\*.* $EXEDIR\Data
 		${EndIf}
 	${EndIf}
-	!ifmacrodef UnInit
-		!insertmacro UnInit
+	!ifmacrodef Init
+		!insertmacro Init
 	!endif
 !macroend
