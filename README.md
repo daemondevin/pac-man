@@ -32,11 +32,12 @@ Other things could follow depending on my availability, interest.. and of course
 
 ## Added Features
 #### __PortableApps.comLauncher.nsi__
- - <del>Added code to add a manifest file to the Launcher.exe for better user privileges support. Refer to line 80 for referance.</del> 
- - Adding an application manifest is now handled by default since NSIS3. The code has been commented out.
+ - <del>Added code to add a manifest file to the Launcher.exe for better user privileges support. Refer to line 80 for referance.</del>
  - Added support for using new NSISPortable which is the new NSIS3 with Unicode support. Removed NSIS in the App directory.
+ - Adding an application manifest is now handled by default since NSIS3. The code has been commented out.
  - Added support for automatic code signing. Refer to the code block on line 709 for referance.
  - Added support to prevent a user from shutting down or at least allow enough time to cleanup before exiting then shutting down.
+ - Added support for .NET checking from both 4.0 and below to 4.5 and above. See `DotNet.nsh` in the segments folder for referance. 
 
 #### __Launcher.ini__
 Added new keys to the `[Activate]` section. They are as follows (a short description of what each key means or does can be found further below):
