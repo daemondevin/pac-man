@@ -24,6 +24,191 @@ Var LauncherFile
 !macro xml::Unload
 	xml::_Unload
 !macroend
+!ifdef Get_Drives
+	Function Get::Drives
+		!macro _Get::Drives _DRV _FUNC
+			Push $0
+			Push `${_DRV}`
+			GetFunctionAddress $0 `${_FUNC}`
+			Push `$0`
+			Call Get::Drives
+			Pop $0
+		!macroend
+		!define Get::Drives `!insertmacro _Get::Drives`
+		Exch $1
+		Exch
+		Exch $0
+		Exch
+		Push $2
+		Push $3
+		Push $4
+		Push $5
+		Push $6
+		Push $8
+		Push $9
+		System::Alloc /NOUNLOAD 1024
+		Pop $2
+		System::Call /NOUNLOAD 'kernel32::GetLogicalDriveStringsA(i,i) i(1024, r2)'
+		StrCmp $0 ALL drivestring
+		StrCmp $0 '' 0 typeset
+		StrCpy $0 ALL
+		Goto drivestring
+		typeset:
+		StrCpy $6 -1
+		IntOp $6 $6 + 1
+		StrCpy $8 $0 1 $6
+		StrCmp $8$0 '' enumex
+		StrCmp $8 '' +2
+		StrCmp $8 '+' 0 -4
+		StrCpy $8 $0 $6
+		IntOp $6 $6 + 1
+		StrCpy $0 $0 '' $6
+		StrCmp $8 'FDD' 0 +3
+		StrCpy $6 2
+		Goto drivestring
+		StrCmp $8 'HDD' 0 +3
+		StrCpy $6 3
+		Goto drivestring
+		StrCmp $8 'NET' 0 +3
+		StrCpy $6 4
+		Goto drivestring
+		StrCmp $8 'CDROM' 0 +3
+		StrCpy $6 5
+		Goto drivestring
+		StrCmp $8 'RAM' 0 typeset
+		StrCpy $6 6
+		drivestring:
+		StrCpy $3 $2
+		enumok:
+		System::Call /NOUNLOAD 'kernel32::lstrlenA(t) i(i r3) .r4'
+		StrCmp $4$0 '0ALL' enumex
+		StrCmp $4 0 typeset
+		System::Call /NOUNLOAD 'kernel32::GetDriveTypeA(t) i(i r3) .r5'
+		StrCmp $0 ALL +2
+		StrCmp $5 $6 letter enumnext
+		StrCmp $5 2 0 +3
+		StrCpy $8 FDD
+		Goto letter
+		StrCmp $5 3 0 +3
+		StrCpy $8 HDD
+		Goto letter
+		StrCmp $5 4 0 +3
+		StrCpy $8 NET
+		Goto letter
+		StrCmp $5 5 0 +3
+		StrCpy $8 CDROM
+		Goto letter
+		StrCmp $5 6 0 enumex
+		StrCpy $8 RAM
+		letter:
+		System::Call /NOUNLOAD '*$3(&t1024 .r9)'
+		Push $0
+		Push $1
+		Push $2
+		Push $3
+		Push $4
+		Push $5
+		Push $6
+		Push $8
+		Call $1
+		Pop $9
+		Pop $8
+		Pop $6
+		Pop $5
+		Pop $4
+		Pop $3
+		Pop $2
+		Pop $1
+		Pop $0
+		StrCmp $9 'StopGetDrives' enumex
+		enumnext:
+		IntOp $3 $3 + $4
+		IntOp $3 $3 + 1
+		Goto enumok
+		enumex:
+		System::Free $2
+		Pop $9
+		Pop $8
+		Pop $6
+		Pop $5
+		Pop $4
+		Pop $3
+		Pop $2
+		Pop $1
+		Pop $0
+	FunctionEnd
+!endif
+!ifdef CompareVersions
+	Function Compare
+		!define Compare `!insertmacro _Compare`
+		!macro _Compare _VER1 _VER2 _RESULT
+			Push `${_VER1}`
+			Push `${_VER2}`
+			Call Compare
+			Pop ${_RESULT}
+		!macroend
+		Exch $1
+		Exch
+		Exch $0
+		Exch
+		Push $2
+		Push $3
+		Push $4
+		Push $5
+		Push $6
+		Push $7
+		StrCpy $2 -1
+		IntOp $2 $2 + 1
+		StrCpy $3 $0 1 $2
+		StrCmp $3 '' +2
+		StrCmp $3 '.' 0 -3
+		StrCpy $4 $0 $2
+		IntOp $2 $2 + 1
+		StrCpy $0 $0 '' $2
+		StrCpy $2 -1
+		IntOp $2 $2 + 1
+		StrCpy $3 $1 1 $2
+		StrCmp $3 '' +2
+		StrCmp $3 '.' 0 -3
+		StrCpy $5 $1 $2
+		IntOp $2 $2 + 1
+		StrCpy $1 $1 '' $2
+		StrCmp $4$5 '' +20
+		StrCpy $6 -1
+		IntOp $6 $6 + 1
+		StrCpy $3 $4 1 $6
+		StrCmp $3 '0' -2
+		StrCmp $3 '' 0 +2
+		StrCpy $4 0
+		StrCpy $7 -1
+		IntOp $7 $7 + 1
+		StrCpy $3 $5 1 $7
+		StrCmp $3 '0' -2
+		StrCmp $3 '' 0 +2
+		StrCpy $5 0
+		StrCmp $4 0 0 +2
+		StrCmp $5 0 -30 +10
+		StrCmp $5 0 +7
+		IntCmp $6 $7 0 +6 +8
+		StrCpy $4 '1$4'
+		StrCpy $5 '1$5'
+		IntCmp $4 $5 -35 +5 +3
+		StrCpy $0 0
+		Goto end
+		StrCpy $0 1
+		Goto end
+		StrCpy $0 2
+		end:
+		Pop $7
+		Pop $6
+		Pop $5
+		Pop $4
+		Pop $3
+		Pop $2
+		Pop $1
+		Exch $0
+	FunctionEnd
+!endif
 Function Get.Parent
 	!macro Get.Parent _PATH _RET
 		Push `${_PATH}`
@@ -48,6 +233,688 @@ Function Get.Parent
 	Pop $1
 	Exch $0
 FunctionEnd
+!ifdef ConFunc
+	Function WriteS
+		!macro _WriteS _FILE _ENTRY _VALUE _RESULT
+			Push `${_FILE}`
+			Push `${_ENTRY}`
+			Push `${_VALUE}`
+			Call WriteS
+			Pop ${_RESULT}
+		!macroend
+		!define WriteS `!insertmacro _WriteS`
+		!insertmacro TextFunc_BOM
+		Exch $2
+		Exch
+		Exch $1
+		Exch
+		Exch 2
+		Exch $0
+		Exch 2
+		Push $3
+		Push $4
+		Push $5
+		Push $6
+		Push $7
+		ClearErrors
+		IfFileExists $0 0 +81
+		FileOpen $3 $0 a
+		IfErrors +79
+		FileReadWord $3 $7
+		IntCmp $7 0xFEFF +4
+		FileSeek $3 0 SET
+		StrCpy $TextFunc_BOM 0
+		Goto +2
+		StrCpy $TextFunc_BOM FFFE
+		StrLen $0 $1
+		StrCmpS $0 0 0 +3
+		StrCpy $0 ''
+		Goto +67
+		IntCmp $7 0xFEFF +3
+		FileRead $3 $4
+		Goto +2
+		FileReadUTF16LE $3 $4
+		IfErrors +41
+		StrCpy $5 $4 $0
+		StrCmpS $5 $1 0 -6
+		StrCpy $5 0
+		IntOp $5 $5 - 1
+		StrCpy $6 $4 1 $5
+		StrCmpS $6 '$\r' -2
+		StrCmpS $6 '$\n' -3
+		StrCpy $6 $4
+		StrCmpS $5 -1 +3
+		IntOp $5 $5 + 1
+		StrCpy $6 $4 $5
+		StrCmpS $2 '' +4
+		StrCmpS $6 '$1$2' 0 +3
+		StrCpy $0 SAME
+		Goto +47
+		FileSeek $3 0 CUR $5
+		StrLen $4 $4
+		IntCmp $7 0xFEFF 0 +2 +2
+		IntOp $4 $4 * 2
+		IntOp $4 $5 - $4
+		FileSeek $3 0 END $6
+		IntOp $6 $6 - $5
+		System::Alloc $6
+		Pop $0
+		FileSeek $3 $5 SET
+		System::Call 'kernel32::ReadFile(i r3, i r0, i r6, t.,)'
+		FileSeek $3 $4 SET
+		StrCmpS $2 '' +5
+		IntCmp $7 0xFEFF +3
+		FileWrite $3 '$1$2$\r$\n'
+		Goto +2
+		FileWriteUTF16LE $3 '$1$2$\r$\n'
+		System::Call 'kernel32::WriteFile(i r3, i r0, i r6, t.,)'
+		System::Call 'kernel32::SetEndOfFile(i r3)'
+		System::Free $0
+		StrCmpS $2 '' +3
+		StrCpy $0 CHANGED
+		Goto +24
+		StrCpy $0 DELETED
+		Goto +22
+		StrCmpS $2 '' 0 +3
+		StrCpy $0 SAME
+		Goto +19
+		IntCmp $7 0xFEFF +4
+		FileSeek $3 -1 END
+		FileRead $3 $4
+		Goto +3
+		FileSeek $3 -2 END
+		FileReadUTF16LE $3 $4
+		IfErrors +4
+		IntCmp $7 0xFEFF +6
+		StrCmpS $4 '$\r' +3
+		StrCmpS $4 '$\n' +2
+		FileWrite $3 '$\r$\n'
+		FileWrite $3 '$1$2$\r$\n'
+		Goto +5
+		StrCmpS $4 '$\r' +3
+		StrCmpS $4 '$\n' +2
+		FileWriteUTF16LE $3 '$\r$\n'
+		FileWriteUTF16LE $3 '$1$2$\r$\n'
+		StrCpy $0 ADDED
+		FileClose $3
+		Goto +3
+		SetErrors
+		StrCpy $0 ''
+		Pop $7
+		Pop $6
+		Pop $5
+		Pop $4
+		Pop $3
+		Pop $2
+		Pop $1
+		Exch $0
+	FunctionEnd
+	Function ReadS
+		!macro _ReadS _FILE _ENTRY _RESULT
+			Push `${_FILE}`
+			Push `${_ENTRY}`
+			Call ReadS
+			Pop ${_RESULT}
+		!macroend
+		!define ReadS `!insertmacro _ReadS`
+		!insertmacro TextFunc_BOM
+		Exch $1
+		Exch
+		Exch $0
+		Exch
+		Push $2
+		Push $3
+		Push $4
+		Push $5
+		ClearErrors
+		FileOpen $2 $0 r
+		IfErrors +22
+		FileReadWord $2 $5
+		IntCmp $5 0xFEFF +4
+		FileSeek $2 0 SET
+		StrCpy $TextFunc_BOM 0
+		Goto +2
+		StrCpy $TextFunc_BOM FFFE
+		StrLen $0 $1
+		StrCmpS $0 0 +14
+		IntCmp $5 0xFEFF +3
+		FileRead $2 $3
+		Goto +2
+		FileReadUTF16LE $2 $3
+		IfErrors +9
+		StrCpy $4 $3 $0
+		StrCmpS $4 $1 0 -6
+		StrCpy $0 $3 '' $0
+		StrCpy $4 $0 1 -1
+		StrCmpS $4 '$\r' +2
+		StrCmpS $4 '$\n' 0 +5
+		StrCpy $0 $0 -1
+		Goto -4
+		SetErrors
+		StrCpy $0 ''
+		FileClose $2
+		Pop $5
+		Pop $4
+		Pop $3
+		Pop $2
+		Pop $1
+		Exch $0
+	FunctionEnd
+	Function Write
+		!define Write `!insertmacro _Write`
+		!macro _Write _FILE _ENTRY _VALUE _RESULT
+			Push `${_FILE}`
+			Push `${_ENTRY}`
+			Push `${_VALUE}`
+			Call Write
+			Pop ${_RESULT}
+		!macroend
+		Exch $2
+		Exch
+		Exch $1
+		Exch
+		Exch 2
+		Exch $0
+		Exch 2
+		Push $3
+		Push $4
+		Push $5
+		Push $6
+		ClearErrors
+		IfFileExists $0 0 error
+		FileOpen $3 $0 a
+		IfErrors error
+		StrLen $0 $1
+		StrCmp $0 0 0 readnext
+		StrCpy $0 ''
+		Goto close
+		readnext:
+		FileRead $3 $4
+		IfErrors add
+		StrCpy $5 $4 $0
+		StrCmp $5 $1 0 readnext
+		StrCpy $5 0
+		IntOp $5 $5 - 1
+		StrCpy $6 $4 1 $5
+		StrCmp $6 '$\r' -2
+		StrCmp $6 '$\n' -3
+		StrCpy $6 $4
+		StrCmp $5 -1 +3
+		IntOp $5 $5 + 1
+		StrCpy $6 $4 $5
+		StrCmp $2 '' change
+		StrCmp $6 '$1$2' 0 change
+		StrCpy $0 SAME
+		Goto close
+		change:
+		FileSeek $3 0 CUR $5
+		StrLen $4 $4
+		IntOp $4 $5 - $4
+		FileSeek $3 0 END $6
+		IntOp $6 $6 - $5
+		System::Alloc /NOUNLOAD $6
+		Pop $0
+		FileSeek $3 $5 SET
+		System::Call /NOUNLOAD 'kernel32::ReadFile(i r3, i r0, i $6, t.,)'
+		FileSeek $3 $4 SET
+		StrCmp $2 '' +2
+		FileWrite $3 '$1$2$\r$\n'
+		System::Call /NOUNLOAD 'kernel32::WriteFile(i r3, i r0, i $6, t.,)'
+		System::Call /NOUNLOAD 'kernel32::SetEndOfFile(i r3)'
+		System::Free $0
+		StrCmp $2 '' +3
+		StrCpy $0 CHANGED
+		Goto close
+		StrCpy $0 DELETED
+		Goto close
+		add:
+		StrCmp $2 '' 0 +3
+		StrCpy $0 SAME
+		Goto close
+		FileSeek $3 -1 END
+		FileRead $3 $4
+		IfErrors +4
+		StrCmp $4 '$\r' +3
+		StrCmp $4 '$\n' +2
+		FileWrite $3 '$\r$\n'
+		FileWrite $3 '$1$2$\r$\n'
+		StrCpy $0 ADDED
+		close:
+		FileClose $3
+		Goto end
+		error:
+		SetErrors
+		StrCpy $0 ''
+		end:
+		Pop $6
+		Pop $5
+		Pop $4
+		Pop $3
+		Pop $2
+		Pop $1
+		Exch $0
+	FunctionEnd
+	Function Read
+		!define Read `!insertmacro _Read`
+		!macro _Read _FILE _ENTRY _RESULT
+			Push `${_FILE}`
+			Push `${_ENTRY}`
+			Call Read
+			Pop ${_RESULT}
+		!macroend
+		Exch $1
+		Exch
+		Exch $0
+		Exch
+		Push $2
+		Push $3
+		Push $4
+		ClearErrors
+		FileOpen $2 $0 r
+		IfErrors error
+		StrLen $0 $1
+		StrCmp $0 0 error
+		readnext:
+		FileRead $2 $3
+		IfErrors error
+		StrCpy $4 $3 $0
+		StrCmp $4 $1 0 readnext
+		StrCpy $0 $3 '' $0
+		StrCpy $4 $0 1 -1
+		StrCmp $4 '$\r' +2
+		StrCmp $4 '$\n' 0 close
+		StrCpy $0 $0 -1
+		Goto -4
+		error:
+		SetErrors
+		StrCpy $0 ''
+		close:
+		FileClose $2
+		Pop $4
+		Pop $3
+		Pop $2
+		Pop $1
+		Exch $0
+	FunctionEnd
+!endif
+
+!ifdef Include_ReadLine
+	Function ReadLine
+		!macro _ReadLine _FILE _NUMBER _RESULT
+			Push `${_FILE}`
+			Push `${_NUMBER}`
+			Call ReadLine
+			Pop ${_RESULT}
+		!macroend
+		!define ReadLine `!insertmacro _ReadLine`
+		!insertmacro TextFunc_BOM
+		Exch $1
+		Exch
+		Exch $0
+		Exch
+		Push $2
+		Push $3
+		Push $4
+		Push $5
+		ClearErrors
+		IfFileExists $0 0 TextFunc_LineRead_error
+		IntOp $1 $1 + 0
+		IntCmp $1 0 TextFunc_LineRead_error 0 TextFunc_LineRead_plus
+		StrCpy $4 0
+		FileOpen $2 $0 r
+		IfErrors TextFunc_LineRead_error
+		FileReadWord $2 $5
+		IntCmp $5 0xFEFF +6
+		FileSeek $2 0 SET
+		StrCpy $TextFunc_BOM 0
+		IntCmp $5 0xFEFF +3		
+		FileRead $2 $3
+		Goto +3
+		StrCpy $TextFunc_BOM FFFE
+		FileReadUTF16LE $2 $3
+		IfErrors +3
+		IntOp $4 $4 + 1
+		Goto -7
+		FileClose $2
+		IntOp $1 $4 + $1
+		IntOp $1 $1 + 1
+		IntCmp $1 0 TextFunc_LineRead_error TextFunc_LineRead_error
+		TextFunc_LineRead_plus:
+		FileOpen $2 $0 r
+		IfErrors TextFunc_LineRead_error
+		StrCpy $3 0
+		IntOp $3 $3 + 1
+		IntCmp $5 0xFEFF +3		
+		FileRead $2 $0
+		Goto +2
+		FileReadUTF16LE $2 $0
+		IfErrors +4
+		StrCmp $3 $1 0 -6
+		FileClose $2
+		Goto TextFunc_LineRead_end
+		FileClose $2
+		TextFunc_LineRead_error:
+		SetErrors
+		StrCpy $0 ''
+		TextFunc_LineRead_end:
+		Pop $5
+		Pop $4
+		Pop $3
+		Pop $2
+		Pop $1
+		Exch $0
+	FunctionEnd
+!endif
+!ifdef Include_WordRep
+	Function WordRepS
+		!macro _WordRepS _STRING _WORD1 _WORD2 _NUMBER _RESULT
+			Push `${_STRING}`
+			Push `${_WORD1}`
+			Push `${_WORD2}`
+			Push `${_NUMBER}`
+			Call WordRepS
+			Pop ${_RESULT}
+		!macroend
+		!define WordRepS `!insertmacro _WordRepS`
+		Exch $2
+		Exch
+		Exch $1
+		Exch
+		Exch 2
+		Exch $0
+		Exch 2
+		Exch 3
+		Exch $R0
+		Exch 3
+		Push $3
+		Push $4
+		Push $5
+		Push $6
+		Push $7
+		Push $8
+		Push $9
+		Push $R1
+		ClearErrors
+		StrCpy $R1 $R0
+		StrCpy $9 ""
+		StrCpy $3 $2 1
+		StrCpy $2 $2 "" 1
+		StrCmp $3 E 0 +3
+		StrCpy $9 E
+		Goto -4
+		StrCpy $4 $2 1 -1
+		StrCpy $5 ""
+		StrCpy $6 ""
+		StrLen $7 $0
+		StrCmpS $7 0 ERROR1
+		StrCmpS $R0 "" ERROR1
+		StrCmpS $3 { BEGIN
+		StrCmpS $3 } END CHK
+		BEGIN:
+		StrCpy $8 $R0 $7
+		StrCmpS $8 $0 0 +4
+		StrCpy $R0 $R0 "" $7
+		StrCpy $5 "$5$1"
+		Goto -4
+		StrCpy $3 $2 1
+		StrCmpS $3 } 0 MERGE
+		END:
+		StrCpy $8 $R0 "" -$7
+		StrCmpS $8 $0 0 +4
+		StrCpy $R0 $R0 -$7
+		StrCpy $6 "$6$1"
+		Goto -4
+		MERGE:
+		StrCmpS $4 * 0 +5
+		StrCmpS $5 "" +2
+		StrCpy $5 $1
+		StrCmpS $6 "" +2
+		StrCpy $6 $1
+		StrCpy $R0 "$5$R0$6"
+		Goto DONE
+		CHK:
+		StrCmpS $3 + +2
+		StrCmpS $3 - 0 ERROR3
+		StrCpy $5 $2 1
+		IntOp $2 $2 + 0
+		StrCmpS $2 0 0 ONE
+		StrCmpS $5 0 ERROR2
+		StrCpy $3 ""
+		REPLACE:
+		StrCpy $5 0
+		StrCpy $2 $R0 $7 $5
+		StrCmpS $2 "" +4
+		StrCmpS $2 $0 +6
+		IntOp $5 $5 + 1
+		Goto -4
+		StrCmpS $R0 $R1 ERROR1
+		StrCpy $R0 "$3$R0"
+		Goto DONE
+		StrCpy $2 $R0 $5
+		IntOp $5 $5 + $7
+		StrCmpS $4 * 0 +3
+		StrCpy $6 $R0 $7 $5
+		StrCmpS $6 $0 -3
+		StrCpy $R0 $R0 "" $5
+		StrCpy $3 "$3$2$1"
+		Goto REPLACE
+		ONE:
+		StrCpy $5 0
+		StrCpy $8 0
+		Goto LOOP
+		PRELOOP:
+		IntOp $5 $5 + 1
+		LOOP:
+		StrCpy $6 $R0 $7 $5
+		StrCmpS $6$8 0 ERROR1
+		StrCmpS $6 "" MINUS
+		StrCmpS $6 $0 0 PRELOOP
+		IntOp $8 $8 + 1
+		StrCmpS $3$8 +$2 FOUND
+		IntOp $5 $5 + $7
+		Goto LOOP
+		MINUS:
+		StrCmpS $3 - 0 ERROR2
+		StrCpy $3 +
+		IntOp $2 $8 - $2
+		IntOp $2 $2 + 1
+		IntCmp $2 0 ERROR2 ERROR2 ONE
+		FOUND:
+		StrCpy $3 $R0 $5
+		StrCmpS $4 * 0 +5
+		StrCpy $6 $3 "" -$7
+		StrCmpS $6 $0 0 +3
+		StrCpy $3 $3 -$7
+		Goto -3
+		IntOp $5 $5 + $7
+		StrCmpS $4 * 0 +3
+		StrCpy $6 $R0 $7 $5
+		StrCmpS $6 $0 -3
+		StrCpy $R0 $R0 "" $5
+		StrCpy $R0 "$3$1$R0"
+		Goto DONE
+		ERROR3:
+		StrCpy $R0 3
+		Goto ERROR
+		ERROR2:
+		StrCpy $R0 2
+		Goto ERROR
+		ERROR1:
+		StrCpy $R0 1
+		ERROR:
+		StrCmp $9 E +3
+		StrCpy $R0 $R1
+		Goto +2
+		SetErrors
+		DONE:
+		Pop $R1
+		Pop $9
+		Pop $8
+		Pop $7
+		Pop $6
+		Pop $5
+		Pop $4
+		Pop $3
+		Pop $2
+		Pop $1
+		Pop $0
+		Exch $R0
+	FunctionEnd
+	Function WordRep
+		!define WordRep `!insertmacro _WordRep`
+		!macro _WordRep _STRING _WORD1 _WORD2 _NUMBER _RESULT
+			Push `${_STRING}`
+			Push `${_WORD1}`
+			Push `${_WORD2}`
+			Push `${_NUMBER}`
+			Call WordRep
+			Pop ${_RESULT}
+		!macroend
+		Exch $2
+		Exch
+		Exch $1
+		Exch
+		Exch 2
+		Exch $0
+		Exch 2
+		Exch 3
+		Exch $R0
+		Exch 3
+		Push $3
+		Push $4
+		Push $5
+		Push $6
+		Push $7
+		Push $8
+		Push $9
+		Push $R1
+		ClearErrors
+		StrCpy $R1 $R0
+		StrCpy $9 ''
+		StrCpy $3 $2 1
+		StrCpy $2 $2 '' 1
+		StrCmp $3 'E' 0 +3
+		StrCpy $9 E
+		Goto -4
+		StrCpy $4 $2 1 -1
+		StrCpy $5 ''
+		StrCpy $6 ''
+		StrLen $7 $0
+		StrCmp $7 0 error1
+		StrCmp $R0 '' error1
+		StrCmp $3 '{' beginning
+		StrCmp $3 '}' ending errorchk
+		beginning:
+		StrCpy $8 $R0 $7
+		StrCmp $8 $0 0 +4
+		StrCpy $R0 $R0 '' $7
+		StrCpy $5 '$5$1'
+		Goto -4
+		StrCpy $3 $2 1
+		StrCmp $3 '}' 0 merge
+		ending:
+		StrCpy $8 $R0 '' -$7
+		StrCmp $8 $0 0 +4
+		StrCpy $R0 $R0 -$7
+		StrCpy $6 '$6$1'
+		Goto -4
+		merge:
+		StrCmp $4 '*' 0 +5
+		StrCmp $5 '' +2
+		StrCpy $5 $1
+		StrCmp $6 '' +2
+		StrCpy $6 $1
+		StrCpy $R0 '$5$R0$6'
+		Goto end
+		errorchk:
+		StrCmp $3 '+' +2
+		StrCmp $3 '-' 0 error3
+		StrCpy $5 $2 1
+		IntOp $2 $2 + 0
+		StrCmp $2 0 0 one
+		StrCmp $5 0 error2
+		StrCpy $3 ''
+		all:
+		StrCpy $5 0
+		StrCpy $2 $R0 $7 $5
+		StrCmp $2 '' +4
+		StrCmp $2 $0 +6
+		IntOp $5 $5 + 1
+		Goto -4
+		StrCmp $R0 $R1 error1
+		StrCpy $R0 '$3$R0'
+		Goto end
+		StrCpy $2 $R0 $5
+		IntOp $5 $5 + $7
+		StrCmp $4 '*' 0 +3
+		StrCpy $6 $R0 $7 $5
+		StrCmp $6 $0 -3
+		StrCpy $R0 $R0 '' $5
+		StrCpy $3 '$3$2$1'
+		Goto all
+		one:
+		StrCpy $5 0
+		StrCpy $8 0
+		Goto loop
+		preloop:
+		IntOp $5 $5 + 1
+		loop:
+		StrCpy $6 $R0 $7 $5
+		StrCmp $6$8 0 error1
+		StrCmp $6 '' minus
+		StrCmp $6 $0 0 preloop
+		IntOp $8 $8 + 1
+		StrCmp $3$8 +$2 found
+		IntOp $5 $5 + $7
+		Goto loop
+		minus:
+		StrCmp $3 '-' 0 error2
+		StrCpy $3 +
+		IntOp $2 $8 - $2
+		IntOp $2 $2 + 1
+		IntCmp $2 0 error2 error2 one
+		found:
+		StrCpy $3 $R0 $5
+		StrCmp $4 '*' 0 +5
+		StrCpy $6 $3 '' -$7
+		StrCmp $6 $0 0 +3
+		StrCpy $3 $3 -$7
+		Goto -3
+		IntOp $5 $5 + $7
+		StrCmp $4 '*' 0 +3
+		StrCpy $6 $R0 $7 $5
+		StrCmp $6 $0 -3
+		StrCpy $R0 $R0 '' $5
+		StrCpy $R0 '$3$1$R0'
+		Goto end
+		error3:
+		StrCpy $R0 3
+		Goto error
+		error2:
+		StrCpy $R0 2
+		Goto error
+		error1:
+		StrCpy $R0 1
+		error:
+		StrCmp $9 'E' +3
+		StrCpy $R0 $R1
+		Goto +2
+		SetErrors
+		end:
+		Pop $R1
+		Pop $9
+		Pop $8
+		Pop $7
+		Pop $6
+		Pop $5
+		Pop $4
+		Pop $3
+		Pop $2
+		Pop $1
+		Pop $0
+		Exch $R0
+	FunctionEnd
+!endif
 Function SetVariablesPath
 	!macro _SetVariablesPath _VAR _PATH
 		Push "${_VAR}"
@@ -224,7 +1091,8 @@ FunctionEnd
 	!define FileLocked `"" LL_FileLocked`
 !endif
 !ifdef TrimString
-	;=== this works better than TrimWhite because this also removes carriage returns.
+	;=== This works better than TrimWhite because 
+	;=== this can also remove carriage returns.
 	Function Trim
 		!macro _Trim _RESULT _STRING
 			Push `${_STRING}`
@@ -275,6 +1143,12 @@ FunctionEnd
 		Pop $1
 		Pop $0
 	FunctionEnd
+!endif
+!ifdef WININET_FUNCTION
+	!macro _WININET _URL
+		System::Call `wininet::DeleteUrlCacheEntryW(t '${_URL}')i .r0`
+	!macroend
+	!define WININET "!insertmacro _WININET"
 !endif
 !ifdef RMEMPTYDIRECTORIES
 	Function RMEmptyDir
@@ -331,6 +1205,28 @@ FunctionEnd
 		Pop $0
 		Pop $1
 		Exch $2
+	FunctionEnd
+!endif
+!ifdef ComputerName
+	Function GetComputerName
+		!macro _GetComputerName _NAME
+			Call GetComputerName
+			Pop ${_NAME}
+		!macroend
+		!define GetComputerName `!insertmacro _GetComputerName`
+		Push $0
+		Push $1
+		System::Call `kernel32.dll::GetComputerNameExW(i 4,w .r0,*i ${NSIS_MAX_STRLEN} r1)i.r1`
+		StrCmpS $1 1 0 +3
+		StrCpy $0 `\\$0`
+		Goto +6
+		System::Call `kernel32.dll::GetComputerNameW(t .r0,*i ${NSIS_MAX_STRLEN} r1)i.r1`
+		StrCmpS $1 1 0 +3
+		StrCpy $0 `\\$0`
+		Goto +2
+		StrCpy $0 ""
+		Pop $1
+		Exch $0
 	FunctionEnd
 !endif
 !ifdef ACL
@@ -413,6 +1309,27 @@ FunctionEnd
 		Pop $2
 	FunctionEnd
 !endif
+!ifdef LocalLow
+	Function GetLocalAppDataLow
+		!macro _GetLocalAppDataLow _VAR
+			Call GetLocalAppDataLow
+			Pop `${_VAR}`
+		!macroend
+		!define GetLocalAppDataLow `!insertmacro _GetLocalAppDataLow`
+		Push $0
+		Push $1
+		Push $2
+		System::Call `shell32::SHGetKnownFolderPath(g '{A520A1A4-1780-4FF6-BD18-167343C5AF16}', i 0x1000 ,in, *i.r1)i.r0`
+		StrCmpS $0 0 0 +5
+		System::Call /NOUNLOAD `kernel32::lstrlenW(i $1)i.r2`
+		IntOp $2 $2 * 2
+		System::Call /NOUNLOAD `*$1(&w$2 .r0)`
+		System::Call `ole32::CoTaskMemFree(i $1)`
+		Pop $2
+		Pop $1
+		Exch $0
+	FunctionEnd
+!endif
 Function GetLongPathName
 	!macro _GetLongPathName _PATH
 		Push `${_PATH}`
@@ -432,6 +1349,28 @@ Function GetLongPathName
 	Pop $1
 	Exch $0
 FunctionEnd
+!ifdef PublicDoc
+	Function GetPublicDoc
+		!macro _GetPublicDoc _RET
+			Call GetPublicDoc
+			Pop `${_RET}`
+		!macroend
+		!define GetPublicDoc `!insertmacro _GetPublicDoc`
+		Push $1
+		Push $2
+		Push $3
+		Push $4
+		StrCpy $1 ""
+		StrCpy $2 0x002e
+		StrCpy $3 ""
+		StrCpy $4 ""
+		System::Call `shell32::SHGetSpecialFolderPath(i $HWNDPARENT, t .r1, i r2, i r3) i .r4`
+		Pop $4
+		Pop $3
+		Pop $2
+		Exch $1
+	FunctionEnd
+!endif
 Function FileName
 	!macro _FileName _STRING _RESULT
 		Push `${_STRING}`

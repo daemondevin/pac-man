@@ -44,6 +44,45 @@ Function dotNETCheck
 	Pop $1
 	Exch $0
 FunctionEnd
+Function HasDotNETFramework
+	!macro _HasDotNETFramework _a _b _t _f
+		!insertmacro _LOGICLIB_TEMP
+		Call HasDotNETFramework
+		Pop $_LOGICLIB_TEMP
+		!insertmacro _= $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
+	!macroend
+	!define HasDotNETFramework `"" HasDotNETFramework ""`
+	!define NET `SOFTWARE\Microsoft\.NETFramework`
+	!define POL `SOFTWARE\Microsoft\.NETFramework\policy`
+	Push $0
+	Push $1
+	Push $2
+	Push $3
+	Push $4
+	ReadRegStr $4 HKLM `${NET}` InstallRoot
+	Push $4
+	Exch $EXEDIR
+	Exch $EXEDIR
+	Pop $4
+	IfFileExists $4 0 +10
+	StrCpy $0 0
+	EnumRegKey $2 HKLM `${POL}` $0
+	IntOp $0 $0 + 1
+	StrCmpS $2 "" +6
+	StrCpy $1 0
+	EnumRegValue $3 HKLM `${POL}\$2` $1
+	IntOp $1 $1 + 1
+	StrCmpS $3 "" -6
+	IfFileExists `$4\$2.$3` +3 -3
+	StrCpy $0 0
+	Goto +2
+	StrCpy $0 1
+	Pop $4
+	Pop $3
+	Pop $2
+	Pop $1
+	Exch $0
+FunctionEnd
 
 ${SegmentFile}
 ${SegmentInit}
@@ -58,11 +97,18 @@ ${SegmentInit}
 	;  - (4.7|4.6.2|4.6.1|4.6|4.5.2|4.5.1|4.5)
 	; 
 	ReadINIStr $0 $EXEDIR\App\AppInfo\appinfo.ini Dependencies UsesDotNetVersion
+	!define dotNETVersion "$0"
 	${If} $0 != ""
 		${CheckDOTNET} $1 "$0"
 		${If} ${Errors}
-			${IfThen} $0 == 4.0 ${|} StrCpy $0 4.0C ${|}
-			${If} ${HasDotNetFramework} $0
+			; ${IfNot} ${HasDotNet${dotNETVersion}}
+				; MessageBox MB_ICONSTOP|MB_TOPMOST `${PORTABLEAPPNAME} requires Microsoft .NET Framework 2.0 or newer`
+				; Call Unload
+				; Quit
+			; ${EndIf}
+			; ${If} ${HasDotNetFramework} $0
+			${If} ${HasDotNetFramework}
+				MessageBox MB_OK|MB_ICONSTOP `$0`
 				; Required .NET version found
 				${DebugMsg} ".NET Framework $0 found"
 			${ElseIf} ${Errors}
