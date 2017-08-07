@@ -93,7 +93,7 @@ Specify here the original developer of the PAF if you're updating someone elses 
 
 * __CertSigning__
 If set to true, the `Launcher.exe` will be signed automatically using both _sha1_ and _sha256_. __Note:__ As it is written right now, the `LauncherGenerator.exe` expects the certificate to be the developer's name (same as the above key's value) and located in `..\Other\Source\Contrib\certificates`. 
-> Note: If your certificate requires you to use a password, refer to lines 738 and 739 and input your password on column 62.
+> Note: If your certificate requires you to use a password, refer to lines 741 and 742 and input your password on column 62.
 > Be sure it is similiar to something like this: `/p "PASSWORD"` where PASSWORD is your password.
 * __CertExtension__
 If the key `CertSigning` is set to true then this should be set to the certificate's file extension without the period (e.g. "_pfx_" not "_.pfx_").
