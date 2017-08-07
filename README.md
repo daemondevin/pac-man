@@ -90,16 +90,25 @@ The name of the developer that created the portable application.
 Specify here anyone who has helped with the creation of the portable application.
 
 * __Creator__
-Specify here the original developer of the PAF if you're updating someone elses work.
+Specify here the original developer of the PAF if you're updating someone else's work.
 
 * __CertSigning__
-If set to true, the `Launcher.exe` will be signed automatically using both _sha1_ and _sha256_. __Note:__ As it is written right now, the `LauncherGenerator.exe` expects the certificate to be the developer's name (same as the above key's value) and located in `..\Other\Source\Contrib\certificates`. 
+If set to true, the `Launcher.exe` will automatically be signed using dual signature hashing algorithm standards (_SHA256_ and _SHA1_). I decided to use dual signing because Windows 8 supports SHA256 Code Signing Certificates (SHA-2 hashing algorithm); whereas, Windows 7 may only support SHA-1 Code Signing Certificates (SHA-1 hashing algorithm). It should be noted that Windows 10 has stopped accepting SHA-1 certificates and certificate chains for Authenticode-signed binaries (unless a timestamp marked the binary as being signed before 1/1/2016). You can visit this [Microsoft Security Advisory article][MSAdvisory] on the availability of SHA-2 code signing support for Windows 7 and Windows Server 2008 R2 for more information about this topic.
+>__ATTENTION:__ As it is written right now, the `PortableApps.comLauncherGenerator.exe` expects the certificate file to be the developer's name (same as the `[Team]Developer` key's value) and located in `..\Other\Source\Contrib\certificates`. 
+
 > Note: If your certificate requires you to use a password, refer to lines 741 and 742 and input your password on column 62.
 > Be sure it is similiar to something like this: `/p "PASSWORD"` where PASSWORD is your password.
 * __CertExtension__
 If the key `CertSigning` is set to true then this should be set to the certificate's file extension without the period (e.g. "_pfx_" not "_.pfx_").
 * __CertTimestamp__
-Here you can choose which timestamping service you would like to use. There are only 3 services to choose from as of right now; _Comodo_, _VeriSign_, and _GlobalSign_. Be aware that this key is case-sensitive. If this key is omitted, the compiler will default to using _Comodo_.
+Here you can choose which time-stamping service you would like to use. Refer to the table below for a small list of available services and their available hashing algorithms. I would recommend using a service which uses both signature hashes. Be aware that this key is case-sensitive. If this key is omitted, the compiler will default to using _Comodo_.
+> | __Key=Value__ | __Service__ | __Hashing__|
+> | CertTimestamp=Comodo | Comodo Group, Inc. | _SHA-1_ & _SHA-2_ |
+> | CertTimestamp=Verisign | Verisign, Inc. | _SHA-1_ & _SHA-2_ |
+> | CertTimestamp=GlobalSign | GMO GlobalSign, Inc. | _SHA-1_ & _SHA-2_ |
+> | CertTimestamp=DigiCert | DigiCert, Inc. | _SHA-1_ & _SHA-2_ |
+> | CertTimestamp=Starfield | Starfield Technologies, LLC. | _SHA-1_ & _SHA-2_ |
+> | CertTimestamp=SwissSign | SwissSign AG | _SHA-2_ |
 
 Alongside the already provided keys in the `[Dependencies]` section, I've added the support for the following (a short description of what each key means or does can be found further below):
 > Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
@@ -204,4 +213,5 @@ I should convey that some of the code I've added here was written by FukenGruven
 [3]: https://portableapps.com/node/56500 "A Superfluous Discussion"
 [4]: https://portableapps.com/apps/development/nsis_portable "NSIS Portable"
 [5]: http://johnhaller.com/useful-stuff/dot-net-portable-apps ".NET Availability and Viability With Portable Apps"
+[MSAdvisory]: https://support.microsoft.com/en-us/kb/3033929 "MS Security Advisory: SHA2 support for Win7/Windows Server '08 R2: March 10, 2015"
 [author]: http://softables.tk/ "Softables.tk/"
