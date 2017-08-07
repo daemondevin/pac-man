@@ -1,8 +1,8 @@
 !define FNTDIR    `${DATA}\Fonts`
 !define FNTXT     `${FNTDIR}\.Portable.Fonts.txt`
 !define DEFFNTXT  `${DEFDATA}\Fonts\.Portable.Fonts.txt`
-!define FNT1      `• Font(s) added in here are portabilized and are available for usage during runtime.$\r$\n`
-!define FNT2      `• Supported: .fon, .fnt, .ttf, .ttc, .fot, .otf, .mmm, .pfb, .pfm.`
+!define FNT1      `â€¢ Font(s) added in here are portabilized and are available for usage during runtime.$\r$\n`
+!define FNT2      `â€¢ Supported: .fon, .fnt, .ttf, .ttc, .fot, .otf, .mmm, .pfb, .pfm.`
 Function Fonts::Import
 	!macro _Fonts::Import _DIR
 		Push `${_DIR}`
