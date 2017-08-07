@@ -63,11 +63,11 @@ Ghostscript=true
 > ```INI
 > [RegisterDLL1]
 > ProgID=MyAppControlPanel
-> File=${PAL:AppDir}\controller.cpl
+> File=%PAL:AppDir%\controller.cpl
 >
 > [RegisterDLL2]
 > ProgID=DynamicLibrary
-> File=${PAL:DataDir}\dynlib.dll
+> File=%PAL:DataDir%\dynlib.dll
 > ```
 * __JDK:__ Add support for Java Development Kit.
 
@@ -158,9 +158,16 @@ TaskCleanup=true
 
 * __RegistryValueWrite:__ Set this to true to set a sleep value for `[RegistryValueWrite]` otherwise the function is inaccurate.
 
-* __RegistryCopyKeys:__ Enable support for adding the section `[RegistryCopyKeys]` in `Launcher.ini`. See `RegistryCopyKeys.nsh` in the Segments directory.
+* __RegistryCopyKeys:__ Enable support for copying registry keys to a special hive (`HKCU\Software\PortableApps.com`) before launchering the application and restoring the keys after the application exits. See `RegistryCopyKeys.nsh` in the Segments directory.
+> To use this feature add the section `[RegistryCopyKeys]` to the `Launcher.ini` file. Each entry should be the path to the registry key to be copied back and forth. Example usage:
+> ```INI
+> [RegistryCopyKeys]
+> 1=HKCU\Software\MyProgram\ExtraCareNeededKey
+> 2=HKLM\SOFTWARE\MyProgram\AnotherFragileKey
+> ```
 
-* __RegDisableRedirection:__ Enable support for enabling/disabling registry redirection (For use with `RegistryCopyKeys`)
+
+* __RegDisableRedirection:__ Enable support for enabling/disabling registry redirection.
 
 * __FontsFolder:__ Allows the portable application to support fonts within the directory `..\Data\Fonts`. Any fonts added in this folder will be added and are available for usage during runtime. Be aware, the more fonts to process the longer it will take for the launcher to load and unload these fonts.
 > Supported Fonts: 
@@ -177,6 +184,12 @@ TaskCleanup=true
 * __FileWriteReplace:__ Enables the Replace functionality in `[FileWrite]`
 
 * __FileCleanup:__ Enable support for adding the section `[FilesCleanup]` in `Launcher.ini`. See `FilesCleanup.nsh` in the Segments directory.
+> To use this feature add the section `[FilesCleanup]` to the `Launcher.ini` file. Each entry should be the path to the file that needs deleting. Supports environment variables. Example usage:
+> ```INI
+> [FilesCleanup]
+> 1=%PAL:DataDir%\uselessUpgradeFile.xml
+> 2=%APPDATA%\MyProgram\purposelessCfg.ini
+> ```
 
 * __FileLocking:__ Enable this to prevent ejection/unplugging problems for USB devices. Windows Explorer tend to lock application's DLL(s). 
 __Note:__ As of right now, this only enables support for using `${If} ${FileLocked}` and/or `${IfNot} ${FileLocked}` in the `custom.nsh` file. 
@@ -204,9 +217,13 @@ This forked project has been started by [demon.devin][author] and hopefully main
 
 A special thanks is expressed for [DoomStorm][TekSpert] for all the suggestions and heavily testing for bugs.
 
-Thank you to the following people; Dave Green, HandyPAF, and anyone else who makes use of this version to *port and let portable!*
+Thank you to the following people; Dave Green, HandyPAF, all those on the [Discord Workbench][DiscordWorkbench] and anyone else who makes use of this version to *port and let portable!* 
 
-I should convey that some of the code I've added here was written by FukenGruven. Without his code-base, most of this version of PA.c Launcher would not be possible. So a round of applause is in order for FukenGruven! Thank you FukenGruven. =)
+I should convey that some of the code I've added here was written by FukenGruven. Without his code-base, most of this version of PA.c Launcher would not be possible. So a round of applause is in order for FukenGruven! Thank you FukenGruven. 
+
+----------
+
+=)
 
 
 [1]: https://github.com/GordCaswell/portableapps.comlauncher "PortableApps.com Launcher"
@@ -219,3 +236,4 @@ I should convey that some of the code I've added here was written by FukenGruven
 [GhostscriptPortable]: https://portableapps.com/apps/utilities/ghostscript_portable "Ghostscript Portable"
 [author]: http://softables.tk/ "Softables.tk/"
 [TekSpert]: http://tekspert.se/ "Webmaster of TekSpert.se/"
+[DiscordWorkbench]: https://discord.gg/ExKbgXg "A PAFing Community (Discord Chat Platform)"
