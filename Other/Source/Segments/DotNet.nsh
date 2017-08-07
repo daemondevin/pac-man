@@ -96,7 +96,7 @@ ${SegmentInit}
 	; Added by demon.devin
 	;  - (4.7|4.6.2|4.6.1|4.6|4.5.2|4.5.1|4.5)
 	; 
-	ReadINIStr $0 $EXEDIR\App\AppInfo\appinfo.ini Dependencies UsesDotNetVersion
+/*	ReadINIStr $0 $EXEDIR\App\AppInfo\appinfo.ini Dependencies UsesDotNetVersion
 	!define dotNETVersion "$0"
 	${If} $0 != ""
 		${CheckDOTNET} $1 "$0"
@@ -120,6 +120,32 @@ ${SegmentInit}
 				MessageBox MB_OK|MB_ICONSTOP `$(LauncherNoDotNet)`
 				Quit
 			${EndIf}
+		${Else}
+			; Required .NET version found. Has 4.5 or above.
+			${DebugMsg} "The required .NET Framework was found."
 		${EndIf}
+	${EndIf}
+!macroend */
+
+	ReadINIStr $0 $EXEDIR\App\AppInfo\appinfo.ini Dependencies UsesDotNetVersion
+	${If} $0 <= "4.0"
+		!define dotNETVersion "$0"
+		${IfNot} ${HasDotNet${dotNETVersion}}
+			${DebugMsg} "Unable to find .NET Framework ${dotNETVersion}." ; Required .NET version not found
+			MessageBox MB_OK|MB_ICONSTOP `$(LauncherNoDotNet)`
+			Quit
+		${Else}
+			${DebugMsg} ".NET Framework ${dotNETVersion} found." ; Required .NET version found. 4.0 or below.
+		${EndIf}
+	${ElseIf} $0 >= "4.5"
+		${CheckDOTNET} $R0 $0
+		IfErrors 0 +4
+		${DebugMsg} "Unable to find .NET Framework $0" ; Required .NET version not found
+		MessageBox MB_OK|MB_ICONSTOP `$(LauncherNoDotNet)`
+		Quit
+		${DebugMsg} "The required .NET Framework was found." ; Required .NET version found. Has 4.5 or above.
+	${Else}
+		; Invalid .NET version
+		${InvalidValueError} [Dependencies]:UsesDotNetVersion $0
 	${EndIf}
 !macroend

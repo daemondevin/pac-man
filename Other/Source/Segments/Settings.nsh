@@ -26,15 +26,10 @@
 !macroend
 ${SegmentFile}
 ${SegmentInit}
-	; Check for settings
-	${IfNot} ${FileExists} $EXEDIR\Data\settings
-		${DebugMsg} "$EXEDIR\Data\settings does not exist. Creating it."
-		CreateDirectory $EXEDIR\Data\settings
-		${If} ${FileExists} $EXEDIR\App\DefaultData\*.*
-			${DebugMsg} "Copying default data from $EXEDIR\App\DefaultData to $EXEDIR\Data."
-			CopyFiles /SILENT $EXEDIR\App\DefaultData\*.* $EXEDIR\Data
-		${EndIf}
-	${EndIf}
+	; Check for files to move in DefaultData
+	IfFileExists `${DEFDATA}\*.*` 0 +3
+	${DebugMsg} "Copying default data from ${DEFDATA} to ${DATA}."
+	CopyFiles /SILENT `${DEFDATA}\*.*` `${DATA}`
 	!ifmacrodef Init
 		!insertmacro Init
 	!endif
