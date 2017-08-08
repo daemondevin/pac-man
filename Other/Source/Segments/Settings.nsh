@@ -27,8 +27,8 @@
 ${SegmentFile}
 ${SegmentInit}
 	; Check for files to move in DefaultData
-	IfFileExists `${DEFDATA}\*.*` 0 +3
 	${DebugMsg} "Copying default data from ${DEFDATA} to ${DATA}."
+	IfFileExists `${DATA}\*.*` +2
 	CopyFiles /SILENT `${DEFDATA}\*.*` `${DATA}`
 	!ifmacrodef Init
 		!insertmacro Init
