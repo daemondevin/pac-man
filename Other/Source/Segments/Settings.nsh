@@ -26,10 +26,15 @@
 !macroend
 ${SegmentFile}
 ${SegmentInit}
-	; Check for files to move in DefaultData
-	${DebugMsg} "Copying default data from ${DEFDATA} to ${DATA}."
-	IfFileExists `${DATA}\*.*` +2
-	CopyFiles /SILENT `${DEFDATA}\*.*` `${DATA}`
+	; Check for settings
+	${IfNot} ${FileExists} ${SET}
+		${DebugMsg} "${SET} does not exist. Creating it."
+		CreateDirectory ${SET}
+		${If} ${FileExists} ${DEFDATA}\*.*
+			${DebugMsg} "Copying default data from ${DEFDATA} to ${DATA}."
+			CopyFiles /SILENT ${DEFDATA}\*.* ${DATA}
+		${EndIf}
+	${EndIf}
 	!ifmacrodef Init
 		!insertmacro Init
 	!endif
