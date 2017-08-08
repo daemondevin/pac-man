@@ -1,53 +1,51 @@
-!ifdef DIRECTORIES_MOVE
-	!define Directory::BackupLocal `!insertmacro Directory::BackupLocal`
-	!macro Directory::BackupLocal _LOCALDIR _SUBDIR
-		RMDir /r `${_LOCALDIR}\${_SUBDIR}.BackupBy${APPNAME}`
-		Rename `${_LOCALDIR}\${_SUBDIR}` `${_LOCALDIR}\${_SUBDIR}.BackupBy${APPNAME}`
-	!macroend
-	!define Directory::RestoreLocal `!insertmacro Directory::RestoreLocal`
-	!macro Directory::RestoreLocal _LOCALDIR _SUBDIR
-		RMDir /r `${_LOCALDIR}\${_SUBDIR}`
-		Rename `${_LOCALDIR}\${_SUBDIR}.BackupBy${APPNAME}` `${_LOCALDIR}\${_SUBDIR}`
-		RMDir `${_LOCALDIR}`
-	!macroend
-	!define Directory::BackupPortable `!insertmacro Directory::BackupPortable`
-	!macro Directory::BackupPortable _LOCALDIR _SUBDIR _PORTABLEDIR _VAR1 _VAR2
-		IfFileExists `${_LOCALDIR}\${_SUBDIR}` 0 +17
-		Push `${_PORTABLEDIR}`
-		Call Root
-		Pop ${_VAR1}
-		Push `${_LOCALDIR}`
-		Call Root
-		Pop ${_VAR2}
-		RMDir /r `${_PORTABLEDIR}`
-		RMDir `${_LOCALDIR}\${_SUBDIR}`
-		IfFileExists `${_LOCALDIR}\${_SUBDIR}` 0 +7
-		StrCmp ${_VAR1} ${_VAR2} 0 +4
-		ClearErrors
-		Rename `${_LOCALDIR}\${_SUBDIR}` `${_PORTABLEDIR}`
-		IfErrors 0 +3
-		CreateDirectory `${_PORTABLEDIR}`
-		CopyFiles /SILENT `${_LOCALDIR}\${_SUBDIR}\*.*` `${_PORTABLEDIR}`
-		RMDir `${_LOCALDIR}`
-	!macroend
-	!define Directory::RestorePortable `!insertmacro Directory::RestorePortable`
-	!macro Directory::RestorePortable _LOCALDIR _SUBDIR _PORTABLEDIR _VAR1 _VAR2
-		IfFileExists `${_PORTABLEDIR}` 0 +14
-		Push `${_PORTABLEDIR}`
-		Call Root
-		Pop ${_VAR1}
-		Push `${_LOCALDIR}`
-		Call Root
-		Pop ${_VAR2}
-		StrCmp ${_VAR1} ${_VAR2} 0 +5
-		CreateDirectory `${_LOCALDIR}`
-		ClearErrors
-		Rename `${_PORTABLEDIR}` `${_LOCALDIR}\${_SUBDIR}`
-		IfErrors 0 +3
-		CreateDirectory `${_LOCALDIR}\${_SUBDIR}`
-		CopyFiles /SILENT `${_PORTABLEDIR}\*.*` `${_LOCALDIR}\${_SUBDIR}`
-	!macroend
-!endif
+!define Directory::BackupLocal `!insertmacro Directory::BackupLocal`
+!macro Directory::BackupLocal _LOCALDIR _SUBDIR
+	RMDir /r `${_LOCALDIR}\${_SUBDIR}.BackupBy${APPNAME}`
+	Rename `${_LOCALDIR}\${_SUBDIR}` `${_LOCALDIR}\${_SUBDIR}.BackupBy${APPNAME}`
+!macroend
+!define Directory::RestoreLocal `!insertmacro Directory::RestoreLocal`
+!macro Directory::RestoreLocal _LOCALDIR _SUBDIR
+	RMDir /r `${_LOCALDIR}\${_SUBDIR}`
+	Rename `${_LOCALDIR}\${_SUBDIR}.BackupBy${APPNAME}` `${_LOCALDIR}\${_SUBDIR}`
+	RMDir `${_LOCALDIR}`
+!macroend
+!define Directory::BackupPortable `!insertmacro Directory::BackupPortable`
+!macro Directory::BackupPortable _LOCALDIR _SUBDIR _PORTABLEDIR _VAR1 _VAR2
+	IfFileExists `${_LOCALDIR}\${_SUBDIR}` 0 +17
+	Push `${_PORTABLEDIR}`
+	Call Root
+	Pop ${_VAR1}
+	Push `${_LOCALDIR}`
+	Call Root
+	Pop ${_VAR2}
+	RMDir /r `${_PORTABLEDIR}`
+	RMDir `${_LOCALDIR}\${_SUBDIR}`
+	IfFileExists `${_LOCALDIR}\${_SUBDIR}` 0 +7
+	StrCmp ${_VAR1} ${_VAR2} 0 +4
+	ClearErrors
+	Rename `${_LOCALDIR}\${_SUBDIR}` `${_PORTABLEDIR}`
+	IfErrors 0 +3
+	CreateDirectory `${_PORTABLEDIR}`
+	CopyFiles /SILENT `${_LOCALDIR}\${_SUBDIR}\*.*` `${_PORTABLEDIR}`
+	RMDir `${_LOCALDIR}`
+!macroend
+!define Directory::RestorePortable `!insertmacro Directory::RestorePortable`
+!macro Directory::RestorePortable _LOCALDIR _SUBDIR _PORTABLEDIR _VAR1 _VAR2
+	IfFileExists `${_PORTABLEDIR}` 0 +14
+	Push `${_PORTABLEDIR}`
+	Call Root
+	Pop ${_VAR1}
+	Push `${_LOCALDIR}`
+	Call Root
+	Pop ${_VAR2}
+	StrCmp ${_VAR1} ${_VAR2} 0 +5
+	CreateDirectory `${_LOCALDIR}`
+	ClearErrors
+	Rename `${_PORTABLEDIR}` `${_LOCALDIR}\${_SUBDIR}`
+	IfErrors 0 +3
+	CreateDirectory `${_LOCALDIR}\${_SUBDIR}`
+	CopyFiles /SILENT `${_PORTABLEDIR}\*.*` `${_LOCALDIR}\${_SUBDIR}`
+!macroend
 Function Root
 	!macro _Root _PATH _RET
 		Push `${_PATH}`

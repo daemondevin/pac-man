@@ -137,6 +137,11 @@ Junctions=true
 ACLRegSupport=true
 ACLDirSupport=true
 TaskCleanup=true
+RMEmptyDir=true
+LocalLow=true
+PublicDoc=true
+CompareVersions=true
+ConfigFunctions=true
 ```
 * __ElevatedPrivileges:__ For launchers which need to run with elevated privileges.
 
@@ -165,7 +170,6 @@ TaskCleanup=true
 > 1=HKCU\Software\MyProgram\ExtraCareNeededKey
 > 2=HKLM\SOFTWARE\MyProgram\AnotherFragileKey
 > ```
-
 
 * __RegDisableRedirection:__ Enable support for enabling/disabling registry redirection.
 
@@ -210,6 +214,16 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 > 1=MyAppTask1
 > 2=Another Task w/ Spaces
 > ```
+
+* __RMEmptyDir:__ Enable the function `RMEmptyDir`. See the `Core.nsh` segment on line 1192 for reference.
+
+* __LocalLow:__ Enable the function `GetLocalAppDataLow`. See the `Core.nsh` segment on line 1351 for reference.
+
+* __PublicDoc:__ Enable the function `GetPublicDoc`. See the `Core.nsh` segment on line 1427 for reference.
+
+* __CompareVersions:__ Enable the function `Compare`. See the `Core.nsh` segment on line 141 for reference.
+
+* __ConfigFunctions:__ Enable `ConfigWrite(s)` and `ConfigRead(s)` functions. See the `Core.nsh` segment on line 236 for reference.
 
 ## Documentation
 ----------

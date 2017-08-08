@@ -56,7 +56,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `ProgramExecutable64=` APPEXE64
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Registry=` REGISTRY
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `[RegistryValueWrite` RegValueWrite
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Java=` JAVA
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `JDK=` JDK
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `XML=` XML_PLUGIN
@@ -64,9 +63,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `RegDLLs= ` REGISTERDLL
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Ghostscript=` GHOSTSCRIPT
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `RunAsAdmin=` UAC
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `[DirectoriesMove` DIRECTORIES_MOVE
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `[DirectoriesCleanupIfEmpty` RMEMPTYDIRECTORIES
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `[FilesMove` FILES_MOVE
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `AppID=` APPNAME
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `Name=` PORTABLEAPPNAME
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `CertSigning=` Certificate
@@ -86,6 +82,11 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `ACLDirSupport= ` ACL_DIR
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `FileCleanup= ` FileCleanup
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `TaskCleanup= ` TaskCleanup
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `RMEmptyDir= ` RMEMPTYDIRECTORIES
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `LocalLow= ` LocalLow
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `PublicDoc= ` PublicDoc
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `CompareVersions= ` CompareVersions
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `ConfigFunctions= ` ConFunc
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -114,9 +115,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 ;=== Custom Defines
 !if "${REGISTRY}" == true
 	!define /REDEF REGISTRY
-	!if "${RegValueWrite}" == "]"
-		!define RegSleep 50	
-	!endif
 	!ifdef APP64
 		!if ${DISABLEFSR} == true
 			!define /REDEF DISABLEFSR 	;=== Disable Registry redirection for x64 machines.
@@ -187,41 +185,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef UAC
 	!endif
 !endif
-!if "${DIRECTORIES_MOVE}" == "]"
-	!define /REDEF DIRECTORIES_MOVE 	;=== Enable for added macros for the [DirectoriesMove] section in launcher.ini. See DirectoriesMove.nsh in the Segments directory.
-!else
-	!ifdef DIRECTORIES_MOVE
-		!undef DIRECTORIES_MOVE
-	!endif
-!endif
-!if "${RMEMPTYDIRECTORIES}" == "]"
-	!define /REDEF RMEMPTYDIRECTORIES 	;=== Enable for the [DirectoriesCleanupIfEmpty] section in launcher.ini
-!else
-	!ifdef RMEMPTYDIRECTORIES
-		!undef RMEMPTYDIRECTORIES
-	!endif
-!endif
-!if "${FILES_MOVE}" == "]"
-	!define /REDEF FILES_MOVE 			;=== Enable for added macros for the [FilesMove] section in launcher.ini. See FilesMove.nsh in the Segments directory.
-!else
-	!ifdef FILES_MOVE
-		!undef FILES_MOVE
-	!endif
-!endif
-!if "${REPLACE}" == true
-	!define /REDEF REPLACE 				;=== Enables Replace functionality in [FileWrite]
-!else
-	!ifdef REPLACE
-		!undef REPLACE
-	!endif
-!endif
-!if "${RegValueWrite}" == true
-	!define /REDEF RegValueWrite 50 	;=== Sleep value for [RegistryValueWrite]; function is inaccurate otherwise.
-!else
-	!ifdef RegValueWrite
-		!undef RegValueWrite
-	!endif
-!endif
 !if ${SERVICES} == true
 	!define /REDEF SERVICES 			;=== Enable support for Services
 !else
@@ -235,6 +198,69 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!ifdef REGISTERDLL
 		!undef REGISTERDLL
 	!endif
+!endif
+!if ! ${ConFunc} == ""
+	!if ${ConFunc} == true 				;=== Enable ConfigWrite(s), ConfigRead(s) Functions.
+		!define /REDEF ConFunc
+	!else if ${ConFunc} == false
+		!undef ConFunc
+	!endif
+!else
+	!error "The key 'ConfigFunctions' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${LocalLow} == ""
+	!if ${LocalLow} == true 			;=== Enable GetLocalAppDataLow Function.
+		!define /REDEF LocalLow
+	!else if ${LocalLow} == false
+		!undef LocalLow
+	!endif
+!else
+	!error "The key 'LocalLow' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${CompareVersions} == ""
+	!if ${CompareVersions} == true 		;=== Enable VersionCompare Function.
+		!define /REDEF CompareVersions
+	!else if ${CompareVersions} == false
+		!undef CompareVersions
+	!endif
+!else
+	!error "The key 'CompareVersions' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${PublicDoc} == ""
+	!if ${PublicDoc} == true 			;=== Enable GetPublicDoc Function.
+		!define /REDEF PublicDoc
+	!else if ${PublicDoc} == false
+		!undef PublicDoc
+	!endif
+!else
+	!error "The key 'PublicDoc' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${RegValueWrite} == ""
+	!if ${RegValueWrite} == true
+		!define RegSleep 50 			;=== Sleep value for the [RegistryValueWrite] section. Function is inaccurate otherwise.
+	!else if ${RegValueWrite} == false
+		!undef RegValueWrite
+	!endif
+!else
+	!error "The key 'RegistryValueWrite' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${REPLACE} == ""
+	!if ${REPLACE} == true 				;=== Enables Replace functionality in [FileWrite]
+		!define /REDEF REPLACE
+	!else if ${REPLACE} == false
+		!undef REPLACE
+	!endif
+!else
+	!error "The key 'FileWriteReplace' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${RMEMPTYDIRECTORIES} == ""
+	!if ${RMEMPTYDIRECTORIES} == true 	;=== Enable RMEmptyDir Function.
+		!define /REDEF RMEMPTYDIRECTORIES
+	!else if ${RMEMPTYDIRECTORIES} == false
+		!undef RMEMPTYDIRECTORIES
+	!endif
+!else
+	!error "The key 'RMEmptyDir' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
 !if ! ${StdUtils} == ""
 	!if ${StdUtils} == true

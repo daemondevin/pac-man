@@ -1,34 +1,32 @@
-!ifdef FILES_MOVE
-	!define BAK BackupBy${APPNAME}
-	!define File::BackupLocal "!insertmacro File::BackupLocal"
-	!macro File::BackupLocal _LOCALFILE
-		Delete `${_LOCALFILE}.${BAK}`
-		Rename `${_LOCALFILE}` `${_LOCALFILE}.${BAK}`
-	!macroend
-	!define File::RestoreLocal "!insertmacro File::RestoreLocal"
-	!macro File::RestoreLocal _LOCALFILE
-		Delete `${_LOCALFILE}`
-		Rename `${_LOCALFILE}.${BAK}` `${_LOCALFILE}`
-	!macroend
-	!define File::BackupPortable "!insertmacro File::BackupPortable"
-	!macro File::BackupPortable _LOCALFILE _PORTABLEFILE
-		Delete `${_PORTABLEFILE}`
-		Rename `${_LOCALFILE}` `${_PORTABLEFILE}`
-	!macroend
-	!define File::RestorePortable "!insertmacro File::RestorePortable"
-	!macro File::RestorePortable _LOCALFILE _PORTABLEFILE
-		Rename `${_PORTABLEFILE}` `${_LOCALFILE}`
-	!macroend
-	!define File::CopyPortable "!insertmacro File::CopyPortable"
-	!macro File::CopyPortable _LOCALFILE _PORTABLEFILE
-		CopyFiles /SILENT `${_PORTABLEFILE}` `${_LOCALFILE}`
-	!macroend
-	!define File::BackupLocalCopy "!insertmacro File::BackupLocalCopy"
-	!macro File::BackupLocalCopy _LOCALFILE
-		Delete `${_LOCALFILE}.${BAK}`
-		CopyFiles /SILENT `${_LOCALFILE}` `${_LOCALFILE}.${BAK}`
-	!macroend
-!endif
+!define BAK BackupBy${APPNAME}
+!define File::BackupLocal "!insertmacro File::BackupLocal"
+!macro File::BackupLocal _LOCALFILE
+	Delete `${_LOCALFILE}.${BAK}`
+	Rename `${_LOCALFILE}` `${_LOCALFILE}.${BAK}`
+!macroend
+!define File::RestoreLocal "!insertmacro File::RestoreLocal"
+!macro File::RestoreLocal _LOCALFILE
+	Delete `${_LOCALFILE}`
+	Rename `${_LOCALFILE}.${BAK}` `${_LOCALFILE}`
+!macroend
+!define File::BackupPortable "!insertmacro File::BackupPortable"
+!macro File::BackupPortable _LOCALFILE _PORTABLEFILE
+	Delete `${_PORTABLEFILE}`
+	Rename `${_LOCALFILE}` `${_PORTABLEFILE}`
+!macroend
+!define File::RestorePortable "!insertmacro File::RestorePortable"
+!macro File::RestorePortable _LOCALFILE _PORTABLEFILE
+	Rename `${_PORTABLEFILE}` `${_LOCALFILE}`
+!macroend
+!define File::CopyPortable "!insertmacro File::CopyPortable"
+!macro File::CopyPortable _LOCALFILE _PORTABLEFILE
+	CopyFiles /SILENT `${_PORTABLEFILE}` `${_LOCALFILE}`
+!macroend
+!define File::BackupLocalCopy "!insertmacro File::BackupLocalCopy"
+!macro File::BackupLocalCopy _LOCALFILE
+	Delete `${_LOCALFILE}.${BAK}`
+	CopyFiles /SILENT `${_LOCALFILE}` `${_LOCALFILE}.${BAK}`
+!macroend
 !macro _FilesMove_Start
 	ExpandEnvStrings $0 $0
 	ExpandEnvStrings $1 $1
