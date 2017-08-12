@@ -807,7 +807,6 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 Function .onInit           ;{{{1
 	Call CreateShutdownBlockReason
 	Push $0
-	CreateDirectory `${SET}`
 	!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 		!ifndef SYSTEMWIDE_DISABLEREDIR
 			!define SYSTEMWIDE_DISABLEREDIR
