@@ -175,6 +175,7 @@ ${SegmentFile}
 Var AppDirectory
 Var DataDirectory
 Var PortableAppsDirectory
+Var PortableAppsCommonFiles
 Var PortableAppsBaseDirectory
 Var LastPortableAppsBaseDirectory
 ${SegmentInit}
@@ -186,6 +187,7 @@ ${SegmentInit}
 	${SetEnvironmentVariablesPath} PAL:AppDir  $AppDirectory
 	${SetEnvironmentVariablesPath} PAL:DataDir $DataDirectory
 	${GetParentUNC} $EXEDIR $PortableAppsDirectory
+	StrCpy $PortableAppsCommonFiles $PortableAppsDirectory\CommonFiles
 	${SetEnvironmentVariablesPath} PAL:PortableAppsDir $PortableAppsDirectory
 	${SetEnvironmentVariablesPath} PAL:CommonFiles $PortableAppsDirectory\CommonFiles
 	${GetParentUNC} $PortableAppsDirectory $PortableAppsBaseDirectory
