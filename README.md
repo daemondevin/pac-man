@@ -143,6 +143,7 @@ PublicDoc=true
 CompareVersions=true
 ConfigFunctions=true
 CloseWindow=true
+JSONSupport=true
 ```
 * __ElevatedPrivileges:__ For launchers which need to run with elevated privileges.
 
@@ -154,7 +155,7 @@ CloseWindow=true
 
 * __ExecAsUser:__ For applications which need to run as normal user but need the launcher to have elevated privileges.
 
-* __UseStdUtils:__ Include the StdUtils plug-in without `ExecAsUser`
+* __UseStdUtils:__ Include the _StdUtils_ plug-in without `ExecAsUser`
 
 * __InstallINF:__ Add support and macros for INF installation. Refer to the `Services.nsh` file in the Segments directory for reference.
 
@@ -227,6 +228,8 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 * __ConfigFunctions:__ Enable `ConfigWrite(s)` and `ConfigRead(s)` functions. See the `Core.nsh` segment on line 236 for reference.
 
 * __CloseWindow:__ Enable `Close` function. See the `Core.nsh` segment on line 1288 for reference.
+
+* __JSONSupport:__ Include the _nsJSON_ plugin allowing `nsJSON::Get`, `nsJSON::Set`, and `nsJSON::Serialize` for use within `custom.nsh`.
 
 ## Documentation
 ----------
