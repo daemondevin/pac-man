@@ -142,6 +142,7 @@ LocalLow=true
 PublicDoc=true
 CompareVersions=true
 ConfigFunctions=true
+CloseWindow=true
 ```
 * __ElevatedPrivileges:__ For launchers which need to run with elevated privileges.
 
@@ -224,6 +225,8 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 * __CompareVersions:__ Enable the function `Compare`. See the `Core.nsh` segment on line 141 for reference.
 
 * __ConfigFunctions:__ Enable `ConfigWrite(s)` and `ConfigRead(s)` functions. See the `Core.nsh` segment on line 236 for reference.
+
+* __CloseWindow:__ Enable `Close` function. See the `Core.nsh` segment on line 1288 for reference.
 
 ## Documentation
 ----------

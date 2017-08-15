@@ -87,6 +87,8 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `PublicDoc= ` PublicDoc
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `CompareVersions= ` CompareVersions
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `ConfigFunctions= ` ConFunc
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `CloseWindow= ` CloseWindow
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `JSONSupport= ` JSON
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -316,10 +318,30 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!error "The key 'FontsFolder' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
+!if ! ${JSON} == ""
+	!if ${JSON} == true
+		!define /REDEF JSON		;=== Enable the Close function
+	!else if ${JSON} == false
+		!undef JSON 
+	!endif
+!else
+	!error "The key 'JSONSupport' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${CloseWindow} == ""
+	!if ${CloseWindow} == true
+		!define /REDEF CloseWindow		;=== Enable the Close function
+	!else if ${CloseWindow} == false
+		!undef CloseWindow 
+	!endif
+!else
+	!error "The key 'CloseWindow' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
 !if ! ${FileLocking} == ""
 	!if ${FileLocking} == true
 		!define IsFileLocked 			;=== If enabled, PortableApp will ensure DLL(s) are unlocked.
-		!define CloseWindow
+		!ifndef CloseWindow
+			!define CloseWindow
+		!endif
 	!else if ${FileLocking} == false
 		!undef FileLocking 				;=== Disable 
 	!endif
@@ -541,6 +563,12 @@ FunctionEnd
 	!endif
 !endif
 !ifdef UAC
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
+!ifdef JSON
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
 		!AddPluginDir Plugins
