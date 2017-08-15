@@ -53,7 +53,7 @@ John T. Haller has a history of throwing a tantrum anytime someone else uses his
 
 Other things could follow depending on my availability, interest.. and of course the interest and support from others. So with that being said, this little project might not even see the light of day. Lol.
 
-## Added Features
+## Features
 ----------
 
 #### __PortableApps.comLauncher.nsi__
