@@ -181,6 +181,9 @@ CompareVersions=true
 ConfigFunctions=true
 CloseWindow=true
 JSONSupport=true
+RestartSleep=500
+WinMessages=true
+LineWrite=true
 ```
 * __ElevatedPrivileges:__ For launchers which need to run with elevated privileges.
 
@@ -267,6 +270,12 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 * __CloseWindow:__ Enable `Close` function. See the `Core.nsh` segment on line 1288 for reference.
 
 * __JSONSupport:__ Include the _nsJSON_ plugin allowing `nsJSON::Get`, `nsJSON::Set`, and `nsJSON::Serialize` for use within `custom.nsh`.
+
+* __RestartSleep:__ Set this to a numerical value (in milliseconds) to set a sleep value for applications that need to restart (i.e. Notepad++ after installing new plugins).
+
+* __WinMessages:__ Include the `WinMessages.nsh` file.
+
+* __LineWrite:__ Include the `LineWrite.nsh` file.
 
 ## Documentation
 ----------
