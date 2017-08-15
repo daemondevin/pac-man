@@ -211,7 +211,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !endif
 !if ! ${LineWrite} == ""
 	!if ${LineWrite} == true 			;=== include LineWrite.nsh
-		!define Include_LineWrite.nsh
+		!define Include_LineWrite
 	!else if ${LineWrite} == false
 		!undef LineWrite
 	!endif
@@ -220,7 +220,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !endif
 !if ! ${WinMessages} == ""
 	!if ${WinMessages} == true 			;=== include WinMessages.nsh
-		!define Include_WinMessages.nsh
+		!define Include_WinMessages
 	!else if ${WinMessages} == false
 		!undef WinMessages
 	!endif
@@ -664,10 +664,10 @@ FunctionEnd
 		!include x64.nsh
 	!endif
 !endif
-!ifdef Include_LineWrite.nsh
+!ifdef Include_LineWrite
 	!include LineWrite.nsh
 !endif
-!ifdef Include_WinMessages.nsh
+!ifdef Include_WinMessages
 	!include WinMessages.nsh
 !endif
 !ifdef DIRECTORIES_MOVE
