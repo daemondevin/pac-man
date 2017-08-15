@@ -38,7 +38,7 @@ I'm conceptualizing and outlining ideas for a nice GUI which will potentially al
 
 * __Rename This Project:__ (Brainstorming)
 
-I've decided to rename this project to set it a part from the official PA.c Launcher. I've come to this conclusion on the simple notion that the current developers of the official builds are completely useless. I've tried sharing solutions over and overe again only to be regarded in a dismissive manner. It was as if they (not all of them) couldn't wait to make disparaging remarks about my ideas. So instead of holding my breathe, I'll just take this project to new heights; that which far exceeds the official predecessor (which, by the way, hasn't received any real worthwhile development in years). 
+I've decided to rename this project to set it a part from the official PA.c Launcher. I've come to this conclusion on the simple notion that the current developers of the official builds are completely useless in the sense that they treat any progressive ideas as the Devil's word. I'm kidding, although I do think to be a part of their exclusive community you need a members-only Letterman's Jacket. I've tried sharing solutions over and over again just to be dismissed and ignored. It was as if they couldn't wait to deprecate my ideas. So instead of holding my breathe, I'll just take this project to new heights; that which far exceeds the official predecessor (which, by the way, hasn't received any real worthwhile development in years). 
 
 * __Etc. Etc. And So On:__ (On Going Process)
 
