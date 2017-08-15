@@ -676,21 +676,21 @@ FunctionEnd
 	!endif
 !endif
 !ifdef FONTS_ENABLED
-	!if ! /FileExists "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt"
+	Function CreateFontsFolder
+		IfFileExists "${PACKAGE}\App\DefaultData\Fonts" +2
+		CreateDirectory /SILENT "${PACKAGE}\App\DefaultData\Fonts"
+		IfFileExists "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" +2
 		!tempfile FONTFILE
-		!appendfile "${FONTFILE}" "Font(s) added here will be loaded on launch and accessible at runtime.$\n$\n"
+		!appendfile "${FONTFILE}" "Font(s) added here will be loaded on launch and accessible during runtime.$\n$\n"
 		!appendfile "${FONTFILE}" "NOTE:$\n"
 		!appendfile "${FONTFILE}" "$\tThe launcher will have to load and unload any fonts in this directory.$\n"
 		!appendfile "${FONTFILE}" "$\tThe more fonts you have will mean a longer work load for the launcher.$\n$\n"
 		!appendfile "${FONTFILE}" "Fonts Supported:$\n"
 		!appendfile "${FONTFILE}" " • .fon$\n • .fnt$\n • .ttf$\n • .ttc$\n • .fot$\n • .otf$\n • .mmm$\n • .pfb$\n • .pfm$\n"
-		!if ! /FileExists "${PACKAGE}\App\DefaultData\Fonts"
-			!system 'mkdir "${PACKAGE}\App\DefaultData\Fonts"'
-		!endif
 		!system 'copy /Y /A "${FONTFILE}" "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" /A'
 		!delfile "${FONTFILE}"
 		!undef FONTFILE
-	!endif
+	FunctionEnd
 !endif
 
 ;=== Languages {{{1
@@ -920,6 +920,9 @@ Function Init           ;{{{1
 			StrCmpS $APP ${APP64} 0 +2
 			System::Call `${DISABLEREDIR}`
 		!endif
+	!endif
+	!ifdef FONTS_ENABLED
+		Call CreateFontsFolder
 	!endif
 	${If} $SecondaryLaunch != true
 		${RunSegment} Language
