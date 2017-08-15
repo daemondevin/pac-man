@@ -30,7 +30,7 @@ Here's a small list of a few ideas that I want to try and implement with this pr
 
 * __Support Services:__ (Almost Finished)
 
-<del>The support for services is by default disabled in the official builds of PAL. In the source code it states that they might be unstable and the plugin is large in size. I plan on not using a plugin to support services, instead I plan on dealing with this by using the command line with a few functions and macros to try and keep things simple.</del> TODO: Still need tp rewrite the `Services.nsh` segment to handle services without using custom code.
+<del>The support for services is by default disabled in the official builds of PAL. In the source code it states that they might be unstable and the plugin is large in size. I plan on not using a plugin to support services, instead I plan on dealing with this by using the command line with a few functions and macros to try and keep things simple.</del> TODO: Still need to rewrite the `Services.nsh` segment to handle services without using custom code or a plugin.
 
 * __Redevelop Generator Wizard:__ (Brainstorming)
 
