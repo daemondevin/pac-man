@@ -34,7 +34,7 @@ Here's a small list of a few ideas that I want to try and implement with this pr
 
 * __Redevelop Generator Wizard:__ (Brainstorming)
 
-I'm conceptualizing and outlining ideas for a nice GUI which will potentially allow the user to just select certain checkboxes for the `[Dependencies]` section which is discussed in greater detail further below. This way I can eliminate the need to use all those keys in the _AppInfo.ini_ file. I'm certainly open to any suggestions on this topic so if you've got an idea pleasse share it with me.
+I'm conceptualizing and outlining ideas for a nice GUI which will potentially allow the user to just select certain checkboxes for the `[Dependencies]` section which is discussed in greater detail further below. This way I can eliminate the need to use all those keys in the _AppInfo.ini_ file. I'd like to point out that my knowledgebase in this area of NSIS is primitive and/or novice at best so I'm certainly open to any helpful input and suggestions in this area.
 
 * __Rename This Project:__ (Brainstorming)
 
