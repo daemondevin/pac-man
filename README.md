@@ -34,7 +34,7 @@ Here's a small list of a few ideas that I want to try and implement with this pr
 
 * __Redevelop Generator Wizard:__ (Brainstorming)
 
-I've decided to rename this project to set it a part from the official PA.c Launcher. I've come to this conclusion on the simple notion that the current developers of the official builds are completely useless. I've tried sharing solutions over and overe again only to be regarded in a dismissive manner. It was as if they (not all of them) couldn't wait to make disparaging remarks about my ideas. So instead of holding my breathe, I'll just take this project to new heights; that which far exceeds the official predecessor (which, by the way, hasn't received any real worthwhile development in years). 
+I'm conceptualizing and outlining ideas for a nice GUI which will potentially allow the user to just select certain checkboxes for the `[Dependencies]` section which is discussed in greater detail further below. This way I can eliminate the need to use all those keys in the _AppInfo.ini_ file. I'm certainly open to any suggestions on this topic so if you've got an idea pleasse share it with me.
 
 * __Rename This Project:__ (Brainstorming)
 
