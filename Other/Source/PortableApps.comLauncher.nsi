@@ -89,6 +89,9 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `ConfigFunctions= ` ConFunc
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `CloseWindow= ` CloseWindow
 !searchparse /NOERRORS /FILE `${APPINFOINI}` `JSONSupport= ` JSON
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `RestartSleep= ` SleepValue
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `WinMessages= ` WinMessages
+!searchparse /NOERRORS /FILE `${APPINFOINI}` `LineWrite= ` LineWrite
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -200,6 +203,29 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!ifdef REGISTERDLL
 		!undef REGISTERDLL
 	!endif
+!endif
+!if ! ${SleepValue} == ""
+	!define Sleep `${SleepValue}`		;=== Specify a number (milliseconds) to set a Sleep value for applications that need to restart.
+!else
+	!error "The key 'RestartSleep' in AppInfo.ini needs a value that's an integer!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${LineWrite} == ""
+	!if ${LineWrite} == true 			;=== include LineWrite.nsh
+		!define Include_LineWrite.nsh
+	!else if ${LineWrite} == false
+		!undef LineWrite
+	!endif
+!else
+	!error "The key 'LineWrite' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${WinMessages} == ""
+	!if ${WinMessages} == true 			;=== include WinMessages.nsh
+		!define Include_WinMessages.nsh
+	!else if ${WinMessages} == false
+		!undef WinMessages
+	!endif
+!else
+	!error "The key 'WinMessages' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
 !if ! ${ConFunc} == ""
 	!if ${ConFunc} == true 				;=== Enable ConfigWrite(s), ConfigRead(s) Functions.
@@ -637,6 +663,12 @@ FunctionEnd
 	!ifndef 64.nsh
 		!include x64.nsh
 	!endif
+!endif
+!ifdef Include_LineWrite.nsh
+	!include LineWrite.nsh
+!endif
+!ifdef Include_WinMessages.nsh
+	!include WinMessages.nsh
 !endif
 !ifdef DIRECTORIES_MOVE
 	!ifndef GET_ROOT
