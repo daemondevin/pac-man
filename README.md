@@ -12,6 +12,7 @@ I should say that what I'm going to be adding to this variant of PAL is what wor
 Here's a small list of a few ideas that I want to try and implement with this project. These are just things I plan on working on in my spare time and while the ideas listed below are not recognized by PortableApps.com please be aware that using some of the things you find in this variant of PAL can and most likely will be buggy. 
 
 * __Support for NSIS3:__ (DONE)
+
 <del>Well, support for [NSISPortable][4] rather which is packaged with the latest release of NSIS. The current official release of PAL is using NSIS v2.46.5-Unicode which is actually packaged with the project. So I would like to completely remove the need for this dependency entirely.</del>
 
 * __Manifest Support:__ (DONE)
