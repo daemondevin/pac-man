@@ -3,7 +3,9 @@
 
 This is a fork of the official [PortableApps.com Launcher][1]. I forked this project because I wanted to incorporate some ideas I had that I believe would better this project in its entirety. So instead of going to [PortableApps.com][2] and sharing my ideas ([a superfluous attempt][3] was already made; to what seemed like no avail), I feel it would be much more advantageous on my part to just implement these ideas instead. 
 
-I have no real expectations that any of these ideas will actually be pulled into the official version of __PAL__ (_PortableApps.com Launcher_) but if any of them do than kudos.. lol. If anyone is actually reading this and does find some of these concepts to be useful then maybe support my effort in supporting their cause. 
+<del>I have no real expectations that any of these ideas will actually be pulled into the official version of __PAL__ (_PortableApps.com Launcher_) but if any of them do than kudos.. lol. If anyone is actually reading this and does find some of these concepts to be useful then maybe support my effort in supporting their cause.</del>
+
+I've come to the conclusion that I no longer care to add any support to the official version of PAL. The current developers of the official builds are completely useless in the sense that they treat any progressive ideas as the Devil's work&mdash;I'm only kidding, although I do think to be a part of their exclusive community you need a members-only Letterman's Jacket. I'm tired of trying to help their cause. I kept on sharing my ideas with them over and over again only to be dismissed and ignored. It was as if they couldn't wait to deprecate my ideas. So instead of holding my breathe, I'll just take this project to new heights; that far exceeds the official predecessor (which, by the way, hasn't received any real worthwhile development in years).
 
 I should say that what I'm going to be adding to this variant of PAL is what works for me and my environment. All the concepts that you find here should work with any other environment unless explicitly expressed otherwise. So like I say in a recent motto I have recently just adopted, _"Port and let portable!"_ — You see what I did there? Lol. If you don't, no worries; I guess I should just _live and let live_.
 
@@ -38,7 +40,7 @@ I'm conceptualizing and outlining ideas for a nice GUI which will potentially al
 
 * __Rename This Project:__ (Brainstorming)
 
-I've decided to rename this project to set it a part from the official PA.c Launcher. I've come to this conclusion on the simple notion that the current developers of the official builds are completely useless in the sense that they treat any progressive ideas as the Devil's word. I'm kidding, although I do think to be a part of their exclusive community you need a members-only Letterman's Jacket. I've tried sharing solutions over and over again just to be dismissed and ignored. It was as if they couldn't wait to deprecate my ideas. So instead of holding my breathe, I'll just take this project to new heights; that which far exceeds the official predecessor (which, by the way, hasn't received any real worthwhile development in years). 
+I've decided to rename this project to set it a part from the official PA.c Launcher. This rebranding is to help make this project it's own entity. So instead of people looking at the official builds of PAL and thinking, _"Wow! How cool is that feature?! I wonder who had the idea to add that?"_ they can think that about my version and know exactly who added that _cool_ feature instead; __me__.
 
 * __Redevelop PA.c Installer:__ (Near Future)
 
