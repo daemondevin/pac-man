@@ -31,9 +31,15 @@ Here's a small list of a few ideas that I want to try and implement with this pr
 
 <del>The official release of PAL has no native support for registering libraries (DLLs), so I will try to add support for registering files. Be aware though that a program developer has complete control over what happens when you call _RegSvr32_ which is what is used by `RegDLL` (the native command used by NSIS for registering files). With that being said, my ideas on this topic may be buggy.</del>
 
+* __Language Handling:__ (In Progress)
+
+The official PAL's language handling is based on the setting of the PortableApps.com Platform language. Not every user of a PAF uses the PortableApps.com Platform so I'm rewritting the language handling to support and be based on the end-users operating system language. As it is written now, if you want language support you need to use the `custom.nsh` file.
+TODO: Fallback on the original method to use the `Launcher.ini` but still be based on the OS language.
+
 * __Support Services:__ (Almost Finished)
 
-<del>The support for services is by default disabled in the official builds of PAL. In the source code it states that they might be unstable and the plugin is large in size. I plan on not using a plugin to support services, instead I plan on dealing with this by using the command line with a few functions and macros to try and keep things simple.</del> TODO: Still need to rewrite the `Services.nsh` segment to handle services without using custom code or a plugin.
+<del>The support for services is by default disabled in the official builds of PAL. In the source code it states that they might be unstable and the plugin is large in size. I plan on not using a plugin to support services, instead I plan on dealing with this by using the command line with a few functions and macros to try and keep things simple.</del> 
+TODO: Still need to rewrite the `Services.nsh` segment to handle services without using custom code or a plugin.
 
 * __Redevelop Generator Wizard:__ (Brainstorming)
 
