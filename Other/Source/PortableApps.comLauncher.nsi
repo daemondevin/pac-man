@@ -486,6 +486,14 @@ SetCompressorDictSize 32
 !macro ReadAppInfoConfig _RETURN _SECTION _ENTRY
 	ReadINIStr ${_RETURN} `${INFOINI}` `${_SECTION}` `${_ENTRY}`
 !macroend
+!define WriteAppInfoConfig `!insertmacro WriteLauncherConfig`
+!macro WriteLauncherConfig _SECTION _ENTRY _VALUE
+	WriteINIStr `${INFOINI}` `${_SECTION}` `${_ENTRY}` `${_VALUE}`
+!macroend
+!define DeleteAppInfoConfig `!insertmacro DeleteLauncherConfig`
+!macro DeleteLauncherConfig _SECTION _ENTRY
+	DeleteINIStr `${INFOINI}` `${_SECTION}` `${_ENTRY}`
+!macroend
 !define ReadUserConfig `!insertmacro ReadUserConfig`
 !macro ReadUserConfig _RETURN _KEY
 	${ConfigReadS} `${CONFIG}` `${_KEY}=` `${_RETURN}`
