@@ -96,15 +96,15 @@ XML=true
 
 * __Services:__ Add support for handling Windows Services.
 > To use this feature add the section `[Service1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports six keys which are as follows:
-> | __Key__ 	| __Value__ 	|
-> |:--------:	|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:	|
-> | Name 	| The local/portable service name. 	|
-> | Path 	| The path to the portable service executable. Supports environment variables. 	|
-> | Type 	| Specify whether you are dealing with a service, a kernel driver or a file system driver, etc. Choose from: _own_ | _share_ | _interact_ | _kernel_ | _filesys_ | _rec_ 	|
-> | Start 	| Specify when the service is supposed to start. Choose from: _boot_ | _system_ | _auto_ | _demand_ | _disabled_ | _delayed-auto_ 	|
-> | Depend 	| List any dependencies here separated by `/` (forward slash). 	|
-> | IfExists 	| If the service already exists, you can either skip it or replace it with the portable version of the service (the original service will be restored afterwards). Choose from: _skip_ | _replace_ 	|
->
+| __Key__ 	| __Value__ 	|
+|:--------:	|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:	|
+| Name 	| The local/portable service name. 	|
+| Path 	| The path to the portable service executable. Supports environment variables. 	|
+| Type 	| Specify whether you are dealing with a service, a kernel driver or a file system driver, etc. Choose from: _own_ | _share_ | _interact_ | _kernel_ | _filesys_ | _rec_ 	|
+| Start 	| Specify when the service is supposed to start. Choose from: _boot_ | _system_ | _auto_ | _demand_ | _disabled_ | _delayed-auto_ 	|
+| Depend 	| List any dependencies here separated by `/` (forward slash). 	|
+| IfExists 	| If the service already exists, you can either skip it or replace it with the portable version of the service (the original service will be restored afterwards). Choose from: _skip_ | _replace_ 	|
+
 > Example usage:
 > ```INI
 > [Service1]
