@@ -96,8 +96,9 @@ XML=true
 
 * __Services:__ Add support for handling Windows Services.
 > To use this feature add the section `[Service1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports six keys which are as follows:
+
 | __Key__ 	| __Value__ 	|
-|:--------:	|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:	|
+|:--------	|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
 | Name 	| The local/portable service name. 	|
 | Path 	| The path to the portable service executable. Supports environment variables. 	|
 | Type 	| Specify whether you are dealing with a service, a kernel driver or a file system driver, etc. Choose from: _own_ | _share_ | _interact_ | _kernel_ | _filesys_ | _rec_ 	|
@@ -118,7 +119,7 @@ XML=true
 > [Service2]
 > Name=AnotherService
 > Path=%PAL:DataDir%\service64.exe
-> Type=kernel
+> Type=own
 > Start=demand
 > Depend=
 > IfExists=skip
