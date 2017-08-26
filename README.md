@@ -31,13 +31,13 @@ Here's a small list of a few ideas that I want to try and implement with this pr
 
 <del>The official release of PAL has no native support for registering libraries (DLLs), so I will try to add support for registering files. Be aware though that a program developer has complete control over what happens when you call _RegSvr32_ which is what is used by `RegDLL` (the native command used by NSIS for registering files). With that being said, my ideas on this topic may be buggy.</del>
 
+* __Support Services:__ (DONE)
+
+<del>The support for services is by default disabled in the official builds of PAL. In the source code it states that they might be unstable and the plugin is large in size. I plan on not using a plugin to support services, instead I plan on dealing with this by using the command line with a few functions and macros to try and keep things simple.</del><br /><del>__TODO:__ Still need to rewrite the `Services.nsh` segment to handle services without using custom code or a plugin.</del>
+
 * __Language Handling:__ (In Progress)
 
 The official PAL's language handling is based on the setting of the PortableApps.com Platform language. Not every user of a PAF uses the PortableApps.com Platform so I'm rewritting the language handling to support and be based on the end-users operating system language. As it is written now, if you want language support you need to use the `custom.nsh` file.<br />__TODO:__ Fallback on the original method to use the `Launcher.ini` but still be based on the OS language.
-
-* __Support Services:__ (Almost Finished)
-
-<del>The support for services is by default disabled in the official builds of PAL. In the source code it states that they might be unstable and the plugin is large in size. I plan on not using a plugin to support services, instead I plan on dealing with this by using the command line with a few functions and macros to try and keep things simple.</del><br />__TODO:__ Still need to rewrite the `Services.nsh` segment to handle services without using custom code or a plugin.
 
 * __Redevelop Generator Wizard:__ (Brainstorming)
 
@@ -95,6 +95,34 @@ XML=true
 * __Registry:__ Add support for minipulating the Windows Registry.
 
 * __Services:__ Add support for handling Windows Services.
+> To use this feature add the section `[Service1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports six keys which are as follows:
+> | __Key__ 	| __Value__ 	|
+> |:--------:	|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------:	|
+> | Name 	| The local/portable service name. 	|
+> | Path 	| The path to the portable service executable. Supports environment variables. 	|
+> | Type 	| Specify whether you are dealing with a service, a kernel driver or a file system driver, etc. Choose from: _own_ | _share_ | _interact_ | _kernel_ | _filesys_ | _rec_ 	|
+> | Start 	| Specify when the service is supposed to start. Choose from: _boot_ | _system_ | _auto_ | _demand_ | _disabled_ | _delayed-auto_ 	|
+> | Depend 	| List any dependencies here separated by `/` (forward slash). 	|
+> | IfExists 	| If the service already exists, you can either skip it or replace it with the portable version of the service (the original service will be restored afterwards). Choose from: _skip_ | _replace_ 	|
+>
+> Example usage:
+> ```INI
+> [Service1]
+> Name=SomeServiceName
+> Path=%PAL:AppDir%\service32.sys
+> Type=kernel
+> Start=auto
+> Depend=
+> IfExists=replace
+>
+> [Service2]
+> Name=AnotherService
+> Path=%PAL:DataDir%\service64.exe
+> Type=kernel
+> Start=demand
+> Depend=
+> IfExists=skip
+> ```
 
 * __RegDLLs:__ Add support for handling library (DLLs) file registration.
 > To use this feature add the section `[RegisterDLL1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports two keys; _ProgID_ (The DLL's ProgID) and _File_ (The path to DLL. Supports environment variables). Example usage:

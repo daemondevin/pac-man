@@ -381,22 +381,96 @@ ${SegmentPre}
 	!ifmacrodef PreServices
 		!insertmacro PreServices
 	!endif
+	StrCpy $R0 1
+	${Do}
+		ClearErrors
+		${ReadLauncherConfig} $0 Service$R0 Name
+		${Service::Query} "$0" /DISABLEFSR $8 $9
+		IfErrors PRENONE PRELOCAL
+		PRELOCAL:
+			${ReadLauncherConfig} $1 Service$R0 IfExists
+			${If} $1 == replace
+				${Service::QueryConfig} "$0" /DISABLEFSR $8 $9
+				${Registry::CopyKey} "HKLM\SYSTEM\CurrentControlSet\services\$0" "${PAF}\Keys\HKLM\SYSTEM\CurrentControlSet\services\$0" $9
+				${Service::State} "$0" /DISABLEFSR $8 $9
+				${If} $8 == 1
+				${AndIf} $9 == 1
+					${Service::Stop} "$0" /DISABLEFSR $8 $9
+				${EndIf}
+				${Service::Remove} "$0" /DISABLEFSR $8 $9
+			${EndIf}
+		PRENONE:
+		ClearErrors
+		IntOp $R0 $R0 + 1
+	${Loop}
 !macroend
 ${SegmentPrePrimary}
 	# Install Portable Services
 	!ifmacrodef PrePrimaryServices
 		!insertmacro PrePrimaryServices
 	!endif
+	StrCpy $R0 1
+	${Do}
+		${ReadLauncherConfig} $0 Service$R0 IfExists
+		${If} $0 == replace
+			${ReadLauncherConfig} $1 Service$R0 Name
+			${ReadLauncherConfig} $2 Service$R0 Path
+			${ReadLauncherConfig} $3 Service$R0 Type
+			${ReadLauncherConfig} $4 Service$R0 Start
+			${ReadLauncherConfig} $5 Service$R0 Depend
+			${ParseLocations} $2
+			${Service::Create} "$1" "$2" "$3" "$4" "$5" /DISABLEFSR $8 $9
+			${Registry::CopyKey} "${PAFKEYS}\HKLM\SYSTEM\CurrentControlSet\services\$1" "HKLM\SYSTEM\CurrentControlSet\services\$1" $9
+			WriteRegStr HKLM "SYSTEM\CurrentControlSet\services\$1" "ImagePath" "$2"
+			Sleep 50
+			${Service::Start} "$1" /DISABLEFSR $8 $9
+		${EndIf}
+		IntOp $R0 $R0 + 1
+	${Loop}
 !macroend
 ${SegmentPostPrimary}
 	# Uninstall Portable Services
 	!ifmacrodef PostPrimaryServices
 		!insertmacro PostPrimaryServices
 	!endif
+	StrCpy $R0 1
+	${Do}
+		${ReadLauncherConfig} $0 Service$R0 IfExists
+		${If} $0 == replace
+			${ReadLauncherConfig} $1 Service$R0 Name
+			${Service::Stop} "$1" /DISABLEFSR $8 $9
+			Sleep 50
+			${Service::Remove} "$1" /DISABLEFSR $8 $9
+			DeleteRegKey HKLM "SYSTEM\CurrentControlSet\services\$1"
+		${EndIf}
+		IntOp $R0 $R0 + 1
+	${Loop}
 !macroend
 ${SegmentUnload}
 	# Restore Local Services
 	!ifmacrodef UnloadServices
 		!insertmacro UnloadServices
 	!endif
+	StrCpy $R0 1
+	${Do}
+		${ReadLauncherConfig} $0 Service$R0 IfExists
+		${If} $0 == replace
+			${ReadLauncherConfig} $1 Service$R0 Name
+			${ReadRuntimeData} $7 "$1Service" LocalService
+			${IfNot} ${Errors}
+			${AndIf} $7 == true
+				${Registry::RestoreBackupKey} "HKLM\SYSTEM\CurrentControlSet\services\$1" $9
+				${ReadRuntimeData} $6 "$1Service" LocalPath
+				${IfNot} ${Errors}
+					${ReadLauncherConfig} $2 Service$R0 Type
+					${ReadLauncherConfig} $3 Service$R0 Start
+					${ReadLauncherConfig} $4 Service$R0 Depend
+					${Service::Create} "$1" "$6" "$2" "$3" "$4" /DISABLEFSR $8 $9
+					Sleep 50
+					${Service::Start} "$1" /DISABLEFSR $8 $9
+				${EndIf}
+			${EndIf}
+		${EndIf}
+		IntOp $R0 $R0 + 1
+	${Loop}	
 !macroend
