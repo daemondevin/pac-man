@@ -56,44 +56,44 @@
 !define LAUNCHERINI		`${PACKAGE}\App\AppInfo\Launcher\${AppID}.ini`
 !define NEWLINE			`$\r$\n`
 ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `ProgramExecutable64=` APPEXE64
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Registry=` REGISTRY
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Java=` JAVA
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `JDK=` JDK
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `XML=` XML_PLUGIN
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Services= ` SERVICES
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `RegDLLs= ` REGISTERDLL
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Ghostscript=` GHOSTSCRIPT
-!searchparse /NOERRORS /FILE `${LAUNCHERINI}` `RunAsAdmin=` UAC
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `AppID=` APPNAME
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `Name=` PORTABLEAPPNAME
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `CertSigning=` Certificate
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `RegDisableRedirection= ` DISABLEFSR
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `UsesDotNetVersion=` dotNET_Version
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `FileWriteReplace=` REPLACE
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `RegistryValueWrite=` RegValueWrite
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `UseStdUtils= ` StdUtils
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `ExecAsUser= ` ExecAsUser
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `InstallINF= ` INF_Install
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `DisableRedirection= ` SYSTEMWIDE_DISABLEREDIR
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `ForceDisableRedirection= ` FORCE_SYSTEMWIDE_DISABLEREDIR
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `FontsFolder= ` FONTS_ENABLE
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `FileLocking= ` FileLocking
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `Junctions= ` NTFS
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `ACLRegSupport= ` ACL
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `ACLDirSupport= ` ACL_DIR
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `FileCleanup= ` FileCleanup
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `TaskCleanup= ` TaskCleanup
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `RMEmptyDir= ` RMEMPTYDIRECTORIES
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `LocalLow= ` LocalLow
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `PublicDoc= ` PublicDoc
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `CompareVersions= ` CompareVersions
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `ConfigFunctions= ` ConFunc
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `CloseWindow= ` CloseWindow
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `JSONSupport= ` JSON
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `RestartSleep= ` SleepValue
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `WinMessages= ` WinMessages
-!searchparse /NOERRORS /FILE `${APPINFOINI}` `LineWrite= ` LineWrite
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `ProgramExecutable64=` APPEXE64
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Registry=` REGISTRY
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Java=` JAVA
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `JDK=` JDK
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `XML=` XML_PLUGIN
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Services=` SERVICES
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RegDLLs=` REGISTERDLL
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Ghostscript=` GHOSTSCRIPT
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RunAsAdmin=` UAC
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `AppID=` APPNAME
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Name=` PORTABLEAPPNAME
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CertSigning=` Certificate
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RegDisableRedirection=` DISABLEFSR
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `UsesDotNetVersion=` dotNET_Version
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FileWriteReplace=` REPLACE
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RegistryValueWrite=` RegValueWrite
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `UseStdUtils=` StdUtils
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ExecAsUser=` ExecAsUser
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `InstallINF=` INF_Install
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `DisableRedirection=` SYSTEMWIDE_DISABLEREDIR
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ForceDisableRedirection=` FORCE_SYSTEMWIDE_DISABLEREDIR
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FontsFolder=` FONTS_ENABLE
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FileLocking=` FileLocking
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Junctions=` NTFS
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ACLRegSupport=` ACL
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ACLDirSupport=` ACL_DIR
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FileCleanup=` FileCleanup
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `TaskCleanup=` TaskCleanup
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RMEmptyDir=` RMEMPTYDIRECTORIES
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `LocalLow=` LocalLow
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `PublicDoc=` PublicDoc
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CompareVersions=` CompareVersions
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ConfigFunctions=` ConFunc
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CloseWindow=` CloseWindow
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `JSONSupport=` JSON
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RestartSleep=` SleepValue
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `WinMessages=` WinMessages
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `LineWrite=` LineWrite
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -513,7 +513,7 @@ SetCompressorDictSize 32
 !macroend
 !define InvalidValueError `!insertmacro _InvalidValueError`
 !macro _InvalidValueError _SECTION_KEY _VALUE
-	MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid value '${_VALUE}' for ${_SECTION_KEY}. Please refer to the offical PA.c Launcher's Manual for valid values.`
+	MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid value '${_VALUE}' for ${_SECTION_KEY}. Please refer to the official PA.c Launcher's Manual for valid values.`
 !macroend
 !define WriteRuntimeData "!insertmacro _WriteRuntimeData"
 !macro _WriteRuntimeData _SECTION _KEY _VALUE
@@ -526,31 +526,31 @@ SetCompressorDictSize 32
 	DeleteINIStr `${RUNTIME2}` `${_SECTION}` `${_KEY}`
 !macroend
 !define ReadRuntimeData "!insertmacro _ReadRuntimeData"
-!macro _ReadRuntimeData _RETURN _SECTION _KEY
+!macro _ReadRuntimeData _VALUE _SECTION _KEY
 	IfFileExists `${RUNTIME}` 0 +3
-	ReadINIStr `${_RETURN}` `${RUNTIME}` `${_SECTION}` `${_KEY}`
+	ReadINIStr `${_VALUE}` `${RUNTIME}` `${_SECTION}` `${_KEY}`
 	Goto +2
-	ReadINIStr `${_RETURN}` `${RUNTIME2}` `${_SECTION}` `${_KEY}`
+	ReadINIStr `${_VALUE}` `${RUNTIME2}` `${_SECTION}` `${_KEY}`
 !macroend
 !define WriteRuntime "!insertmacro _WriteRuntime"
 !macro _WriteRuntime _VALUE _KEY
-	WriteINIStr `${RUNTIME}` PortableApps.comLauncher `${_KEY}` `${_VALUE}`
-	WriteINIStr `${RUNTIME2}` PortableApps.comLauncher `${_KEY}` `${_VALUE}`
+	WriteINIStr `${RUNTIME}` ${PAL} `${_KEY}` `${_VALUE}`
+	WriteINIStr `${RUNTIME2}` ${PAL} `${_KEY}` `${_VALUE}`
 !macroend
 !define ReadRuntime "!insertmacro _ReadRuntime"
-!macro _ReadRuntime _RETURN _KEY
+!macro _ReadRuntime _VALUE _KEY
 	IfFileExists `${RUNTIME}` 0 +3
-	ReadINIStr `${_RETURN}` `${RUNTIME}` PortableApps.comLauncher `${_KEY}`
+	ReadINIStr `${_VALUE}` `${RUNTIME}` ${PAL} `${_KEY}`
 	Goto +2
-	ReadINIStr `${_RETURN}` `${RUNTIME2}` PortableApps.comLauncher `${_KEY}`
+	ReadINIStr `${_VALUE}` `${RUNTIME2}` ${PAL} `${_KEY}`
 !macroend
 !define WriteSettings `!insertmacro _WriteSettings`
 !macro _WriteSettings _VALUE _KEY
 	WriteINIStr `${SETINI}` ${APPNAME}Settings `${_KEY}` `${_VALUE}`
 !macroend
 !define ReadSettings `!insertmacro _ReadSettings`
-!macro _ReadSettings _RETURN _KEY
-	ReadINIStr `${_RETURN}` `${SETINI}` ${APPNAME}Settings `${_KEY}`
+!macro _ReadSettings _VALUE _KEY
+	ReadINIStr `${_VALUE}` `${SETINI}` ${APPNAME}Settings `${_KEY}`
 !macroend
 !define DeleteSettings `!insertmacro _DeleteSettings`
 !macro _DeleteSettings _KEY
@@ -732,6 +732,12 @@ Var WaitForProgram
 !ifdef REGISTRY
 	Var Registry
 !endif
+!ifdef SERVICES
+	Var Services
+!endif
+!ifdef REGISTERDLL
+	Var RegisterDLLs
+!endif
 !ifdef UAC
 	Var RunAsAdmin
 !endif
@@ -758,12 +764,12 @@ ${!echo} "${NEWLINE}Loading segments...${NEWLINE}${NEWLINE}"
 ;= App Details {{{1
 ;= ################
 ${!echo}	`${NewLine}Specifying program details and setting options...${NewLine}${NewLine}`
-!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Trademarks=` TRADEMARK
-!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Developer=` DEVELOPER
-!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Contributors=` CONTRIBUTORS
-!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Publisher=` PUBLISHER
-!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `PackageVersion=` PACKAGE_VERSION
-!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Start=` OUTFILE
+!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Trademarks=` TRADEMARK
+!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Developer=` DEVELOPER
+!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Contributors=` CONTRIBUTORS
+!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Publisher=` PUBLISHER
+!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `PackageVersion=` PACKAGE_VERSION
+!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Start=` OUTFILE
 Name		`${PORTABLEAPPNAME}`
 OutFile		`${PACKAGE}\${APPNAME}.exe`
 Icon		`${PACKAGE}\App\AppInfo\appicon.ico`
@@ -844,8 +850,8 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 	!macroend
 	!define Timestamp
 	!define TimestampSHA256
-	!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `CertExtension=` CertExtension
-	!searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `CertTimestamp=` CertTimestamp
+	!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `CertExtension=` CertExtension
+	!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `CertTimestamp=` CertTimestamp
 	!if ! "${CertTimestamp}" == ""
 		!if "${CertTimestamp}" == "Comodo"
 			!define /REDEF Timestamp "http://timestamp.comodoca.com"
@@ -886,7 +892,7 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 
 ;= FUNCTIONS
 ;= ################
-Function .onInit           ;{{{1
+Function .onInit
 	Call CreateShutdownBlockReason
 	Push $0
 	!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
@@ -933,7 +939,7 @@ Function .onInit           ;{{{1
 	!endif
 	Pop $0
 FunctionEnd
-Function Init           ;{{{1
+Function Init
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 			IntCmp $Bit 64 0 +2 +2
@@ -986,7 +992,7 @@ Function Init           ;{{{1
 		!endif
 	!endif
 FunctionEnd
-Function Pre           ;{{{1
+Function Pre
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 			IntCmp $Bit 64 0 +2 +2
@@ -1455,14 +1461,14 @@ Section           ;{{{1
 		!endif
 	!endif
 	Call Init
-	System::Call 'Kernel32::OpenMutex(i1048576, b0, t"PortableApps.comLauncher${APPNAME}-${APPNAME}::Starting") i.R0 ?e'
+	System::Call 'Kernel32::OpenMutex(i1048576, b0, t"${PAL}${APPNAME}-${APPNAME}::Starting") i.R0 ?e'
 	System::Call 'Kernel32::CloseHandle(iR0)'
 	Pop $R9
 	${If} $R9 <> 2
 		MessageBox MB_ICONSTOP $(LauncherAlreadyStarting)
 		Quit
 	${EndIf}
-	System::Call 'Kernel32::OpenMutex(i1048576, i0, t"PortableApps.comLauncher${APPNAME}-${APPNAME}::Stopping") i.R0 ?e'
+	System::Call 'Kernel32::OpenMutex(i1048576, i0, t"${PAL}${APPNAME}-${APPNAME}::Stopping") i.R0 ?e'
 	System::Call 'Kernel32::CloseHandle(iR0)'
 	Pop $R9
 	${If} $R9 <> 2
@@ -1472,7 +1478,7 @@ Section           ;{{{1
 	${IfNot} ${FileExists} `${RUNTIME}`
 	${OrIf} $SecondaryLaunch == true
 		${If} $SecondaryLaunch != true
-			System::Call 'Kernel32::CreateMutex(i0, i0, t"PortableApps.comLauncher${APPNAME}-${APPNAME}::Starting") i.r0'
+			System::Call 'Kernel32::CreateMutex(i0, i0, t"${PAL}${APPNAME}-${APPNAME}::Starting") i.r0'
 			StrCpy $StatusMutex $0
 		${EndIf}
 		${CallPS} Pre +
@@ -1487,7 +1493,7 @@ Section           ;{{{1
 		MessageBox MB_ICONSTOP $(LauncherCrashCleanup)
 	${EndIf}
 	${If} $SecondaryLaunch != true
-		System::Call 'Kernel32::CreateMutex(i0, i0, t"PortableApps.comLauncher${APPNAME}-${APPNAME}::Stopping")'
+		System::Call 'Kernel32::CreateMutex(i0, i0, t"${PAL}${APPNAME}-${APPNAME}::Stopping")'
 	${EndIf}
 	${If} $WaitForProgram != false
 		${CallPS} Post -
