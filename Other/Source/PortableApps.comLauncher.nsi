@@ -30,10 +30,14 @@
 
 !verbose 3
 
+;= DEFINE PACKAGE
+;= ################
 !ifndef PACKAGE
 	!define PACKAGE ..\..
 !endif
 
+;= ECHO MACRO
+;= ################
 !macro !echo msg
 	!verbose push
 	!verbose 4
@@ -45,15 +49,13 @@
 ;=== Require at least Unicode NSIS 2.46 {{{1
 ;!include RequireLatestNSIS.nsh
 
-;= DEFINES
+;= READ/SET DEFINES
 ;= ################
 !define APPINFOINI		`${PACKAGE}\App\AppInfo\appinfo.ini`
 !define CUSTOM			`${PACKAGE}\App\AppInfo\Launcher\custom.nsh`
 !define LAUNCHERINI		`${PACKAGE}\App\AppInfo\Launcher\${AppID}.ini`
 !define NEWLINE			`$\r$\n`
-
 ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
-
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `ProgramExecutable64=` APPEXE64
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Registry=` REGISTRY
 !searchparse /NOERRORS /FILE `${LAUNCHERINI}` `Java=` JAVA
@@ -95,7 +97,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
-
 !if ! "${APPEXE64}" == ""
 	!searchreplace APP64 "${APPNAME}" "Portable" "64"
 !else
@@ -103,12 +104,9 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef APPEXE64
 	!endif
 !endif
-
 !ifdef APP64
 	!define APPDIR64	`$EXEDIR\App\${APP64}`
 !endif
-
-;=== Certificate
 !if "${Certificate}" == true
 	!define /REDEF Certificate
 !else
@@ -116,8 +114,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef Certificate
 	!endif
 !endif
-
-;=== Custom Defines
 !if "${REGISTRY}" == true
 	!define /REDEF REGISTRY
 	!ifdef APP64
@@ -420,22 +416,8 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!error "The key 'TaskCleanup' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
 
-!define APPINFO         `$EXEDIR\App\AppInfo`
-!define INFOINI			`${APPINFO}\appinfo.ini`
-!define DATA            `$EXEDIR\Data`
-!define SET             `${DATA}\settings`
-!define DEFDATA         `$EXEDIR\App\DefaultData`
-!define DEFSET          `${DEFDATA}\settings`
-!define LAUNCHDIR       `${APPINFO}\Launcher`
-!define LAUNCHER        `${LAUNCHDIR}\${APPNAME}.ini`
-!define LAUNCHER2       `$PLUGINSDIR\launcher.ini`
-!define RUNTIME         `${DATA}\PortableApps.comLauncherRuntimeData-${APPNAME}.ini`
-!define RUNTIME2        `$PLUGINSDIR\runtimedata.ini`
-!define SETINI          `${SET}\${APPNAME}Settings.ini`
-!define CONFIG          `$EXEDIR\${APPNAME}.ini`
-!define OTHER           `$EXEDIR\Other`
-
-;=== Runtime Switches {{{1
+;= RUNTIME SWITCHS {{{1
+;= ################
 Unicode true	;=== NSIS3 Support
 ManifestDPIAware true
 WindowIcon Off
@@ -452,6 +434,22 @@ AutoCloseWindow True
 SetCompressor /SOLID lzma
 SetCompressorDictSize 32
 
+;= DEFINES
+;= ################
+!define APPINFO         `$EXEDIR\App\AppInfo`
+!define INFOINI			`${APPINFO}\appinfo.ini`
+!define DATA            `$EXEDIR\Data`
+!define SET             `${DATA}\settings`
+!define DEFDATA         `$EXEDIR\App\DefaultData`
+!define DEFSET          `${DEFDATA}\settings`
+!define LAUNCHDIR       `${APPINFO}\Launcher`
+!define LAUNCHER        `${LAUNCHDIR}\${APPNAME}.ini`
+!define LAUNCHER2       `$PLUGINSDIR\launcher.ini`
+!define RUNTIME         `${DATA}\PortableApps.comLauncherRuntimeData-${APPNAME}.ini`
+!define RUNTIME2        `$PLUGINSDIR\runtimedata.ini`
+!define SETINI          `${SET}\${APPNAME}Settings.ini`
+!define CONFIG          `$EXEDIR\${APPNAME}.ini`
+!define OTHER           `$EXEDIR\Other`
 !define PAL				PortableApps.comLauncher
 !define /DATE YEAR		`%Y`
 !define LCID			`kernel32::GetUserDefaultLangID()i .r0`
@@ -460,99 +458,107 @@ SetCompressorDictSize 32
 !define ENABLEREDIR		`kernel32::Wow64EnableWow64FsRedirection(i1)`
 !define GETCURRPROC		`kernel32::GetCurrentProcess()i.s`
 !define WOW				`kernel32::IsWow64Process(is,*i.r0)`
-!define ReadLauncherConfig `!insertmacro ReadLauncherConfig`
-!macro ReadLauncherConfig _RETURN _SECTION _ENTRY
-	ReadINIStr ${_RETURN} `${LAUNCHER}` `${_SECTION}` `${_ENTRY}`
+
+;= MACROS
+;= ################
+!define ReadAppInfoConfig `!insertmacro _ReadAppInfoConfig`
+!macro _ReadAppInfoConfig _VALUE _SECTION _KEY
+	ReadINIStr ${_VALUE} `${INFOINI}` `${_SECTION}` `${_KEY}`
 !macroend
-!define WriteLauncherConfig `!insertmacro WriteLauncherConfig`
-!macro WriteLauncherConfig _SECTION _ENTRY _VALUE
-	WriteINIStr `${LAUNCHER}` `${_SECTION}` `${_ENTRY}` `${_VALUE}`
+!define WriteAppInfoConfig `!insertmacro _WriteAppInfoConfig`
+!macro _WriteAppInfoConfig _SECTION _KEY _VALUE
+	WriteINIStr `${INFOINI}` `${_SECTION}` `${_KEY}` `${_VALUE}`
 !macroend
-!define DeleteLauncherConfig `!insertmacro DeleteLauncherConfig`
-!macro DeleteLauncherConfig _SECTION _ENTRY
-	DeleteINIStr `${LAUNCHER}` `${_SECTION}` `${_ENTRY}`
+!define DeleteAppInfoConfig `!insertmacro _DeleteAppInfoConfig`
+!macro _DeleteAppInfoConfig _SECTION _KEY
+	DeleteINIStr `${INFOINI}` `${_SECTION}` `${_KEY}`
 !macroend
-!define DeleteLauncherConfigSec `!insertmacro DeleteLauncherConfigSec`
-!macro DeleteLauncherConfigSec _SECTION
+!define DeleteAppInfoConfigSec `!insertmacro _DeleteAppInfoConfigSec`
+!macro _DeleteAppInfoConfigSec _SECTION
 	DeleteINISec `${LAUNCHER}` `${_SECTION}`
 !macroend
-!define ReadLauncherConfigWithDefault `!insertmacro ReadLauncherConfigWithDefault`
-!macro ReadLauncherConfigWithDefault _RETURN _SECTION _VALUE _DEFAULT
+!define ReadLauncherConfig `!insertmacro _ReadLauncherConfig`
+!macro _ReadLauncherConfig _VALUE _SECTION _KEY
+	ReadINIStr ${_VALUE} `${LAUNCHER}` `${_SECTION}` `${_KEY}`
+!macroend
+!define WriteLauncherConfig `!insertmacro _WriteLauncherConfig`
+!macro _WriteLauncherConfig _SECTION _KEY _VALUE
+	WriteINIStr `${LAUNCHER}` `${_SECTION}` `${_KEY}` `${_VALUE}`
+!macroend
+!define DeleteLauncherConfig `!insertmacro _DeleteLauncherConfig`
+!macro _DeleteLauncherConfig _SECTION _KEY
+	DeleteINIStr `${LAUNCHER}` `${_SECTION}` `${_KEY}`
+!macroend
+!define DeleteLauncherConfigSec `!insertmacro _DeleteLauncherConfigSec`
+!macro _DeleteLauncherConfigSec _SECTION
+	DeleteINISec `${LAUNCHER}` `${_SECTION}`
+!macroend
+!define ReadLauncherConfigWithDefault `!insertmacro _ReadLauncherConfigWithDefault`
+!macro _ReadLauncherConfigWithDefault _VALUE _SECTION _KEY _DEFAULT
 	ClearErrors
-	${ReadLauncherConfig} ${_RETURN} `${_SECTION}` `${_VALUE}`
-	${IfThen} ${Errors} ${|} StrCpy ${_OUTPUT} `${_DEFAULT}` ${|}
+	${ReadLauncherConfig} ${_VALUE} `${_SECTION}` `${_KEY}`
+	${IfThen} ${Errors} ${|} StrCpy ${_VALUE} `${_DEFAULT}` ${|}
 !macroend
-!define ReadAppInfoConfig `!insertmacro ReadAppInfoConfig`
-!macro ReadAppInfoConfig _RETURN _SECTION _ENTRY
-	ReadINIStr ${_RETURN} `${INFOINI}` `${_SECTION}` `${_ENTRY}`
+!define ReadUserConfig `!insertmacro _ReadUserConfig`
+!macro _ReadUserConfig _VALUE _KEY
+	${ConfigReadS} `${CONFIG}` `${_KEY}=` `${_VALUE}`
 !macroend
-!define WriteAppInfoConfig `!insertmacro WriteAppInfoConfig`
-!macro WriteAppInfoConfig _SECTION _ENTRY _VALUE
-	WriteINIStr `${INFOINI}` `${_SECTION}` `${_ENTRY}` `${_VALUE}`
-!macroend
-!define DeleteAppInfoConfig `!insertmacro DeleteAppInfoConfig`
-!macro DeleteAppInfoConfig _SECTION _ENTRY
-	DeleteINIStr `${INFOINI}` `${_SECTION}` `${_ENTRY}`
-!macroend
-!define ReadUserConfig `!insertmacro ReadUserConfig`
-!macro ReadUserConfig _RETURN _KEY
-	${ConfigReadS} `${CONFIG}` `${_KEY}=` `${_RETURN}`
-!macroend
-!define WriteUserConfig `!insertmacro WriteUserConfig`
-!macro WriteUserConfig _VALUE _KEY
+!define WriteUserConfig `!insertmacro _WriteUserConfig`
+!macro _WriteUserConfig _VALUE _KEY
 	${ConfigWriteS} `${CONFIG}` `${_KEY}=` `${_VALUE}` $R0
 !macroend
-!define ReadUserOverrideConfig `!insertmacro ReadUserOverrideConfigError`
-!macro ReadUserOverrideConfigError a b
+!define ReadUserOverrideConfig `!insertmacro _ReadUserOverrideConfigError`
+!macro _ReadUserOverrideConfigError a b
 	!error `ReadUserOverrideConfig has been renamed to ReadUserConfig in PAL 2.1.`
 !macroend
-!define InvalidValueError `!insertmacro InvalidValueError`
-!macro InvalidValueError _SECTION_KEY _VALUE
-	MessageBox MB_OK|MB_ICONSTOP `Error: invalid value '${_VALUE}' for ${_SECTION_KEY}. Please refer to the Manual for valid values.`
+!define InvalidValueError `!insertmacro _InvalidValueError`
+!macro _InvalidValueError _SECTION_KEY _VALUE
+	MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid value '${_VALUE}' for ${_SECTION_KEY}. Please refer to the offical PA.c Launcher's Manual for valid values.`
 !macroend
-!define WriteRuntimeData "!insertmacro WriteRuntimeData"
-!macro WriteRuntimeData _SECTION _KEY _VALUE
+!define WriteRuntimeData "!insertmacro _WriteRuntimeData"
+!macro _WriteRuntimeData _SECTION _KEY _VALUE
 	WriteINIStr `${RUNTIME}` `${_SECTION}` `${_KEY}` `${_VALUE}`
 	WriteINIStr `${RUNTIME2}` `${_SECTION}` `${_KEY}` `${_VALUE}`
 !macroend
-!define DeleteRuntimeData "!insertmacro DeleteRuntimeData"
-!macro DeleteRuntimeData _SECTION _KEY
+!define DeleteRuntimeData "!insertmacro _DeleteRuntimeData"
+!macro _DeleteRuntimeData _SECTION _KEY
 	DeleteINIStr `${RUNTIME}` `${_SECTION}` `${_KEY}`
 	DeleteINIStr `${RUNTIME2}` `${_SECTION}` `${_KEY}`
 !macroend
-!define ReadRuntimeData "!insertmacro ReadRuntimeData"
-!macro ReadRuntimeData _RETURN _SECTION _KEY
+!define ReadRuntimeData "!insertmacro _ReadRuntimeData"
+!macro _ReadRuntimeData _RETURN _SECTION _KEY
 	IfFileExists `${RUNTIME}` 0 +3
 	ReadINIStr `${_RETURN}` `${RUNTIME}` `${_SECTION}` `${_KEY}`
 	Goto +2
 	ReadINIStr `${_RETURN}` `${RUNTIME2}` `${_SECTION}` `${_KEY}`
 !macroend
-!define WriteRuntime "!insertmacro WriteRuntime"
-!macro WriteRuntime _VALUE _KEY
+!define WriteRuntime "!insertmacro _WriteRuntime"
+!macro _WriteRuntime _VALUE _KEY
 	WriteINIStr `${RUNTIME}` PortableApps.comLauncher `${_KEY}` `${_VALUE}`
 	WriteINIStr `${RUNTIME2}` PortableApps.comLauncher `${_KEY}` `${_VALUE}`
 !macroend
-!define ReadRuntime "!insertmacro ReadRuntime"
-!macro ReadRuntime _RETURN _KEY
+!define ReadRuntime "!insertmacro _ReadRuntime"
+!macro _ReadRuntime _RETURN _KEY
 	IfFileExists `${RUNTIME}` 0 +3
 	ReadINIStr `${_RETURN}` `${RUNTIME}` PortableApps.comLauncher `${_KEY}`
 	Goto +2
 	ReadINIStr `${_RETURN}` `${RUNTIME2}` PortableApps.comLauncher `${_KEY}`
 !macroend
-!define WriteSettings `!insertmacro WriteSettings`
-!macro WriteSettings _VALUE _KEY
+!define WriteSettings `!insertmacro _WriteSettings`
+!macro _WriteSettings _VALUE _KEY
 	WriteINIStr `${SETINI}` ${APPNAME}Settings `${_KEY}` `${_VALUE}`
 !macroend
-!define ReadSettings `!insertmacro ReadSettings`
-!macro ReadSettings _RETURN _KEY
+!define ReadSettings `!insertmacro _ReadSettings`
+!macro _ReadSettings _RETURN _KEY
 	ReadINIStr `${_RETURN}` `${SETINI}` ${APPNAME}Settings `${_KEY}`
 !macroend
-!define DeleteSettings `!insertmacro DeleteSettings`
-!macro DeleteSettings _KEY
+!define DeleteSettings `!insertmacro _DeleteSettings`
+!macro _DeleteSettings _KEY
 	DeleteINIStr `${SETINI}` ${APPNAME}Settings `${_KEY}`
 !macroend
 
-;=== Include {{{1
+;= INCLUDES {{{1
+;= ################
 ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 ;(Standard NSIS) {{{2
 !include LangFile.nsh
@@ -561,7 +567,8 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 !include TextFunc.nsh
 !include WordFunc.nsh
 
-;=== Prevent Win Shutdown
+;= SHUTDOWN
+;= ################
 !include nsDialogs.nsh
 !define /ifndef WS_POPUP 0x80000000
 Function CreateShutdownBlockReason
@@ -572,7 +579,8 @@ Function CreateShutdownBlockReason
 	System::Call 'USER32::ShutdownBlockReasonCreate(pr1,w"${PORTABLEAPPNAME} is running and still needs to clean up before shutting down!")'
 FunctionEnd
 
-;(NSIS Plugins) {{{
+;= (NSIS Plugins) {{{1
+;= ################
 !ifdef ExecAsUser
 	!include StdUtils.nsh
 	!ifndef PLUGINSDIR
@@ -642,7 +650,9 @@ FunctionEnd
 		!AddPluginDir Plugins
 	!endif
 !endif
-;(Custom) {{{2
+
+;= (Custom) {{{2
+;= ################
 !ifdef REGISTRY
 	!include Registry.nsh
 	!define REGEXE `$SYSDIR\reg.exe`
@@ -701,11 +711,13 @@ FunctionEnd
 	FunctionEnd
 !endif
 
-;=== Languages {{{1
+;= LANGUAGES {{{1
+;= ################
 ${!echo} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 !include Languages.nsh
 
-;=== Variables {{{1
+;= VARIABLES {{{1
+;= ################
 ${!echo} "${NEWLINE}Initialising variables and macros...${NEWLINE}${NEWLINE}"
 Var Bit
 Var Admin
@@ -734,29 +746,28 @@ Var WaitForProgram
 	Var jdkDirectory
 !endif
 
-; Load the segments {{{1
+;= Load Segments {{{1
+;= ################
 ${!echo} "${NEWLINE}Loading segments...${NEWLINE}${NEWLINE}"
 !include Segments.nsh
 
-;=== Debugging {{{1
+;= Debugging {{{1
+;= ################
 !include Debug.nsh
 
-;=== Program Details {{{1
+;= App Details {{{1
+;= ################
 ${!echo}	`${NewLine}Specifying program details and setting options...${NewLine}${NewLine}`
-
-### BRANDING ###
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Trademarks=` TRADEMARK
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Developer=` DEVELOPER
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Contributors=` CONTRIBUTORS
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Publisher=` PUBLISHER
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `PackageVersion=` PACKAGE_VERSION
 !searchparse /NOERRORS /FILE ${PACKAGE}\App\AppInfo\appinfo.ini `Start=` OUTFILE
-
 Name		`${PORTABLEAPPNAME}`
 OutFile		`${PACKAGE}\${APPNAME}.exe`
 Icon		`${PACKAGE}\App\AppInfo\appicon.ico`
 Caption		`${FULLNAME}`
-
 !ifdef PACKAGE_VERSION
 	!if ! ${PACKAGE_VERSION} == ""
 		VIProductVersion	${PACKAGE_VERSION}
@@ -822,7 +833,8 @@ Caption		`${FULLNAME}`
 !endif
 VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 
-;=== Code Signing
+;= CODE SIGNING
+;= ################
 !ifdef Certificate
 	${!echo}	`${NewLine} Gathering the certificate and other information then signing ${OUTFILE}...${NewLine}${NewLine}`
 	;=== Signing Macro
@@ -872,6 +884,8 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 
 !verbose 4
 
+;= FUNCTIONS
+;= ################
 Function .onInit           ;{{{1
 	Call CreateShutdownBlockReason
 	Push $0
