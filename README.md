@@ -69,6 +69,8 @@ Other things could follow depending on my availability, interest.. and of course
 ----------
 
 #### __Launcher.ini__
+__Environment Variables__
+`%PROGRAMDATA%` has now been added and kept %ALLUSERSAPPDATA% for backwards compatibilty. Both can be used anywhere you can use an evironment variable.
 `%PAL:CommonFiles%` may now be used within the _Launcher.ini_ configuration file. This environment variable will point to `..\PortableApps\CommonFiles` if applicable. Can be used anywhere you can use an environment variable.
 > Example:
 > ```INI
