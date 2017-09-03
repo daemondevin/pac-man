@@ -229,6 +229,7 @@ ${SegmentInit}
 	${SetEnvironmentVariablesPath} DOCUMENTS $DOCUMENTS
 	SetShellVarContext all
 	${SetEnvironmentVariablesPath} ALLUSERSAPPDATA $APPDATA
+	${SetEnvironmentVariablesPath} PROGRAMDATA $APPDATA
 	SetShellVarContext current
 	!ifmacrodef PostEnvironmentVariables
 		!insertmacro PostEnvironmentVariables
