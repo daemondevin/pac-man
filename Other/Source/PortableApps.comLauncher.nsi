@@ -65,25 +65,26 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RegDLLs=` REGISTERDLL
 !searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Ghostscript=` GHOSTSCRIPT
 !searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RunAsAdmin=` UAC
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `ExecAsUser=` ExecAsUser
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RegRedirection=` DISABLEFSR
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Redirection=` SYSTEMWIDE_DISABLEREDIR
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `ForceRedirection=` FORCE_SYSTEMWIDE_DISABLEREDIR
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Tasks=` TaskCleanUp
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RegCopyKeys=` RegCopy
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `FileCleanup=` FileCleanup
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `FontsFolder=` FONTS_ENABLE
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `AppID=` APPNAME
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Name=` PORTABLEAPPNAME
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CertSigning=` Certificate
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RegDisableRedirection=` DISABLEFSR
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `UsesDotNetVersion=` dotNET_Version
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FileWriteReplace=` REPLACE
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RegistryValueWrite=` RegValueWrite
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `UseStdUtils=` StdUtils
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ExecAsUser=` ExecAsUser
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `InstallINF=` INF_Install
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `DisableRedirection=` SYSTEMWIDE_DISABLEREDIR
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ForceDisableRedirection=` FORCE_SYSTEMWIDE_DISABLEREDIR
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FontsFolder=` FONTS_ENABLE
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FileLocking=` FileLocking
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Junctions=` NTFS
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ACLRegSupport=` ACL
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ACLDirSupport=` ACL_DIR
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FileCleanup=` FileCleanup
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `TaskCleanup=` TaskCleanup
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RMEmptyDir=` RMEMPTYDIRECTORIES
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `LocalLow=` LocalLow
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `PublicDoc=` PublicDoc
@@ -94,6 +95,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RestartSleep=` SleepValue
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `WinMessages=` WinMessages
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `LineWrite=` LineWrite
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `TrimString=` TrimString
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -175,11 +177,15 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !endif
 !if "${UAC}" == "force"
 	!define /REDEF UAC
-	!define TrimString
+	!ifndef TrimString
+		!define TrimString
+	!endif
 	!include UAC.nsh
 !else if  "${UAC}" == "compile-force"
 	!define /REDEF UAC
-	!define TrimString
+	!ifndef TrimString
+		!define TrimString
+	!endif
 	!include UAC.nsh
 !else
 	!ifdef UAC
@@ -697,7 +703,7 @@ FunctionEnd
 	Function CreateFontsFolder
 		IfFileExists "${PACKAGE}\App\DefaultData\Fonts" +2
 		CreateDirectory /SILENT "${PACKAGE}\App\DefaultData\Fonts"
-		IfFileExists "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" +2
+		IfFileExists "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" +11
 		!tempfile FONTFILE
 		!appendfile "${FONTFILE}" "Font(s) added here will be loaded on launch and accessible during runtime.$\n$\n"
 		!appendfile "${FONTFILE}" "NOTE:$\n"
@@ -731,12 +737,6 @@ Var StatusMutex
 Var WaitForProgram
 !ifdef REGISTRY
 	Var Registry
-!endif
-!ifdef SERVICES
-	Var Services
-!endif
-!ifdef REGISTERDLL
-	Var RegisterDLLs
 !endif
 !ifdef UAC
 	Var RunAsAdmin

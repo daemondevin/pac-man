@@ -82,15 +82,39 @@ Added new keys to the `[Activate]` section. They are as follows (a short descrip
 ```INI
 [Activate]
 Registry=true
+RegRedirection=true
+RegCopyKeys=true
+Redirection=true
+ForceRedirection=true
+ExecAsUser=true
 Services=true
 RegDLLs=true
-Ghostscript=true
+Tasks=true
 Java=true
 JDK=true
 XML=true
+Ghostscript=true
+FontsFolder=true
+FileCleanup=true
 ```
 
 * __Registry:__ Add support for minipulating the Windows Registry.
+
+* __RegRedirection:__ Enable support for enabling/disabling registry redirection.
+
+* __RegCopyKeys:__ Enable support for copying registry keys to a special hive (`HKCU\Software\PortableApps.com`) before launching the application and restoring the keys after the application exits. See `RegistryCopyKeys.nsh` in the Segments directory.
+> To use this feature add the section `[RegistryCopyKeys]` to the `Launcher.ini` file. Each entry should be the path to the registry key to be copied back and forth. Example usage:
+> ```INI
+> [RegistryCopyKeys]
+> 1=HKCU\Software\MyProgram\ExtraCareNeededKey
+> 2=HKLM\SOFTWARE\MyProgram\AnotherFragileKey
+> ```
+
+* __Redirection:__ Enable support for enabling/disabling file system redirection.
+
+* __ForceRedirection:__ Checks using the variable `$Bit` to disable/enable file system redirection.
+
+* __ExecAsUser:__ For applications which need to run as normal user but need the launcher to have elevated privileges. [Read this](http://mdb-blog.blogspot.com/2013/01/nsis-lunch-program-as-user-from-uac.html) for more information on this concept.
 
 * __Services:__ Add support for handling Windows Services.
 > To use this feature add the section `[Service1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports six keys which are as follows:
@@ -135,13 +159,41 @@ XML=true
 > File=%PAL:DataDir%\dynlib.dll
 > ```
 
-* __Ghostscript:__ Add Ghostscript support.
+* __Tasks:__ Enable the TaskCleanup segment for removing any Windows Tasks that were added during runtime.
+> To use this feature add the section `[TaskCleanup]` to the `Launcher.ini` file. Each entry should be the Windows Task name to be removed. Example usage:
+> ```INI
+> [TaskCleanup]
+> 1=MyAppTask1
+> 2=Another Task w/ Spaces
+> ```
 
 * __Java:__ Add support for the Java Runtime Environment.
 
 * __JDK:__ Add support for the Java Development Kit.
 
 * __XML:__ Add XML support.
+
+* __Ghostscript:__ Add Ghostscript support.
+
+* __FontsFolder:__ Allows the portable application to support fonts within the directory `..\Data\Fonts`. Any fonts added in this folder will be added and are available for usage during runtime. Be aware, the more fonts to process the longer it will take for the launcher to load and unload these fonts.
+> Supported Fonts: 
+> - .fon
+> - .fnt
+> - .ttf
+> - .ttc
+> - .fot
+> - .otf
+> - .mmm
+> - .pfb
+> - .pfm
+
+* __FileCleanup:__ Enable support for adding the section `[FilesCleanup]` in `Launcher.ini`. See `FilesCleanup.nsh` in the Segments directory.
+> To use this feature add the section `[FilesCleanup]` to the `Launcher.ini` file. Each entry should be the path to the file that needs deleting. Supports environment variables. Example usage:
+> ```INI
+> [FilesCleanup]
+> 1=%PAL:DataDir%\uselessUpgradeFile.xml
+> 2=%APPDATA%\MyProgram\purposelessCfg.ini
+> ```
 
 ----------
 
@@ -188,23 +240,15 @@ ElevatedPrivileges=true
 UsesJava=true
 UsesGhostscript=true
 UsesDotNetVersion=4.5
-ExecAsUser=true
 UseStdUtils=true
 InstallINF=true
-DisableRedirection=true
-ForceDisableRedirection=true
 RegistryValueWrite=true
-RegistryCopyKeys=true
-RegDisableRedirection=true
-FontsFolder=true
 FileWriteReplace=true
-FileCleanup=true
 FileLocking=true
 Firewall=true
 Junctions=true
 ACLRegSupport=true
 ACLDirSupport=true
-TaskCleanup=true
 RMEmptyDir=true
 LocalLow=true
 PublicDoc=true
@@ -224,49 +268,13 @@ LineWrite=true
 
 * __UsesDotNetVersion:__ Specify the minimum required version of the .NET framework the portable application needs. Values can be from `1.0` thru `4.7` (*e.g.* `UsesDotNetVersion=1.1` or `UsesDotNetVersion=4.6.2`).
 
-* __ExecAsUser:__ For applications which need to run as normal user but need the launcher to have elevated privileges. [Read this](http://mdb-blog.blogspot.com/2013/01/nsis-lunch-program-as-user-from-uac.html) for more information on this concept.
-
 * __UseStdUtils:__ Include the _StdUtils_ plug-in without `ExecAsUser`
 
 * __InstallINF:__ Add support and macros for INF installation. Refer to the `Services.nsh` file in the Segments directory for reference.
 
-* __DisableRedirection:__ Enable support for enabling/disabling file system redirection.
-
-* __ForceDisableRedirection:__ Checks using the variable `$Bit` to disable/enable file system redirection.
-
-* __RegistryValueWrite:__ Set this to true to set a sleep value for `[RegistryValueWrite]` otherwise the function is inaccurate.
-
-* __RegistryCopyKeys:__ Enable support for copying registry keys to a special hive (`HKCU\Software\PortableApps.com`) before launching the application and restoring the keys after the application exits. See `RegistryCopyKeys.nsh` in the Segments directory.
-> To use this feature add the section `[RegistryCopyKeys]` to the `Launcher.ini` file. Each entry should be the path to the registry key to be copied back and forth. Example usage:
-> ```INI
-> [RegistryCopyKeys]
-> 1=HKCU\Software\MyProgram\ExtraCareNeededKey
-> 2=HKLM\SOFTWARE\MyProgram\AnotherFragileKey
-> ```
-
-* __RegDisableRedirection:__ Enable support for enabling/disabling registry redirection.
-
-* __FontsFolder:__ Allows the portable application to support fonts within the directory `..\Data\Fonts`. Any fonts added in this folder will be added and are available for usage during runtime. Be aware, the more fonts to process the longer it will take for the launcher to load and unload these fonts.
-> Supported Fonts: 
-> - .fon
-> - .fnt
-> - .ttf
-> - .ttc
-> - .fot
-> - .otf
-> - .mmm
-> - .pfb
-> - .pfm
+* __RegistryValueWrite:__ If you're using `[RegistryValueWrite]` than set this to true otherwise the function is inaccurate.
 
 * __FileWriteReplace:__ Enables the Replace functionality in `[FileWrite]`
-
-* __FileCleanup:__ Enable support for adding the section `[FilesCleanup]` in `Launcher.ini`. See `FilesCleanup.nsh` in the Segments directory.
-> To use this feature add the section `[FilesCleanup]` to the `Launcher.ini` file. Each entry should be the path to the file that needs deleting. Supports environment variables. Example usage:
-> ```INI
-> [FilesCleanup]
-> 1=%PAL:DataDir%\uselessUpgradeFile.xml
-> 2=%APPDATA%\MyProgram\purposelessCfg.ini
-> ```
 
 * __FileLocking:__ Enable this to prevent ejection/unplugging problems for USB devices. Windows Explorer tend to lock application's DLL(s). 
 __Note:__ As of right now, this only enables support for using `${If} ${FileLocked}` and/or `${IfNot} ${FileLocked}` in the `custom.nsh` file. 
@@ -279,14 +287,6 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 * __ACLRegSupport:__ Enable support for AccessControl on registry keys.
 
 * __ACLDirSupport:__ Enable support for AccessControl on directories.
-
-* __TaskCleanup:__ Enable the TaskCleanup segment for removing any Windows Tasks that was added during runtime.
-> To use this feature add the section `[TaskCleanup]` to the `Launcher.ini` file. Each entry should be the Windows Task name to be removed. Example usage:
-> ```INI
-> [TaskCleanup]
-> 1=MyAppTask1
-> 2=Another Task w/ Spaces
-> ```
 
 * __RMEmptyDir:__ Enable the function `RMEmptyDir`. See the `Core.nsh` segment on line 1192 for reference.
 
