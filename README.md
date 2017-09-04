@@ -312,6 +312,8 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 
 * __LineWrite:__ Include the `LineWrite.nsh` file.
 
+* __TrimString:__ Enable the function `Trim`. See the `Core.nsh` segment on line 1093 for reference.
+
 * __CloseProcess:__ Enable the function `CloseX`. See the `Core.nsh` segment on line 1125 for reference.
 
 * __Include64:__ Include the `64.nsh` file.
