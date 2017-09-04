@@ -96,6 +96,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `WinMessages=` WinMessages
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `LineWrite=` LineWrite
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `TrimString=` TrimString
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CloseProcess=` CloseProc
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -174,6 +175,24 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!ifdef GHOSTSCRIPT
 		!undef GHOSTSCRIPT
 	!endif
+!endif
+!if ! ${TrimString} == ""
+	!if ${TrimString} == true
+		!define /REDEF TrimString
+	!else if ${TrimString} == false
+		!undef TrimString
+	!endif
+!else
+	!error "The key 'TrimString' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${CloseProc} == ""
+	!if ${CloseProc} == true
+		!define /REDEF CloseProc
+	!else if ${CloseProc} == false
+		!undef CloseProc
+	!endif
+!else
+	!error "The key 'CloseProcess' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
 !if "${UAC}" == "force"
 	!define /REDEF UAC
