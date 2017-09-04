@@ -261,6 +261,8 @@ JSONSupport=true
 RestartSleep=500
 WinMessages=true
 LineWrite=true
+CloseProcess=true
+Include64=true
 ```
 * __ElevatedPrivileges:__ For launchers which need to run with elevated privileges.
 
@@ -309,6 +311,10 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 * __WinMessages:__ Include the `WinMessages.nsh` file.
 
 * __LineWrite:__ Include the `LineWrite.nsh` file.
+
+* __CloseProcess:__ Enable the function `CloseX`. See the `Core.nsh` segment on line 1125 for reference.
+
+* __Include64:__ Include the `64.nsh` file.
 
 ## Documentation
 ----------

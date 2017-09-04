@@ -97,6 +97,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `LineWrite=` LineWrite
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `TrimString=` TrimString
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CloseProcess=` CloseProc
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Include64=` Include64
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -247,6 +248,15 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 !else
 	!error "The key 'WinMessages' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${Include64} == ""
+	!if ${Include64} == true 			;=== include WinMessages.nsh
+		!define 64.nsh
+	!else if ${Include64} == false
+		!undef Include64
+	!endif
+!else
+	!error "The key 'Include64' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
 !if ! ${ConFunc} == ""
 	!if ${ConFunc} == true 				;=== Enable ConfigWrite(s), ConfigRead(s) Functions.
