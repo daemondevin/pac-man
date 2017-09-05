@@ -77,6 +77,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Name=` PORTABLEAPPNAME
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CertSigning=` Certificate
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `UsesDotNetVersion=` dotNET_Version
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ElevatedPrivileges=` Elevate
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FileWriteReplace=` REPLACE
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RegistryValueWrite=` RegValueWrite
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `UseStdUtils=` StdUtils
@@ -202,6 +203,18 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 	!include UAC.nsh
 !else if  "${UAC}" == "compile-force"
+	!define /REDEF UAC
+	!ifndef TrimString
+		!define TrimString
+	!endif
+	!include UAC.nsh
+!else if "${UAC}" == "try"
+	!define /REDEF UAC
+	!ifndef TrimString
+		!define TrimString
+	!endif
+	!include UAC.nsh
+!else if "${Elevate}" == "auto"
 	!define /REDEF UAC
 	!ifndef TrimString
 		!define TrimString
