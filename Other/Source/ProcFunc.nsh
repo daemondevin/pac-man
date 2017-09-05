@@ -182,7 +182,30 @@ ${Execute} "[command]" "[working_dir]" $var
 !else
 	!define _PROCFUNC_WSTRING "&w520"
 !endif
-
+;Push `${_Process}`
+;Call Find::Process
+;IntCmp $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
+Function Find::Process
+	!insertmacro _LOGICLIB_TEMP
+	System::Store s
+	Pop $0
+	StrCpy $_LOGICLIB_TEMP 0
+	System::Call '*(&l4,i,i,i,i,i,i,i,i,${_PROCFUNC_WSTRING})i .r2'
+	System::Call 'kernel32::CreateToolhelp32Snapshot(i 2, i 0)i .r3'
+	IntCmp $3 -1 +11
+	System::Call 'kernel32::Process32FirstW(i r3, i r2)i .r4'
+	IntCmp $4 0 +8
+	System::Call '*$2(i,i,i,i,i,i,i,i,i,${_PROCFUNC_WSTRING} .r5)'
+	StrCmp $5 $0 0 +3
+	StrCpy $_LOGICLIB_TEMP 1
+	Goto +4
+	System::Call 'kernel32::Process32NextW(i r3, i r2)i .r4'
+	IntCmp $4 0 +2
+	Goto -6
+	System::Call 'kernel32::CloseHandle(i r3)'
+	System::Free $2
+	System::Store l
+FunctionEnd
 !macro ProcessExists
 	!error "ProcessExists has been renamed to GetProcessPID"
 !macroend
@@ -197,6 +220,16 @@ ${Execute} "[command]" "[working_dir]" $var
 	!verbose pop
 !macroend
 !define ProcessExists `"" ProcessExists`
+!macro _ProcExists _a _b _t _f
+	!insertmacro _LOGICLIB_TEMP
+	!verbose push
+	!verbose ${_PROCFUNC_VERBOSE}
+	Push `${_b}`
+	${CallArtificialFunction} LLProcessExists_
+	IntCmp $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
+	!verbose pop
+!macroend
+!define ProcExists `"" ProcExists`
 
 !macro GetProcessPID
 !macroend
