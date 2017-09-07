@@ -384,22 +384,37 @@ ${SegmentPre}
 	StrCpy $R0 1
 	${Do}
 		ClearErrors
-		${ReadLauncherConfig} $0 Service$R0 Name
-		${Service::Query} "$0" /DISABLEFSR $8 $9
-		IfErrors PRENONE PRELOCAL
-		PRELOCAL:
-			${ReadLauncherConfig} $1 Service$R0 IfExists
-			${If} $1 == replace
-				${Service::QueryConfig} "$0" /DISABLEFSR $8 $9
-				${Registry::CopyKey} "HKLM\SYSTEM\CurrentControlSet\services\$0" "${PAF}\Keys\HKLM\SYSTEM\CurrentControlSet\services\$0" $9
-				${Service::State} "$0" /DISABLEFSR $8 $9
-				${If} $8 == 1
-				${AndIf} $9 == 1
-					${Service::Stop} "$0" /DISABLEFSR $8 $9
-				${EndIf}
-				${Service::Remove} "$0" /DISABLEFSR $8 $9
+		ReadINIStr $0 `${LAUNCHER}` `Service$R0` `Name`
+		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+		ReadRegStr $1 HKLM `SYSTEM\CurrentControlSet\services\$0` ImagePath
+		${IfNot} ${Errors}
+			${WriteRuntimeData} "$0Service" LocalService true
+			ReadINIStr $2 `${LAUNCHER}` `Service$R0` `IfExists`
+			${If} $2 == replace
+				ReadEnvStr $R0 COMSPEC
+				StrCmpS $Bit 64 0 +3
+				ExecDos::Exec /TOSTACK /DISABLEFSR `"$R0" /c "${SC} query "${_SVC}" | find /C "RUNNING""`
+				Goto +2
+				ExecDos::Exec /TOSTACK `"$R0" /c "${SC} query "${_SVC}" | find /C "RUNNING""`
+				Pop $8
+				Pop $9
+				StrCmpS $8 1 0 +4
+				StrCmpS $9 1 0 +3
+				${WriteRuntimeData} "$0Service" LocalState Running
+				StrCmpS $Bit 64 0 +3
+				ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" stop "${_SVC}"`
+				Goto +2
+				ExecDos::Exec /TOSTACK `"${SC}" stop "${_SVC}"`
+				Pop $8
+				Pop $9
+				StrCmpS $Bit 64 0 +3
+				ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" delete "${_SVC}"`
+				Goto +2
+				ExecDos::Exec /TOSTACK `"${SC}" delete "${_SVC}"`
+				Pop $8
+				Pop $9
 			${EndIf}
-		PRENONE:
+		${EndIf}
 		ClearErrors
 		IntOp $R0 $R0 + 1
 	${Loop}
@@ -411,9 +426,10 @@ ${SegmentPrePrimary}
 	!endif
 	StrCpy $R0 1
 	${Do}
+		${ReadLauncherConfig} $1 Service$R0 Name
+		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 		${ReadLauncherConfig} $0 Service$R0 IfExists
 		${If} $0 == replace
-			${ReadLauncherConfig} $1 Service$R0 Name
 			${ReadLauncherConfig} $2 Service$R0 Path
 			${ReadLauncherConfig} $3 Service$R0 Type
 			${ReadLauncherConfig} $4 Service$R0 Start
@@ -435,9 +451,10 @@ ${SegmentPostPrimary}
 	!endif
 	StrCpy $R0 1
 	${Do}
+		${ReadLauncherConfig} $1 Service$R0 Name
+		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 		${ReadLauncherConfig} $0 Service$R0 IfExists
 		${If} $0 == replace
-			${ReadLauncherConfig} $1 Service$R0 Name
 			${Service::Stop} "$1" /DISABLEFSR $8 $9
 			Sleep 50
 			${Service::Remove} "$1" /DISABLEFSR $8 $9
@@ -453,21 +470,25 @@ ${SegmentUnload}
 	!endif
 	StrCpy $R0 1
 	${Do}
+		${ReadLauncherConfig} $1 Service$R0 Name
+		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 		${ReadLauncherConfig} $0 Service$R0 IfExists
 		${If} $0 == replace
-			${ReadLauncherConfig} $1 Service$R0 Name
 			${ReadRuntimeData} $7 "$1Service" LocalService
 			${IfNot} ${Errors}
 			${AndIf} $7 == true
 				${Registry::RestoreBackupKey} "HKLM\SYSTEM\CurrentControlSet\services\$1" $9
-				${ReadRuntimeData} $6 "$1Service" LocalPath
-				${IfNot} ${Errors}
-					${ReadLauncherConfig} $2 Service$R0 Type
-					${ReadLauncherConfig} $3 Service$R0 Start
-					${ReadLauncherConfig} $4 Service$R0 Depend
-					${Service::Create} "$1" "$6" "$2" "$3" "$4" /DISABLEFSR $8 $9
-					Sleep 50
-					${Service::Start} "$1" /DISABLEFSR $8 $9
+				${ReadRuntimeData} $5 "$1Service" LocalState
+				${If} $5 == "Running"
+					${ReadRuntimeData} $6 "$1Service" LocalPath
+					${IfNot} ${Errors}
+						${ReadLauncherConfig} $2 Service$R0 Type
+						${ReadLauncherConfig} $3 Service$R0 Start
+						${ReadLauncherConfig} $4 Service$R0 Depend
+						${Service::Create} "$1" "$6" "$2" "$3" "$4" /DISABLEFSR $8 $9
+						Sleep 50
+						${Service::Start} "$1" /DISABLEFSR $8 $9
+					${EndIf}
 				${EndIf}
 			${EndIf}
 		${EndIf}
