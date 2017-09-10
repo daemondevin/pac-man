@@ -333,41 +333,41 @@ ${SegmentPre}
 	StrCpy $R0 1
 	${Do}
 		ClearErrors
-		ReadINIStr $0 `${LAUNCHER}` `Service$R0` `Name`
+		ReadINIStr $0 "${LAUNCHER}" "Service$R0" "Name"
 		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-		ReadRegStr $1 HKLM `SYSTEM\CurrentControlSet\services\$0` ImagePath
+		ReadRegStr $1 HKLM "SYSTEM\CurrentControlSet\services\$0" ImagePath
 		${IfNot} ${Errors}
 			${WriteRuntimeData} "$0Service" LocalService true
 			${ParseLocations} $1
 			${WriteRuntimeData} "$0Service" LocalPath "$1"
+			${DebugMsg} "Checking and logging state of local instance of $0 service."
+			${ServiceLib::Status} $9 "$0"
+			Pop $9
+			${If} $9 == running
+				${WriteRuntimeData} "$0Service" LocalState running
+			${ElseIf} $9 == stopped
+				${WriteRuntimeData} "$0Service" LocalState stopped
+			${Else}
+				${WriteRuntimeData} "$0Service" LocalState "$9"
+			${EndIf}
+			ClearErrors
+			ReadINIStr $2 "${LAUNCHER}" "Service$R0" "IfExists"
+			${If} $2 == replace
+				${DebugMsg} "Preparing portable service of $0; removing local instance."
+				PRE_SERVICE_STOP_LOOP:
+				${ServiceLib::Stop} $9 "$0"
+				Pop $9
+				${If} $9 == true
+					${ServiceLib::Remove} $8 "$0"
+				${Else}
+					Goto PRE_SERVICE_STOP_LOOP
+				${EndIf}
+				${Registry::CopyKey} "${PAFKEYS}\HKLM\SYSTEM\CurrentControlSet\services\$0" "HKLM\SYSTEM\CurrentControlSet\services\$0" $9
+			${ElseIf} $2 == skip
+				${DebugMsg} "Local service of $0 already exists; not preparing for a portable instance."
+			${EndIf}
 		${Else}
 			${WriteRuntimeData} "$0Service" LocalService false
-		${EndIf}
-		${DebugMsg} "Checking and logging state of local instance of $0 service."
-		${ServiceLib::Status} $9 "$0"
-		Pop $9
-		${If} $9 == running
-			${WriteRuntimeData} "$0Service" LocalState running
-		${ElseIf} $9 == stopped
-			${WriteRuntimeData} "$0Service" LocalState stopped
-		${Else}
-			${WriteRuntimeData} "$0Service" LocalState "$9"
-		${EndIf}
-		ClearErrors
-		ReadINIStr $2 `${LAUNCHER}` `Service$R0` `IfExists`
-		${If} $2 == replace
-			${DebugMsg} "Preparing portable service of $0; removing local instance."
-			PRE_SERVICE_STOP_LOOP:
-			${ServiceLib::Stop} $9 "$0"
-			Pop $9
-			${If} $9 == true
-				${ServiceLib::Remove} $8 "$0"
-			${Else}
-				Goto PRE_SERVICE_STOP_LOOP
-			${EndIf}
-			${Registry::CopyKey} "${PAFKEYS}\HKLM\SYSTEM\CurrentControlSet\services\$0" "HKLM\SYSTEM\CurrentControlSet\services\$0" $9
-		${ElseIf} $2 == skip
-			${DebugMsg} "Local service of $0 already exists; not preparing for a portable instance."
 		${EndIf}
 		IntOp $R0 $R0 + 1
 	${Loop}
