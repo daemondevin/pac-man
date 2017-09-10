@@ -1,113 +1,3 @@
-; ${SegmentFile}
-
-; Currently services are disabled as
-;   (a) they're not used yet (possibly unstable) and
-;   (b) the plug-in is fairly large (at time of reporting, 122591B vs. 96901B, 25KB larger)
-; TODO: switch back to NSIS code... got to sort out the null byte issue with dependencies.
-
-; !define SERVICES_ENABLED
-
-; !ifndef SERVICES_ENABLED
-	; !echo "The Services segment is currently disabled."
-; !else ifdef NSIS_UNICODE
-	; !warning "The Services segment is disabled for your build as the SimpleSC plug-in is not Unicode-compatible."
-	; !undef SERVICES_ENABLED
-; !endif
-
-
-; ${SegmentPrePrimary}
-; !ifdef SERVICES_ENABLED
-	; StrCpy $R0 1
-	; ${Do}
-		; ClearErrors
-		; ${ReadLauncherConfig} $1 Service$R0 Name
-		; ${ReadLauncherConfig} $4 Service$R0 Path
-		; ${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-		; ${ParseLocations} $4
-		; SimpleSC::ExistsService $1
-		; Pop $2
-		; ${If} $2 == 0 ; Service already exists
-			; ${ReadLauncherConfig} $2 Service$R0 IfExists
-			; ${If} $2 == replace
-				; MessageBox MB_ICONEXCLAMATION "TODO: The backing up and replacement of services is not yet implemented. The local service will remain."
-				; /*
-				; SimpleSC::GetServiceDisplayName $1
-				; Pop $9
-				; Pop $2
-				; ${DebugMsg} "Local service $1's display name is $2 (error code $9)"
-				; SimpleSC::GetServiceBinaryPath $1
-				; Pop $9
-				; Pop $3
-				; ${DebugMsg} "Local service $1's binary path is $3 (error code $9)"
-				; TODO: this is going to be very messy. I'm not going to do it till later.
-				; ${NewServiceLib.BackupService} $1 $DataDirectory\PortableApps.comLauncherWorkingData.ini Service$1
-				; SimpleSC::RemoveService $1
-				; Pop $9
-				; ${DebugMsg} "Removed local service $1 (error code $9)
-				; */
-			; ${EndIf}
-			; ${WriteRuntimeData} Service$R0 ExistedBefore true
-			; StrCpy $R9 no-create
-		; ${EndIf}
-		; ${If} $R9 == no-create
-			; ${DebugMsg} "Not creating service $1 (local service already exists)"
-		; ${Else}
-			; ${ReadLauncherConfigWithDefault} $2 Service$R0 Display $1
-			; ${ReadLauncherConfig} $3 Service$R0 Type
-			; ${If} $3 == driver-kernel
-				; StrCpy $3 1
-			; ${ElseIf} $3 == driver-file-system
-				; StrCpy $3 2
-			; ${Else}
-				; StrCpy $3 16
-			; ${EndIf}
-			; ${ReadLauncherConfig} $5 Service$R0 Dependencies
-			; ${ReadLauncherConfig} $6 Service$R0 User
-			; ${If} $4 == LocalService
-			; ${OrIf} $4 == NetworkService
-				; StrCpy $4 "NT AUTHORITY\$4"
-			; ${EndIf}
-			; SimpleSC::InstallService $1 $2 $3 3 $4 $5 $6 "" ; the 3 is for manual start, "" is an empty password
-			; Pop $9
-			; ${DebugMsg} "Installed service $1 (error code $9)"
-			; ClearErrors
-			; ${ReadLauncherConfig} $7 Service$R0 Description
-			; ${If} ${Errors}
-				; SimpleSC::SetServiceDescription $1 $7
-				; Pop $9
-				; ${DebugMsg} "Set service $1's description to $7"
-			; ${EndIf}
-			; IntOp $R0 $R0 + 1
-		; ${EndIf}
-	; ${Loop}
-; !endif
-; !macroend
-
-; ${SegmentPostPrimary}
-; !ifdef SERVICES_ENABLED
-	; StrCpy $R0 1
-	; ${Do}
-		; ClearErrors
-		; ${ReadLauncherConfig} $1 Service$R0 Name
-		; ${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-		; TODO: save state in the runtime data to prevent doing anything silly.
-		; Possibly also check the service path to make sure it's the right one we delete.
-		; SimpleSC::GetServiceStatus $1
-		; Pop $9 ; error code
-		; Pop $2 ; return value
-		; ${DebugMsg} "Service $1's status: $2 (error code $9)"
-		; ${If} $2 != 1 ; 1 = stopped
-			; SimpleSC::StopService $1
-			; Pop $9
-			; ${DebugMsg} "Stopped service $1 (error code $9)"
-		; ${EndIf}
-		; SimpleSC::RemoveService $1
-		; Pop $9
-		; ${DebugMsg} "Removed service $1 (error code $9)"
-	; ${Loop}
-; !endif
-; !macroend
-
 
 !ifndef LOGICLIB
 	!include LogicLib.nsh
@@ -376,10 +266,67 @@ Var $CMD
 	Pop ${_ERR1}
 	Pop ${_ERR2}
 !macroend
+!define ServiceLib::Create `!insertmacro _ServiceLib::Create`
+!macro _ServiceLib::Create _RETURN _NAME _PATH _TYPE _START _DEPEND
+	Push "start"
+	Push "${_NAME}"
+	StrCmp "${_DEPEND}" "" 0 +3
+	Push "path=${_PATH};servicetype=${_TYPE};starttype=${_START};"
+	Goto +2
+	Push "path=${_PATH};servicetype=${_TYPE};starttype=${_START};depend=${_DEPEND};"
+	Call Service
+	Pop ${_RETURN}
+!macroend
+!define ServiceLib::Start `!insertmacro _ServiceLib::Start`
+!macro _ServiceLib::Start _RETURN _NAME
+	Push "start"
+	Push "${_NAME}"
+	Push ""
+	Call Service
+	Pop ${_RETURN} ;= Returns true/false
+!macroend
+!define ServiceLib::Remove `!insertmacro _ServiceLib::Remove`
+!macro _ServiceLib::Remove _RETURN _NAME
+	Push "delete"
+	Push "${_NAME}"
+	Push ""
+	Call Service
+	Pop ${_RETURN} ;= Returns true/false
+!macroend
+!define ServiceLib::Stop `!insertmacro _ServiceLib::Stop`
+!macro _ServiceLib::Stop _RETURN _NAME
+	Push "stop"
+	Push "${_NAME}"
+	Push ""
+	Call Service
+	Pop ${_RETURN} ;= Returns true/false
+!macroend
+!define ServiceLib::Pause `!insertmacro _ServiceLib::Pause`
+!macro _ServiceLib::Pause _RETURN _NAME
+	Push "pause"
+	Push "${_NAME}"
+	Push ""
+	Call Service
+	Pop ${_RETURN} ;= Returns true/false
+!macroend
+!define ServiceLib::Continue `!insertmacro _ServiceLib::Continue`
+!macro _ServiceLib::Continue _RETURN _NAME
+	Push "continue"
+	Push "${_NAME}"
+	Push ""
+	Call Service
+	Pop ${_RETURN} ;= Returns true/false
+!macroend
+!define ServiceLib::Status `!insertmacro _ServiceLib::Status`
+!macro _ServiceLib::Status _RETURN _NAME
+	Push "status"
+	Push "${_NAME}"
+	Push ""
+	Call Service
+	Pop ${_RETURN} ;= Returns stopped/running/start_pending/stop_pending/continue_pending/pause_pending/pause/unknown
+!macroend
 ${SegmentFile}
 ${SegmentPre}
-	ReadEnvStr $0 COMSPEC
-	StrCpy $CMD $0
 	# Uninstall Local Services
 	!ifmacrodef PreServices
 		!insertmacro PreServices
@@ -397,34 +344,28 @@ ${SegmentPre}
 		${Else}
 			${WriteRuntimeData} "$0Service" LocalService false
 		${EndIf}
-		${DebugMsg} "Checking and logging the state of local instance of the $0 service."
-		StrCmpS $Bit 64 0 +3
-		ExecDos::Exec /TOSTACK /DISABLEFSR `"$CMD" /c "${SC} query "$0" | find /C "RUNNING""`
-		Goto +2
-		ExecDos::Exec /TOSTACK `"$CMD" /c "${SC} query "$0" | find /C "RUNNING""`
-		Pop $8
+		${DebugMsg} "Checking and logging state of local instance of $0 service."
+		${ServiceLib::Status} $9 "$0"
 		Pop $9
-		StrCmpS $8 1 0 +4
-		StrCmpS $9 1 0 +3
-		${WriteRuntimeData} "$0Service" LocalState running
-		${WriteRuntimeData} "$0Service" LocalState stopped
+		${If} $9 == running
+			${WriteRuntimeData} "$0Service" LocalState running
+		${ElseIf} $9 == stopped
+			${WriteRuntimeData} "$0Service" LocalState stopped
+		${Else}
+			${WriteRuntimeData} "$0Service" LocalState "$9"
+		${EndIf}
 		ClearErrors
 		ReadINIStr $2 `${LAUNCHER}` `Service$R0` `IfExists`
 		${If} $2 == replace
 			${DebugMsg} "Preparing portable service of $0; removing local instance."
-			StrCmpS $Bit 64 0 +3
-			ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" stop "$0"`
-			Goto +2
-			ExecDos::Exec /TOSTACK `"${SC}" stop "$0"`
-			Pop $8
+			PRE_SERVICE_STOP_LOOP:
+			${ServiceLib::Stop} $9 "$0"
 			Pop $9
-			Sleep 1500
-			StrCmpS $Bit 64 0 +3
-			ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" delete "$0"`
-			Goto +2
-			ExecDos::Exec /TOSTACK `"${SC}" delete "$0"`
-			Pop $8
-			Pop $9
+			${If} $9 == true
+				${ServiceLib::Remove} $8 "$0"
+			${Else}
+				Goto PRE_SERVICE_STOP_LOOP
+			${EndIf}
 			${Registry::CopyKey} "${PAFKEYS}\HKLM\SYSTEM\CurrentControlSet\services\$0" "HKLM\SYSTEM\CurrentControlSet\services\$0" $9
 		${ElseIf} $2 == skip
 			${DebugMsg} "Local service of $0 already exists; not preparing for a portable instance."
@@ -446,30 +387,25 @@ ${SegmentPrePrimary}
 		${If} $1 == replace
 			${DebugMsg} "Creating a portable instance of the $0 service."
 			${ReadLauncherConfig} $2 Service$R0 Path
+			${ParseLocations} $2
 			${ReadLauncherConfig} $3 Service$R0 Type
 			${ReadLauncherConfig} $4 Service$R0 Start
 			${ReadLauncherConfig} $5 Service$R0 Depend
-			${ParseLocations} $2
-			StrCmpS $Bit 64 0 +6
-			StrCmp "$5" "" 0 +3
-			ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" create "$0" DisplayName= "${FULLNAME}" binpath= "$2" type= "$3" start= "$4"`
-			Goto +7
-			ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" create "$0" DisplayName= "${FULLNAME}" binpath= "$2" type= "$3" start= "$4" depend= ""$5""`
-			Goto +5
-			StrCmp "$5" "" 0 +3
-			ExecDos::Exec /TOSTACK `"${SC}" create "$0" DisplayName= "${FULLNAME}" binpath= "$2" type= "$3" start= "$4"`
-			Goto +2
-			ExecDos::Exec /TOSTACK `"${SC}" create "$0" DisplayName= "${FULLNAME}" binpath= "$2" type= "$3" start= "$4" depend= ""$5""`
-			Pop $8
-			Pop $9
+			${IfNot} ${Errors}
+			${OrIf} $5 != ""
+				${ServiceLib::Create} $6 "$0" "$2" "$3" "$4" "$5"
+			${Else}
+				${ServiceLib::Create} $6 "$0" "$2" "$3" "$4" ""
+			${EndIf}
 			WriteRegStr HKLM "SYSTEM\CurrentControlSet\services\$0" "ImagePath" "$2"
-			Sleep 500
-			StrCmpS $Bit 64 0 +3
-			ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" start "$0"`
-			Goto +2
-			ExecDos::Exec /TOSTACK `"${SC}" start "$0"`
-			Pop $8
+			Sleep 1500
+			${ServiceLib::Start} $9 "$0"
 			Pop $9
+			${If} $9 == true
+				${DebugMsg} "The portable instance of the $0 service has been started."
+			${ElseIf} $9 == false
+				MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST "The portable instance of the $0 service failed to start.${NewLine}Continuing anyway!"
+			${EndIf}
 		${ElseIf} $1 == skip
 			${DebugMsg} "Local service of $0 already exists; not creating a portable instance."
 		${EndIf}
@@ -489,19 +425,14 @@ ${SegmentPostPrimary}
 		${ReadLauncherConfig} $1 Service$R0 IfExists
 		${If} $1 == replace
 			${DebugMsg} "Removing portable service of $0 to prepare for reinstallation of the local instance."
-			StrCmpS $Bit 64 0 +3
-			ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" stop "$0"`
-			Goto +2
-			ExecDos::Exec /TOSTACK `"${SC}" stop "$0"`
-			Pop $8
+			POST_SERVICE_STOP_LOOP:
+			${ServiceLib::Stop} $9 "$0"
 			Pop $9
-			Sleep 1500
-			StrCmpS $Bit 64 0 +3
-			ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" delete "$0"`
-			Goto +2
-			ExecDos::Exec /TOSTACK `"${SC}" delete "$0"`
-			Pop $8
-			Pop $9
+			${If} $9 == true
+				${ServiceLib::Remove} $9 "$0"
+			${Else}
+				Goto POST_SERVICE_STOP_LOOP
+			${EndIf}
 			DeleteRegKey HKLM "SYSTEM\CurrentControlSet\services\$0"
 		${ElseIf} $1 == skip 
 			${DebugMsg} "Local service of $0 was already installed; no further action taken."
@@ -529,27 +460,17 @@ ${SegmentUnload}
 				${ReadLauncherConfig} $2 Service$R0 Type
 				${ReadLauncherConfig} $3 Service$R0 Start
 				${ReadLauncherConfig} $4 Service$R0 Depend
-				StrCmpS $Bit 64 0 +6
-				StrCmp "$4" "" 0 +3
-				ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" create "$0" DisplayName= "${FULLNAME}" binpath= "$5" type= "$2" start= "$3"`
-				Goto +7
-				ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" create "$0" DisplayName= "${FULLNAME}" binpath= "$5" type= "$2" start= "$3" depend= ""$4""`
-				Goto +5
-				StrCmp "$4" "" 0 +3
-				ExecDos::Exec /TOSTACK `"${SC}" create "$0" DisplayName= "${FULLNAME}" binpath= "$5" type= "$2" start= "$3"`
-				Goto +2
-				ExecDos::Exec /TOSTACK `"${SC}" create "$0" DisplayName= "${FULLNAME}" binpath= "$5" type= "$2" start= "$3" depend= ""$4""`
-				Pop $8
-				Pop $9
+				${IfNot} ${Errors}
+				${OrIf} $4 != ""
+					${ServiceLib::Create} $8 "$0" "$5" "$2" "$3" "$4"
+				${Else}
+					${ServiceLib::Create} $8 "$0" "$5" "$2" "$3" ""
+				${EndIf}
 				${ReadRuntimeData} $6 "$0Service" LocalState
 				${If} $6 == running
 					${DebugMsg} "Restarting local instance of the $0 service."
-					Sleep 500
-					StrCmpS $Bit 64 0 +3
-					ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" start "$0"`
-					Goto +2
-					ExecDos::Exec /TOSTACK `"${SC}" start "$0"`
-					Pop $8
+					Sleep 1000
+					${ServiceLib::Start} $9 "$0"
 					Pop $9
 				${ElseIf} $6 == stopped
 					${DebugMsg} "Local instance of the $0 service was not running before runtime; no further action required."

@@ -201,13 +201,11 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!ifndef TrimString
 		!define TrimString
 	!endif
-	!include UAC.nsh
 !else if  "${UAC}" == "compile-force"
 	!define /REDEF UAC
 	!ifndef TrimString
 		!define TrimString
 	!endif
-	!include UAC.nsh
 !else if "${UAC}" == "try"
 	!define /REDEF UAC
 	!ifndef TrimString
@@ -219,7 +217,6 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!ifndef TrimString
 		!define TrimString
 	!endif
-	!include UAC.nsh
 !else
 	!ifdef UAC
 		!undef UAC
@@ -614,6 +611,12 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 !include FileFunc.nsh
 !include TextFunc.nsh
 !include WordFunc.nsh
+!ifdef UAC
+	!include UAC.nsh
+!endif
+!ifdef SERVICES
+	!include servicelib.nsh
+!endif
 
 ;= SHUTDOWN
 ;= ################
@@ -629,6 +632,12 @@ FunctionEnd
 
 ;= (NSIS Plugins) {{{1
 ;= ################
+!ifdef TLB_FUNCTION
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
 !ifdef ExecAsUser
 	!include StdUtils.nsh
 	!ifndef PLUGINSDIR
@@ -677,6 +686,12 @@ FunctionEnd
 	!endif
 !endif
 !ifdef FIREWALL
+	!ifndef PLUGINSDIR
+		!define PLUGINSDIR
+		!AddPluginDir Plugins
+	!endif
+!endif
+!ifdef WRITEREGBIN
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
 		!AddPluginDir Plugins
