@@ -175,7 +175,6 @@
 ; 
 ; The following macros were added by demon.devin
 ; 
-Var $CMD
 !define Service::Query `!insertmacro _Service::Query`
 !macro _Service::Query _SVC _FSR _ERR1 _ERR2
 	StrCmpS $Bit 64 0 +4
@@ -192,12 +191,12 @@ Var $CMD
 !macroend
 !define Service::QueryConfig `!insertmacro _Service::QueryConfig`
 !macro _Service::QueryConfig _SVC _FSR _ERR1 _ERR2
-	ReadEnvStr $CMD COMSPEC
+	ReadEnvStr $R9 COMSPEC
 	StrCmpS $Bit 64 0 +4
 	StrCmp "${_FSR}" /DISABLEFSR 0 +3
-	ExecDos::Exec /TOSTACK /DISABLEFSR `"$CMD" /c "${SC} qc "${_SVC}" | FIND "BINARY_PATH_NAME""`
+	ExecDos::Exec /TOSTACK /DISABLEFSR `"$R9" /c "${SC} qc "${_SVC}" | FIND "BINARY_PATH_NAME""`
 	Goto +2
-	ExecDos::Exec /TOSTACK `"$CMD" /c "${SC} qc "${_SVC}" | FIND "BINARY_PATH_NAME""`
+	ExecDos::Exec /TOSTACK `"$R9" /c "${SC} qc "${_SVC}" | FIND "BINARY_PATH_NAME""`
 	Pop ${_ERR1}
 	Pop ${_ERR2}
 	StrCmpS ${_ERR1} 0 0 +4
@@ -208,12 +207,12 @@ Var $CMD
 !macroend
 !define Service::State `!insertmacro _Service::State`
 !macro _Service::State _SVC _FSR _ERR1 _ERR2
-    ReadEnvStr $CMD COMSPEC
+    ReadEnvStr $R9 COMSPEC
     StrCmpS $Bit 64 0 +4
     StrCmp "${_FSR}" /DISABLEFSR 0 +3
-    ExecDos::Exec /TOSTACK /DISABLEFSR `"$CMD" /c "${SC} query "${_SVC}" | find /C "RUNNING""`
+    ExecDos::Exec /TOSTACK /DISABLEFSR `"$R9" /c "${SC} query "${_SVC}" | find /C "RUNNING""`
     Goto +2
-    ExecDos::Exec /TOSTACK `"$CMD" /c "${SC} query "${_SVC}" | find /C "RUNNING""`
+    ExecDos::Exec /TOSTACK `"$R9" /c "${SC} query "${_SVC}" | find /C "RUNNING""`
     Pop ${_ERR1}
     Pop ${_ERR2}
 	StrCmpS ${_ERR1} 1 0 +4
