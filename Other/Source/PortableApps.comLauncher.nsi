@@ -237,7 +237,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 !endif
 !if ! ${SleepValue} == ""
-	!define Sleep `${SleepValue}`		;=== Specify a number (milliseconds) to set a Sleep value for applications that need to restart.
+	!define Sleep						;=== Specify a number (milliseconds) to set a Sleep value for applications that need to restart.
 !else
 	!error "The key 'RestartSleep' in AppInfo.ini needs a value that's an integer!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
@@ -468,7 +468,7 @@ ManifestDPIAware true
 WindowIcon Off
 XPStyle on
 SilentInstall Silent
-AutoCloseWindow True
+AutoCloseWindow true
 !ifdef RUNASADMIN_COMPILEFORCE
 	RequestExecutionLevel admin
 !else ifdef UAC
@@ -618,18 +618,6 @@ ${!echo} "${NEWLINE}Including required files...${NEWLINE}${NEWLINE}"
 	!include servicelib.nsh
 !endif
 
-;= SHUTDOWN
-;= ################
-!include nsDialogs.nsh
-!define /ifndef WS_POPUP 0x80000000
-Function CreateShutdownBlockReason
-	StrCpy $1 $hwndParent
-	${If} $1 Z= 0 ; $hwndParent is 0, create a new window for silent installers
-		System::Call 'USER32::CreateWindowEx(i0,t"STATIC",t"$(^Name)",i${WS_CHILD}|${WS_POPUP},i0,i0,i0,i0,pr1,i0,i0,i0)p.r1'
-	${EndIf}
-	System::Call 'USER32::ShutdownBlockReasonCreate(pr1,w"${PORTABLEAPPNAME} is running and still needs to clean up before shutting down!")'
-FunctionEnd
-
 ;= (NSIS Plugins) {{{1
 ;= ################
 !ifdef TLB_FUNCTION
@@ -756,23 +744,6 @@ FunctionEnd
 		!define GET_ROOT
 	!endif
 !endif
-!ifdef FONTS_ENABLED
-	Function CreateFontsFolder
-		IfFileExists "${PACKAGE}\App\DefaultData\Fonts" +2
-		CreateDirectory /SILENT "${PACKAGE}\App\DefaultData\Fonts"
-		IfFileExists "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" +11
-		!tempfile FONTFILE
-		!appendfile "${FONTFILE}" "Font(s) added here will be loaded on launch and accessible during runtime.$\n$\n"
-		!appendfile "${FONTFILE}" "NOTE:$\n"
-		!appendfile "${FONTFILE}" "$\tThe launcher will have to load and unload any fonts in this directory.$\n"
-		!appendfile "${FONTFILE}" "$\tThe more fonts you have will mean a longer work load for the launcher.$\n$\n"
-		!appendfile "${FONTFILE}" "Fonts Supported:$\n"
-		!appendfile "${FONTFILE}" " • .fon$\n • .fnt$\n • .ttf$\n • .ttc$\n • .fot$\n • .otf$\n • .mmm$\n • .pfb$\n • .pfm$\n"
-		!system 'copy /Y /A "${FONTFILE}" "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" /A'
-		!delfile "${FONTFILE}"
-		!undef FONTFILE
-	FunctionEnd
-!endif
 
 ;= LANGUAGES {{{1
 ;= ################
@@ -844,7 +815,7 @@ Caption		`${FULLNAME}`
 !ifdef PUBLISHER
 	!if ! "${PUBLISHER}" == ""
 		VIAddVersionKey /LANG=${LANG_ENGLISH} CompanyName      `${PUBLISHER}`
-		VIAddVersionKey /LANG=${LANG_ENGLISH} LegalCopyright   `Copyright © ${PUBLISHER} ${YEAR}`
+		VIAddVersionKey /LANG=${LANG_ENGLISH} LegalCopyright   `Copyright ${YEAR} ${PUBLISHER}`
 	!else
 		!error "The key 'Publisher' in AppInfo.ini needs a value!"
 	!endif
@@ -949,6 +920,61 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 
 ;= FUNCTIONS
 ;= ################
+;=# Check 64-bit
+Function IsWOW64
+	!macro _WOW64 _RETURN
+		Push ${_RETURN}
+		Call IsWOW64
+		Pop ${_RETURN}
+	!macroend
+	!define WOW64 `!insertmacro _WOW64`
+	Exch $0
+	System::Call `${GETCURRPROC}`
+	System::Call `${WOW}`
+	Exch $0
+FunctionEnd
+;=# Restart Sleep
+!ifdef Sleep
+	Var Sleep
+	Function RestartSleep
+		!ifdef SleepValue
+			StrCpy $Sleep "${SleepValue}"
+		!endif
+		Sleep "$Sleep"
+	FunctionEnd
+!endif
+;=# Prevent Shutdown
+!include nsDialogs.nsh
+!define /ifndef WS_POPUP 0x80000000
+!define CreateWinEx1		`USER32::CreateWindowEx(i0,t"STATIC",t"$(^Name)",`
+!define CreateWinEx2		`i${WS_CHILD}|${WS_POPUP},i0,i0,i0,i0,pr1,i0,i0,i0)p.r1`
+!define BlockReason1		`USER32::ShutdownBlockReasonCreate(pr1,w`
+!define BlockReason2		`"${PORTABLEAPPNAME} is running and still needs to clean up before shutting down!")`
+Function CreateShutdownBlockReason
+	StrCpy $1 $hwndParent
+	${If} $1 Z= 0
+		System::Call `${CreateWinEx1}${CreateWinEx2}`
+	${EndIf}
+	System::Call `${BlockReason1}${BlockReason2}`
+FunctionEnd
+;=# Fonts Folder
+!ifdef FONTS_ENABLED
+	Function CreateFontsFolder
+		IfFileExists "${PACKAGE}\App\DefaultData\Fonts" +2
+		CreateDirectory /SILENT "${PACKAGE}\App\DefaultData\Fonts"
+		IfFileExists "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" +11
+		!tempfile FONTFILE
+		!appendfile "${FONTFILE}" "Font(s) added here will be loaded on launch and accessible during runtime.$\n$\n"
+		!appendfile "${FONTFILE}" "NOTE:$\n"
+		!appendfile "${FONTFILE}" "$\tThe launcher will have to load and unload any fonts in this directory.$\n"
+		!appendfile "${FONTFILE}" "$\tThe more fonts you have will mean a longer work load for the launcher.$\n$\n"
+		!appendfile "${FONTFILE}" "Fonts Supported:$\n"
+		!appendfile "${FONTFILE}" " • .fon$\n • .fnt$\n • .ttf$\n • .ttc$\n • .fot$\n • .otf$\n • .mmm$\n • .pfb$\n • .pfm$\n"
+		!system 'copy /Y /A "${FONTFILE}" "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" /A'
+		!delfile "${FONTFILE}"
+		!undef FONTFILE
+	FunctionEnd
+!endif
 Function .onInit
 	Call CreateShutdownBlockReason
 	Push $0
@@ -1310,14 +1336,14 @@ Function Execute           ;{{{1
 				${EmptyWorkingSet}
 				${Do}
 					!ifdef Sleep
-						Sleep ${Sleep}
+						Call RestartSleep
 					!endif
 					${ProcessWaitClose} $1 -1 $R9
 					${IfThen} $R9 > 0 ${|} ${Continue} ${|}
 					StrCpy $0 1
 					${Do}
 						!ifdef Sleep
-							Sleep ${Sleep}
+							Call RestartSleep
 						!endif
 						ClearErrors
 						${ConfigReadS} `${LAUNCHER}` WaitForEXE$0= $2
