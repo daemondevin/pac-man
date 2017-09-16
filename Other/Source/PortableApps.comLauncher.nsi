@@ -72,6 +72,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Tasks=` TaskCleanUp
 !searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RegCopyKeys=` RegCopy
 !searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `FileCleanup=` FileCleanup
+!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `DirectoryCleanup=` DirectoryCleanup
 !searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `FontsFolder=` FONTS_ENABLE
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `AppID=` APPNAME
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Name=` PORTABLEAPPNAME
@@ -237,7 +238,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 !endif
 !if ! ${SleepValue} == ""
-	!define Sleep						;=== Specify a number (milliseconds) to set a Sleep value for applications that need to restart.
+	!define Sleep ${SleepValue}			;=== Specify a number (milliseconds) to set a Sleep value for applications that need to restart.
 !else
 	!error "The key 'RestartSleep' in AppInfo.ini needs a value that's an integer!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
@@ -450,6 +451,15 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 !else
 	!error "The key 'FileCleanup' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${DirectoryCleanup} == ""
+	!if ${DirectoryCleanup} == true
+		!define /REDEF DirectoryCleanup 		;=== Enable DirectoryCleanup segment
+	!else if ${DirectoryCleanup} == false
+		!undef DirectoryCleanup 				;=== Disable DirectoryCleanup segment
+	!endif
+!else
+	!error "The key 'DirectoryCleanup' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
 !if ! ${TaskCleanup} == ""
 	!if ${TaskCleanup} == true
@@ -933,16 +943,6 @@ Function IsWOW64
 	System::Call `${WOW}`
 	Exch $0
 FunctionEnd
-;=# Restart Sleep
-!ifdef Sleep
-	Var Sleep
-	Function RestartSleep
-		!ifdef SleepValue
-			StrCpy $Sleep "${SleepValue}"
-		!endif
-		Sleep "$Sleep"
-	FunctionEnd
-!endif
 ;=# Prevent Shutdown
 !include nsDialogs.nsh
 !define /ifndef WS_POPUP 0x80000000
@@ -1336,14 +1336,14 @@ Function Execute           ;{{{1
 				${EmptyWorkingSet}
 				${Do}
 					!ifdef Sleep
-						Call RestartSleep
+						Sleep ${Sleep}
 					!endif
 					${ProcessWaitClose} $1 -1 $R9
 					${IfThen} $R9 > 0 ${|} ${Continue} ${|}
 					StrCpy $0 1
 					${Do}
 						!ifdef Sleep
-							Call RestartSleep
+							Sleep ${Sleep}
 						!endif
 						ClearErrors
 						${ConfigReadS} `${LAUNCHER}` WaitForEXE$0= $2
@@ -1416,7 +1416,9 @@ Function PostPrimary           ;{{{1
 			${RunSegment} FilesCleanup
 		!endif
 	${EndIf}
-	${RunSegment} DirectoriesCleanup
+	!ifdef DirectoryCleanup
+		${RunSegment} DirectoriesCleanup
+	!endif
 	${RunSegment} DirectoriesMove
 	${RunSegment} FilesMove
 	${RunSegment} RunLocally
@@ -1503,8 +1505,12 @@ Function Unload           ;{{{1
 		!ifdef FONTS_ENABLE
 			${RunSegment} Fonts
 		!endif
-		${RunSegment} FilesCleanup
-		${RunSegment} DirectoriesCleanup
+		!ifdef FileCleanup
+			${RunSegment} FilesCleanup
+		!endif
+		!ifdef DirectoryCleanup
+			${RunSegment} DirectoriesCleanup
+		!endif
 	${EndIf}
 	;${RunSegment} SplashScreen
 	${RunSegment} Core
