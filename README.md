@@ -98,6 +98,7 @@ XML=true
 Ghostscript=true
 FontsFolder=true
 FileCleanup=true
+DirectoryCleanup=true
 ```
 
 * __Registry:__ Add support for minipulating the Windows Registry.
@@ -196,6 +197,8 @@ FileCleanup=true
 > 1=%PAL:DataDir%\uselessUpgradeFile.xml
 > 2=%APPDATA%\MyProgram\purposelessCfg.ini
 > ```
+
+* __DirectoryCleanup:__ Enable support for the sections `[DirectoriesCleanupIfEmpty]` and `[DirectoriesCleanupForce]` in `Launcher.ini`. See `DirectoriesCleanup.nsh` in the Segments directory.
 
 ----------
 
