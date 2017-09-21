@@ -264,6 +264,7 @@ JSONSupport=true
 RestartSleep=500
 WinMessages=true
 LineWrite=true
+TrimString=true
 CloseProcess=true
 Include64=true
 IncludeWordRep=true
