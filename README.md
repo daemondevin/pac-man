@@ -267,6 +267,7 @@ LineWrite=true
 CloseProcess=true
 Include64=true
 IncludeWordRep=true
+GetBetween=true
 ```
 * __ElevatedPrivileges:__ For launchers which need to run with elevated privileges.
 
