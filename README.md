@@ -37,15 +37,15 @@ Here's a small list of a few ideas that I want to try and implement with this pr
 
 * __Language Handling:__ (In Progress)
 
-The official PAL's language handling is based on the setting of the PortableApps.com Platform language. Not every user of a PAF uses the PortableApps.com Platform so I'm rewritting the language handling to support and be based on the end-users operating system language. As it is written now, if you want language support you need to use the `custom.nsh` file.<br />__TODO:__ Fallback on the original method to use the `Launcher.ini` but still be based on the OS language.
+The official PAL's language handling is based on the setting of the PortableApps.com Platform language. Not every user of a PAF uses the PortableApps.com Platform so I'm rewriting the language handling to support and be based on the end-users operating system language. As it is written now, if you want language support you need to use the `custom.nsh` file.<br />__TODO:__ Fallback on the original method to use the `Launcher.ini` but still be based on the OS language.
 
 * __Redevelop Generator Wizard:__ (Brainstorming)
 
-I'm conceptualizing and outlining ideas for a nice GUI which will potentially allow the user to just select certain checkboxes for the `[Dependencies]` section which is discussed in greater detail further below. This way I can eliminate the need to use all those keys in the _AppInfo.ini_ file. I'd like to point out that my knowledgebase in this area of NSIS is primitive and/or novice at best so I'm certainly open to any helpful input and suggestions in this area.
+I'm conceptualizing and outlining ideas for a nice GUI which will potentially allow the user to just select certain check-boxes for the `[Dependencies]` section which is discussed in greater detail further below. This way I can eliminate the need to use all those keys in the _AppInfo.ini_ file. I'd like to point out that my knowledge-base in this area of NSIS is primitive and/or novice at best so I'm certainly open to any helpful input and suggestions in this area.
 
 * __Rename This Project:__ (Brainstorming)
 
-I've decided to rename this project to set it a part from the official PA.c Launcher. This rebranding is to help make this project it's own entity. So instead of people looking at the official builds of PAL and thinking, _"Wow! How cool is that feature?! I wonder who had the idea to add that?"_ they can think that about my version and know exactly who added that _cool_ feature instead; __me__.
+I've decided to rename this project to set it a part from the official PA.c Launcher. This re-branding is to help make this project it's own entity. So instead of people looking at the official builds of PAL and thinking, _"Wow! How cool is that feature?! I wonder who had the idea to add that?"_ they can think that about my version and know exactly who added that _cool_ feature instead; __me__.
 
 * __Redevelop PA.c Installer:__ (Near Future)
 
@@ -59,18 +59,18 @@ Other things could follow depending on my availability, interest.. and of course
 ----------
 
 #### __PortableApps.comLauncher.nsi__
- - <del>Added code to add a manifest file to the Launcher.exe for better user privileges support. Refer to line 80 for referance.</del>
- - Added support for using new NSISPortable which is the new NSIS3 with Unicode support. Removed NSIS in the App directory.
+ - <del>Added code to add a manifest file to the Launcher.exe for better user privileges support. Refer to line 80 for reference.</del>
+ - Added support for using new NSISPortable which is the new NSIS3 with Unicode support. Removed NSIS in the `..\PortableApps.comLauncher\App` directory.
  - Adding an application manifest is now handled by default since NSIS3. The code has been commented out.
- - Added support for automatic code signing. Refer to the code block on line 709 for referance.
- - Added support to prevent a user from shutting down or at least allow enough time to cleanup before exiting then shutting down.
- - Added support for .NET checking from both 4.0 and below to 4.5 and above. See `DotNet.nsh` in the segments folder for referance. 
+ - Added support for automatic code signing. Refer to the code block on line 709 for reference.
+ - Added support to prevent a user from shutting down or at least allow enough time to clean-up before exiting then shutting down.
+ - Added support for .NET checking from both 4.0 and below to 4.5 and above. See `DotNet.nsh` in the segments folder for reference. 
 
 ----------
 
 #### __Launcher.ini__
 __Environment Variables__
-`%PROGRAMDATA%` has now been added and kept %ALLUSERSAPPDATA% for backwards compatibilty. Both can be used anywhere you can use an evironment variable.
+`%PROGRAMDATA%` has now been added and kept `%ALLUSERSAPPDATA%` for backwards compatibility. Both can be used anywhere you can use an evironment variable.
 `%PAL:CommonFiles%` may now be used within the _Launcher.ini_ configuration file. This environment variable will point to `..\PortableApps\CommonFiles` if applicable. Can be used anywhere you can use an environment variable.
 > Example:
 > ```INI
@@ -101,7 +101,7 @@ FileCleanup=true
 DirectoryCleanup=true
 ```
 
-* __Registry:__ Add support for minipulating the Windows Registry.
+* __Registry:__ Add support for manipulating the Windows Registry.
 
 * __RegRedirection:__ Enable support for enabling/disabling registry redirection.
 
@@ -266,6 +266,7 @@ WinMessages=true
 LineWrite=true
 CloseProcess=true
 Include64=true
+IncludeWordRep=true
 ```
 * __ElevatedPrivileges:__ For launchers which need to run with elevated privileges.
 
@@ -320,6 +321,10 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 * __CloseProcess:__ Enable the function `CloseX`. See the `Core.nsh` segment on line 1125 for reference.
 
 * __Include64:__ Include the `64.nsh` file.
+
+* __IncludeWordRep:__ Include both `WordRepS` and `WordRep` functions. See the `Core.nsh` segment on line 608 for reference.
+
+* __GetBetween:__ Include the `GetBetween.nsh` file.
 
 ## Documentation
 ----------

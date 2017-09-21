@@ -100,6 +100,8 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `TrimString=` TrimString
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CloseProcess=` CloseProc
 !searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Include64=` Include64
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `IncludeWordRep=` IncludeWordRep
+!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `GetBetween=` GetBetween
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -260,8 +262,26 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!error "The key 'WinMessages' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
+!if ! ${GetBetween} == ""
+	!if ${GetBetween} == true 			;=== include GetBetween.nsh
+		!define GetBetween.nsh
+	!else if ${GetBetween} == false
+		!undef GetBetween
+	!endif
+!else
+	!error "The key 'GetBetween' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
+!if ! ${IncludeWordRep} == ""
+	!if ${IncludeWordRep} == true 			;=== include the WordRep(S) functions.
+		!define Include_WordRep
+	!else if ${IncludeWordRep} == false
+		!undef IncludeWordRep
+	!endif
+!else
+	!error "The key 'IncludeWordRep' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
+!endif
 !if ! ${Include64} == ""
-	!if ${Include64} == true 			;=== include WinMessages.nsh
+	!if ${Include64} == true 			;=== include x64.nsh
 		!define 64.nsh
 	!else if ${Include64} == false
 		!undef Include64
@@ -270,7 +290,7 @@ ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!error "The key 'Include64' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
 !if ! ${ConFunc} == ""
-	!if ${ConFunc} == true 				;=== Enable ConfigWrite(s), ConfigRead(s) Functions.
+	!if ${ConFunc} == true 				;=== Enable ConfigWrite(S), ConfigRead(S) Functions.
 		!define /REDEF ConFunc
 	!else if ${ConFunc} == false
 		!undef ConFunc
@@ -863,8 +883,12 @@ Caption		`${FULLNAME}`
 !endif
 !ifdef DEVELOPER
 	!if ! "${DEVELOPER}" == ""
-		!if ! "${CONTRIBUTORS}" == ""
-			VIAddVersionKey /LANG=${LANG_ENGLISH} Comments         `Developed by ${DEVELOPER} (with help from ${CONTRIBUTORS})`
+		!ifdef CONTRIBUTORS
+			!if ! "${CONTRIBUTORS}" == ""
+				VIAddVersionKey /LANG=${LANG_ENGLISH} Comments         `Developed by ${DEVELOPER} (with help from ${CONTRIBUTORS})`
+			!else
+				VIAddVersionKey /LANG=${LANG_ENGLISH} Comments         `Developed by ${DEVELOPER}`
+			!endif
 		!else
 			VIAddVersionKey /LANG=${LANG_ENGLISH} Comments         `Developed by ${DEVELOPER}`
 		!endif
