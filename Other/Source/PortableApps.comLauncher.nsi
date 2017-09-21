@@ -1181,6 +1181,9 @@ Function PrePrimary           ;{{{1
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
+		!ifdef TaskCleanup
+			${RunSegment} TaskCleanUp
+		!endif
 		!ifdef FONTS_ENABLE
 			${RunSegment} Fonts
 		!endif
@@ -1522,9 +1525,6 @@ Function Unload           ;{{{1
 		!endif
 		!ifdef SERVICES
 			${RunSegment} Services
-		!endif
-		!ifdef TaskCleanup
-			${RunSegment} TaskCleanUp
 		!endif
 		!ifdef FONTS_ENABLE
 			${RunSegment} Fonts
