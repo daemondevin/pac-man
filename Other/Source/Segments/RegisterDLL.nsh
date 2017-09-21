@@ -144,7 +144,7 @@ ${SegmentPre}
 		${ReadLauncherConfig} $0 RegisterDLL$R0 File
 		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 		${DLL::GetGUID} $2 $1
-		${DLL::Backup} $2 /DISABLEFSR "RegDLLs" "$R0[$1]" $8 $9
+		${DLL::Backup} $2 /DISABLEFSR "RegDLLs" "$R0" $8 $9
 		IntOp $R0 $R0 + 1
 	${Loop}
 !macroend
@@ -192,7 +192,7 @@ ${SegmentUnload}
 		${ReadLauncherConfig} $1 RegisterDLL$R0 ProgID
 		${ReadLauncherConfig} $0 RegisterDLL$R0 File
 		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-		${DLL::Restore} /DISABLEFSR "RegDLLs" "$R0[$1]" $8 $9
+		${DLL::Restore} /DISABLEFSR "RegDLLs" "$R0" $8 $9
 		IntOp $R0 $R0 + 1
 	${Loop}	
 	!ifmacrodef UnloadDLL
