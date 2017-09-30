@@ -160,7 +160,7 @@
 	Pop ${_ERR2}
 !macroend
 !define SC::Status `!insertmacro SC::Status`
-!macro SC::Status _SC _CONFIG _FSR _ERR1 _ERR2
+!macro SC::Status _SC _FSR _ERR1 _ERR2
 	StrCmpS $Bit 64 0 +4
 	StrCmp "${_FSR}" /DISABLEFSR 0 +3
 	ExecDos::Exec /TOSTACK /DISABLEFSR `"${C}" /c "sc QUERY "${_SC}" | FIND /C "RUNNING""`
@@ -173,7 +173,7 @@
 	${WriteRuntimeData} ${PAL} ${_SC}_Status running
 !macroend
 ; 
-; The following macros were added by demon.devin
+; The following macros were added by demon.devin using the cmdline
 ; 
 !define Service::Query `!insertmacro _Service::Query`
 !macro _Service::Query _SVC _FSR _ERR1 _ERR2
@@ -252,7 +252,7 @@
 !define Service::Create `!insertmacro _Service::Create`
 !macro _Service::Create _SVC _PATH _TYPE _START _DEPEND _FSR _ERR1 _ERR2
 	StrCmpS $Bit 64 0 +7
-	StrCmp "${_FSR}" /DISABLEFSR 0 +6
+	StrCmp "${_FSR}" /DISABLEFSR 0 +6	
 	StrCmp "${_DEPEND}" "" 0 +3
 	ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" create "${_SVC}" DisplayName= "${FULLNAME}" binpath= "${_PATH}" type= "${_TYPE}" start= "${_START}"`
 	Goto +7
@@ -265,9 +265,12 @@
 	Pop ${_ERR1}
 	Pop ${_ERR2}
 !macroend
+; 
+; The following macros were added by demon.devin using the ServiceLib.nsh
+; 
 !define ServiceLib::Create `!insertmacro _ServiceLib::Create`
 !macro _ServiceLib::Create _RETURN _NAME _PATH _TYPE _START _DEPEND
-	Push "start"
+	Push "create"
 	Push "${_NAME}"
 	StrCmp "${_DEPEND}" "" 0 +3
 	Push "path=${_PATH};servicetype=${_TYPE};starttype=${_START};"
