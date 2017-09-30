@@ -173,99 +173,6 @@
 	${WriteRuntimeData} ${PAL} ${_SC}_Status running
 !macroend
 ; 
-; The following macros were added by demon.devin using the cmdline
-; 
-!define Service::Query `!insertmacro _Service::Query`
-!macro _Service::Query _SVC _FSR _ERR1 _ERR2
-	StrCmpS $Bit 64 0 +4
-	StrCmp "${_FSR}" /DISABLEFSR 0 +3
-	ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" query "${_SVC}"`
-	Goto +2
-	ExecDos::Exec /TOSTACK `"${SC}" query "${_SVC}"`
-	Pop ${_ERR1}
-	Pop ${_ERR2}
-	StrCmp ${_ERR1} "1060" 0 +3
-	SetErrors
-	Goto +3
-	${WriteRuntimeData} "${_SVC}Service" LocalService true
-!macroend
-!define Service::QueryConfig `!insertmacro _Service::QueryConfig`
-!macro _Service::QueryConfig _SVC _FSR _ERR1 _ERR2
-	ReadEnvStr $R9 COMSPEC
-	StrCmpS $Bit 64 0 +4
-	StrCmp "${_FSR}" /DISABLEFSR 0 +3
-	ExecDos::Exec /TOSTACK /DISABLEFSR `"$R9" /c "${SC} qc "${_SVC}" | FIND "BINARY_PATH_NAME""`
-	Goto +2
-	ExecDos::Exec /TOSTACK `"$R9" /c "${SC} qc "${_SVC}" | FIND "BINARY_PATH_NAME""`
-	Pop ${_ERR1}
-	Pop ${_ERR2}
-	StrCmpS ${_ERR1} 0 0 +4
-	StrCpy $R1 ${_ERR2} "" 29
-	${WriteRuntimeData} "${_SVC}Service" LocalPath "$R1"
-	ReadRegStr $R1 HKLM `SYSTEM\CurrentControlSet\services\${_SVC}` ImagePath
-	${WriteRuntimeData} "${_SVC}Service" LocalPath "$R1"
-!macroend
-!define Service::State `!insertmacro _Service::State`
-!macro _Service::State _SVC _FSR _ERR1 _ERR2
-    ReadEnvStr $R9 COMSPEC
-    StrCmpS $Bit 64 0 +4
-    StrCmp "${_FSR}" /DISABLEFSR 0 +3
-    ExecDos::Exec /TOSTACK /DISABLEFSR `"$R9" /c "${SC} query "${_SVC}" | find /C "RUNNING""`
-    Goto +2
-    ExecDos::Exec /TOSTACK `"$R9" /c "${SC} query "${_SVC}" | find /C "RUNNING""`
-    Pop ${_ERR1}
-    Pop ${_ERR2}
-	StrCmpS ${_ERR1} 1 0 +4
-	StrCmpS ${_ERR2} 1 0 +3
-	${WriteRuntimeData} "${_SVC}Service" LocalState Running
-!macroend
-!define Service::Start `!insertmacro _Service::Start`
-!macro _Service::Start _SVC _FSR _ERR1 _ERR2
-    StrCmpS $Bit 64 0 +4
-    StrCmp "${_FSR}" /DISABLEFSR 0 +3
-    ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" start "${_SVC}"`
-    Goto +2
-    ExecDos::Exec /TOSTACK `"${SC}" start "${_SVC}"`
-    Pop ${_ERR1}
-    Pop ${_ERR2}
-!macroend
-!define Service::Stop `!insertmacro _Service::Stop`
-!macro _Service::Stop _SVC _FSR _ERR1 _ERR2
-    StrCmpS $Bit 64 0 +4
-    StrCmp "${_FSR}" /DISABLEFSR 0 +3
-    ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" stop "${_SVC}"`
-    Goto +2
-    ExecDos::Exec /TOSTACK `"${SC}" stop "${_SVC}"`
-    Pop ${_ERR1}
-    Pop ${_ERR2}
-!macroend
-!define Service::Remove `!insertmacro _Service::Remove`
-!macro _Service::Remove _SVC _FSR _ERR1 _ERR2
-    StrCmpS $Bit 64 0 +4
-    StrCmp "${_FSR}" /DISABLEFSR 0 +3
-    ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" delete "${_SVC}"`
-    Goto +2
-    ExecDos::Exec /TOSTACK `"${SC}" delete "${_SVC}"`
-    Pop ${_ERR1}
-    Pop ${_ERR2}
-!macroend
-!define Service::Create `!insertmacro _Service::Create`
-!macro _Service::Create _SVC _PATH _TYPE _START _DEPEND _FSR _ERR1 _ERR2
-	StrCmpS $Bit 64 0 +7
-	StrCmp "${_FSR}" /DISABLEFSR 0 +6	
-	StrCmp "${_DEPEND}" "" 0 +3
-	ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" create "${_SVC}" DisplayName= "${FULLNAME}" binpath= "${_PATH}" type= "${_TYPE}" start= "${_START}"`
-	Goto +7
-	ExecDos::Exec /TOSTACK /DISABLEFSR `"${SC}" create "${_SVC}" DisplayName= "${FULLNAME}" binpath= "${_PATH}" type= "${_TYPE}" start= "${_START}" depend= ""${_DEPEND}""`
-	Goto +5
-	StrCmp "${_DEPEND}" "" 0 +3
-	ExecDos::Exec /TOSTACK `"${SC}" create "${_SVC}" DisplayName= "${FULLNAME}" binpath= "${_PATH}" type= "${_TYPE}" start= "${_START}"`
-	Goto +2
-	ExecDos::Exec /TOSTACK `"${SC}" create "${_SVC}" DisplayName= "${FULLNAME}" binpath= "${_PATH}" type= "${_TYPE}" start= "${_START}" depend= ""${_DEPEND}""`
-	Pop ${_ERR1}
-	Pop ${_ERR2}
-!macroend
-; 
 ; The following macros were added by demon.devin using the ServiceLib.nsh
 ; 
 !define ServiceLib::Create `!insertmacro _ServiceLib::Create`
@@ -340,37 +247,22 @@ ${SegmentPre}
 		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 		ReadRegStr $1 HKLM "SYSTEM\CurrentControlSet\services\$0" ImagePath
 		${IfNot} ${Errors}
-			${WriteRuntimeData} "$0Service" LocalService true
-			${ParseLocations} $1
-			${WriteRuntimeData} "$0Service" LocalPath "$1"
+			StrCpy $2 $1 4
+			StrCmp $2 \??\ 0 +2
+			StrCpy $1 $1 "" 4
+			${WriteRuntimeData} "$0_Service" LocalService true
+			${WriteRuntimeData} "$0_Service" LocalPath "$1"
 			${DebugMsg} "Checking and logging state of local instance of $0 service."
-			${ServiceLib::Status} $9 "$0"
-			Pop $9
-			${If} $9 == running
-				${WriteRuntimeData} "$0Service" LocalState running
-			${ElseIf} $9 == stopped
-				${WriteRuntimeData} "$0Service" LocalState stopped
-			${Else}
-				${WriteRuntimeData} "$0Service" LocalState "$9"
-			${EndIf}
-			ClearErrors
-			ReadINIStr $2 "${LAUNCHER}" "Service$R0" "IfExists"
-			${If} $2 == replace
+			ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\services\$0" Start
+			${WriteRuntimeData} "$0_Service" LocalState $0
+			ReadINIStr $3 "${LAUNCHER}" "Service$R0" "IfExists"
+			${If} $3 == replace
 				${DebugMsg} "Preparing portable service of $0; removing local instance."
-				PRE_SERVICE_STOP_LOOP:
-				${ServiceLib::Stop} $9 "$0"
-				Pop $9
-				${If} $9 == true
-					${ServiceLib::Remove} $8 "$0"
-				${Else}
-					Goto PRE_SERVICE_STOP_LOOP
-				${EndIf}
-				${Registry::CopyKey} "${PAFKEYS}\HKLM\SYSTEM\CurrentControlSet\services\$0" "HKLM\SYSTEM\CurrentControlSet\services\$0" $9
-			${ElseIf} $2 == skip
+				${SC::Stop} "$0" /DISABLEFSR $8 $9
+				${SC::Delete} "$0" /DISABLEFSR $8 $9
+			${ElseIf} $3 == skip
 				${DebugMsg} "Local service of $0 already exists; not preparing for a portable instance."
 			${EndIf}
-		${Else}
-			${WriteRuntimeData} "$0Service" LocalService false
 		${EndIf}
 		IntOp $R0 $R0 + 1
 	${Loop}
@@ -382,7 +274,6 @@ ${SegmentPrePrimary}
 	!endif
 	StrCpy $R0 1
 	${Do}
-		ClearErrors
 		${ReadLauncherConfig} $0 Service$R0 Name
 		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 		${ReadLauncherConfig} $1 Service$R0 IfExists
@@ -393,20 +284,25 @@ ${SegmentPrePrimary}
 			${ReadLauncherConfig} $3 Service$R0 Type
 			${ReadLauncherConfig} $4 Service$R0 Start
 			${ReadLauncherConfig} $5 Service$R0 Depend
-			${IfNot} ${Errors}
-			${OrIf} $5 != ""
-				${ServiceLib::Create} $6 "$0" "$2" "$3" "$4" "$5"
+			${If} $5 != ""
+				${SC::Create} "$0" "$2" "$3" "$4" "$5" /DISABLEFSR $8 $9
 			${Else}
-				${ServiceLib::Create} $6 "$0" "$2" "$3" "$4" ""
+				${SC::Create} "$0" "$2" "$3" "$4" "" /DISABLEFSR $8 $9
 			${EndIf}
-			WriteRegStr HKLM "SYSTEM\CurrentControlSet\services\$0" "ImagePath" "$2"
-			Sleep 1500
-			${ServiceLib::Start} $9 "$0"
-			Pop $9
-			${If} $9 == true
+			${SC::Start} "$0" /DISABLEFSR $8 $9
+			ReadEnvStr $R9 COMSPEC
+			${If} Bit == 64
+				ExecDos::Exec /TOSTACK /DISABLEFSR `"$R9" /c "sc QUERY "$0" | FIND /C "RUNNING""`
+			${Else}
+				ExecDos::Exec /TOSTACK `"$R9" /c "sc QUERY "$0" | FIND /C "RUNNING""`
+			${EndIf}
+			Pop $R7 ;=== 1 = success
+			Pop $R8 ;=== 1 = running
+			${If} $R7 == 1
+			${OrIf} $R8 == 1
 				${DebugMsg} "The portable instance of the $0 service has been started."
-			${ElseIf} $9 == false
-				MessageBox MB_OK|MB_ICONSTOP|MB_TOPMOST "The portable instance of the $0 service failed to start.${NewLine}Continuing anyway!"
+			${Else}
+				${DebugMsg} "The portable instance of the $0 service failed to start."
 			${EndIf}
 		${ElseIf} $1 == skip
 			${DebugMsg} "Local service of $0 already exists; not creating a portable instance."
@@ -427,15 +323,13 @@ ${SegmentPostPrimary}
 		${ReadLauncherConfig} $1 Service$R0 IfExists
 		${If} $1 == replace
 			${DebugMsg} "Removing portable service of $0 to prepare for reinstallation of the local instance."
-			POST_SERVICE_STOP_LOOP:
-			${ServiceLib::Stop} $9 "$0"
-			Pop $9
-			${If} $9 == true
-				${ServiceLib::Remove} $9 "$0"
+			${ReadRuntimeData} $3 "$0_Service" LocalService
+			${If} ${Errors}
+				${SC::Stop} "$0" /DISABLEFSR $8 $9
+				${SC::Delete} "$0" /DISABLEFSR $8 $9
 			${Else}
-				Goto POST_SERVICE_STOP_LOOP
+				${SC::Stop} "$0" /DISABLEFSR $8 $9
 			${EndIf}
-			DeleteRegKey HKLM "SYSTEM\CurrentControlSet\services\$0"
 		${ElseIf} $1 == skip 
 			${DebugMsg} "Local service of $0 was already installed; no further action taken."
 		${EndIf}
@@ -455,26 +349,22 @@ ${SegmentUnload}
 		${ReadLauncherConfig} $1 Service$R0 IfExists
 		${If} $1 == replace
 			${DebugMsg} "Reinstalling the local instance of the $0 service."
-			${ReadRuntimeData} $7 "$0Service" LocalService
-			${If} $7 == true
-				${Registry::RestoreBackupKey} "HKLM\SYSTEM\CurrentControlSet\services\$0" $9
-				${ReadRuntimeData} $5 "$0Service" LocalPath
-				${ReadLauncherConfig} $2 Service$R0 Type
-				${ReadLauncherConfig} $3 Service$R0 Start
-				${ReadLauncherConfig} $4 Service$R0 Depend
-				${IfNot} ${Errors}
-				${OrIf} $4 != ""
-					${ServiceLib::Create} $8 "$0" "$5" "$2" "$3" "$4"
+			${ReadRuntimeData} $2 "$0_Service" LocalService
+			${IfNot} ${Errors}
+				${ReadRuntimeData} $3 "$0_Service" LocalPath
+				${ReadLauncherConfig} $4 Service$R0 Type
+				${ReadLauncherConfig} $5 Service$R0 Start
+				${ReadLauncherConfig} $6 Service$R0 Depend
+				${If} $6 != ""
+					${SC::Create} "$0" "$3" "$4" "$5" "$6" /DISABLEFSR $8 $9
 				${Else}
-					${ServiceLib::Create} $8 "$0" "$5" "$2" "$3" ""
+					${SC::Create} "$0" "$3" "$4" "$5" "" /DISABLEFSR $8 $9
 				${EndIf}
-				${ReadRuntimeData} $6 "$0Service" LocalState
-				${If} $6 == running
+				${ReadRuntimeData} $7 "$0_Service" LocalState
+				${If} $7 != 4
 					${DebugMsg} "Restarting local instance of the $0 service."
-					Sleep 1000
-					${ServiceLib::Start} $9 "$0"
-					Pop $9
-				${ElseIf} $6 == stopped
+					${SC::Start} "$0" /DISABLEFSR $8 $9
+				${Else}
 					${DebugMsg} "Local instance of the $0 service was not running before runtime; no further action required."
 				${EndIf}
 			${EndIf}
