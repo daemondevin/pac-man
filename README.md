@@ -1,66 +1,48 @@
-## TODO List
+# PortableApps Compiler
 ----------
 
-Here's a small list of a few ideas that I want to try and implement with this project. These are just things I plan on working on in my spare time and while the ideas listed below are not recognized by PortableApps.com please be aware that using some of the things you find in this variant of PAL can and most likely will be buggy. 
+This is an alternative and better solution for creating portable applications in the [PortableApps.com Format](https://portableapps.com/manuals/PortableApps.comLauncher/ref/paf/index.html#portableapps-com-format-specification). **PortableApps Compiler** is a much more advanced, feature-rich **PAF** compiler which gives the developer more capabilities when making the more complex software portable. This is being designed with the _power user_ in mind and should only be used if you're familiar with the practice and understand the features being used by this project.
 
-- [x] __Support for NSIS3:__
+## TODO
+----------
 
-<del>Well, support for [NSISPortable][4] rather which is packaged with the latest release of NSIS. The current official release of PAL is using NSIS v2.46.5-Unicode which is actually packaged with the project. So I would like to completely remove the need for this dependency entirely.</del>
+The following is a list of things you can look forward to seeing in this project. This list is a work in progress so come back later to see if these features have been added.
 
-- [x] __Manifest Support:__
+- [ ] __AiO GUI__
 
-<del>With the release of NSIS3, support for adding an application manifest is done automatically and defaults to supporting Windows 7 and later versions.</del>  
+Working on a nice all-in-one GUI that will enable the developer to quickly create the necessary configuration files for creating and generating a PA.c compliant portable application. After creation, than ask to compile.
 
-- [x] __.NET Handling:__
+- [ ] __AiO Compiler__
 
-<del>I'll just be adding a means for checking a system for the required version of the .NET Framework because John T. Haller [explains][5] in great detail how the .NET Framework has no real practical means for portability when it comes to Portable Apps. He ends his article with,</del> 
->"_...applications based on .NET simply can't be considered portable due to the fact that the files they need can't be bundled portably and won't be on a large number of PCs you encounter in the wild._"
+Working on combining both the PortableApps.com Launcher with the PortableApps.com Installer. Basically, have a single GUI (including the config creator) which can be used to create and generate a portable application package from compiling the portable launcher to creating the PAF installer.
 
-- [x] __Support Registering Libraries:__
+- [ ] __Etc. Etc. And So On__
 
-<del>The official release of PAL has no native support for registering libraries (DLLs), so I will try to add support for registering files. Be aware though that a program developer has complete control over what happens when you call _RegSvr32_ which is what is used by `RegDLL` (the native command used by NSIS for registering files). With that being said, my ideas on this topic may be buggy.</del>
-
-- [x] __Support Services:__
-
-<del>The support for services is by default disabled in the official builds of PAL. In the source code it states that they might be unstable and the plugin is large in size. I plan on not using a plugin to support services, instead I plan on dealing with this by using the command line with a few functions and macros to try and keep things simple.</del><br /><del>__TODO:__ Still need to rewrite the `Services.nsh` segment to handle services without using custom code or a plugin.</del>
-
-- [ ] __Language Handling:__ (In Progress)
-
-The official PAL's language handling is based on the setting of the PortableApps.com Platform language. Not every user of a PAF uses the PortableApps.com Platform so I'm rewriting the language handling to support and be based on the end-users operating system language. As it is written now, if you want language support you need to use the `custom.nsh` file.<br />__TODO:__ Fallback on the original method to use the `Launcher.ini` but still be based on the OS language.
-
-- [ ] __Redevelop Generator Wizard:__ (Brainstorming)
-
-I'm conceptualizing and outlining ideas for a nice GUI which will potentially allow the user to just select certain check-boxes for the `[Dependencies]` section which is discussed in greater detail further below. This way I can eliminate the need to use all those keys in the _AppInfo.ini_ file. I'd like to point out that my knowledge-base in this area of NSIS is primitive and/or novice at best so I'm certainly open to any helpful input and suggestions in this area.
-
-- [ ] __Rename This Project:__ (Brainstorming)
-
-I've decided to rename this project to set it a part from the official PA.c Launcher. This re-branding is to help make this project it's own entity. So instead of people looking at the official builds of PAL and thinking, _"Wow! How cool is that feature?! I wonder who had the idea to add that?"_ they can think that about my version and know exactly who added that _cool_ feature instead; __me__.
-
-- [ ] __Redevelop PA.c Installer:__ (Near Future)
-
-I've been thinking I should probably go ahead and add my two-cents in the [PortableApps.com Installer](https://portableapps.com/apps/development/portableapps.com_installer). That project most certainly could use new life as well. However, if and when I do decide to start a new repository for the PA.c Installer, be aware that I'm going to probably change the output extension of the generated installer&mdash;which is currently something similar to `ApplicationPortable_1.0.2_English.paf.exe` to something else like `ApplicationPortable_1.0.2_English.mps.exe` (`.mps.exe` - _movable program scheme_; first thing that came to mind ..Lol.). I might just drop the `.paf.exe` and just stick with `.exe`. I don't know; I'll cross that bridge when I get there. 
-
-- [ ] __Etc. Etc. And So On:__ (On Going Process)
-
-Other things could follow depending on my availability, interest.. and of course the interest and support from others. So with that being said, this little project might not even see the light of day. Lol.
+Other things could follow depending on our availability, interest.. and of course the interest and support from others.
 
 ## Features
 ----------
 
-#### __PortableApps.comLauncher.nsi__
- - <del>Added code to add a manifest file to the Launcher.exe for better user privileges support. Refer to line 80 for reference.</del>
- - Added support for using new NSISPortable which is the new NSIS3 with Unicode support. Removed NSIS in the `..\PortableApps.comLauncher\App` directory.
- - Adding an application manifest is now handled by default since NSIS3. The code has been commented out.
- - Added support for automatic code signing. Refer to the code block on line 709 for reference.
- - Added support to prevent a user from shutting down or at least allow enough time to clean-up before exiting then shutting down.
- - Added support for .NET checking from both 4.0 and below to 4.5 and above. See `DotNet.nsh` in the segments folder for reference. 
+The following is a list of features that is currently available with PortableApps Compiler. Everything listed here has been tested and is in working order.
+
+- Everything that is available with [PortableApps.com Launcher](https://portableapps.com/apps/development/portableapps.com_launcher) is also available with PortableApps Compiler.
+- Minipulating Windows Services.
+- Dealing with Windows Tasks.
+- Registering DLL files.
+- Registry redirection support.
+- File-system redirection support.
+- Automatic code-signing.
+- Font support for apps that make use of fonts.
+- More feature soon to come!
 
 ----------
 
 #### __Launcher.ini__
+
 __Environment Variables__
-`%PROGRAMDATA%` has now been added and kept `%ALLUSERSAPPDATA%` for backwards compatibility. Both can be used anywhere you can use an evironment variable.
-`%PAL:CommonFiles%` may now be used within the _Launcher.ini_ configuration file. This environment variable will point to `..\PortableApps\CommonFiles` if applicable. Can be used anywhere you can use an environment variable.
+
+- `%PROGRAMDATA%` has now been added and kept `%ALLUSERSAPPDATA%` for backwards compatibility. Both can be used anywhere you can use an evironment variable.
+- `%PAL:CommonFiles%` may now be used within the _Launcher.ini_ configuration file. This environment variable will point to `..\PortableApps\CommonFiles` if applicable. Can be used anywhere you can use an environment variable.
 > Example:
 > ```INI
 > [Environment]
@@ -331,19 +313,19 @@ Because I am only just one man who has to live outside of my computer, the docum
 ## Contributors
 ----------
 
-This forked project has been started by [demon.devin][author] and hopefully maintained on a regular basis. However, if you would like to be a part of this then please do not hesitate on getting involved! I'm always open to new ideas and a willingness for the betterment of all things code. =)
+This project has been started by [demon.devin][author] and hopefully maintained on a regular basis. However, if you would like to be a part of this then please do not hesitate on getting involved! I'm always open to new ideas and a willingness for the betterment of all things code. =)
 
-A special thanks is expressed for [DoomStorm][TekSpert] for all the suggestions and heavily testing for bugs.
+Thanks to [zodi](http://compucode.blogspot.com/) for developing the GUI (coming soon).
+Thanks to [DoomStorm][TekSpert] for all the suggestions and heavily testing for bugs.
 
-Thank you to the following people; Dave Green, HandyPAF, all those on the [Discord Workbench][DiscordWorkbench] and anyone else who makes use of this version to *port and let portable!* 
+Thank you to the following people; Dave Green (RIP), HandyPAF, all those on the [Discord Workbench][DiscordWorkbench] and anyone else who makes use of this version to *port and let portable!* 
 
-I should convey that some of the code I've added here was written by FukenGruven. Without his code-base, most of this version of PA.c Launcher would not be possible. So a round of applause is in order for FukenGruven! Thank you FukenGruven. 
+A special thanks to FukenGruven. His codebase was the skeleton which was used to start this project.
 
 ----------
 
 =)
 
-[1]: https://github.com/GordCaswell/portableapps.comlauncher "PortableApps.com Launcher"
 [2]: http://portableapps.com/ "PortableApps.com/"
 [3]: https://portableapps.com/node/56500 "A Superfluous Discussion"
 [4]: https://portableapps.com/apps/development/nsis_portable "NSIS Portable"
