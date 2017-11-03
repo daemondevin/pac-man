@@ -1,24 +1,15 @@
-# PortableApps Compiler
+# PortableApps Compiler - _Development Branch_
 ----------
 
-This is an alternative and better solution for creating portable applications in the [PortableApps.com Format](https://portableapps.com/manuals/PortableApps.comLauncher/ref/paf/index.html#portableapps-com-format-specification). **PortableApps Compiler** is a much more advanced, feature-rich **PAF** compiler which gives the developer more capabilities when making the more complex software portable. This is being designed with the _power user_ in mind and should only be used if you're familiar with the practice and understand the features being used by this project.
+This branch is meant for the cutting-edge of development. Don't expect this version to work flawlessly. There may be bugs hidden throughout this experimental version of PortableApps Compiler. With that said, enjoy the fresh ideas which are currently being worked out.
 
-## TODO
+## CHANGES
 ----------
 
-The following is a list of things you can look forward to seeing in this project. This list is a work in progress so come back later to see if these features have been added.
-
-- [ ] __AiO GUI__
-
-Working on a nice all-in-one GUI that will enable the developer to quickly create the necessary configuration files for creating and generating a PA.c compliant portable application. After creation, than ask to compile.
-
-- [ ] __AiO Compiler__
-
-Working on combining both the PortableApps.com Launcher with the PortableApps.com Installer. Basically, have a single GUI (including the config creator) which can be used to create and generate a portable application package from compiling the portable launcher to creating the PAF installer.
-
-- [ ] __Etc. Etc. And So On__
-
-Other things could follow depending on our availability, interest.. and of course the interest and support from others.
+- All environment variables that start with `PAL` have been changed to `PAC` 
+  - _I.E._ `%PAL:AppDir%` is now `%PAC:AppDir%` and so on..
+- All environment variables that start with `PortableApps.com` have been changed to `PortableApps` 
+  - _I.E._ `%PortableApps.comDocuments%` is now `%PortableAppsDocuments%` and so on..
 
 ## Features
 ----------
