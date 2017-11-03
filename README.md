@@ -1,7 +1,9 @@
 # PortableApps Compiler - _Development Branch_
 ----------
 
-This branch is meant for the cutting-edge of development. Don't expect this version to work flawlessly. There may be bugs hidden throughout this experimental version of PortableApps Compiler. With that said, enjoy the fresh ideas which are currently being worked out.
+This branch is meant for the cutting-edge of development. Don't expect this version to work flawlessly. There may be bugs hidden throughout this experimental version of PortableApps Compiler. With this branch you will find the code stylings of Chris Morgan, FukenGruven, Azure Zanculmarktum, and myself (demon.devin). You will also see minor influence from other contributors like LegendaryHawk, DoomStorm, and other fellow developers as well. So you can expect to see great things to come out of this experimental build.
+
+With all that said, enjoy the fresh ideas which are currently being worked out.
 
 ## CHANGES
 ----------
@@ -33,12 +35,12 @@ The following is a list of features that is currently available with PortableApp
 __Environment Variables__
 
 - `%PROGRAMDATA%` has now been added and kept `%ALLUSERSAPPDATA%` for backwards compatibility. Both can be used anywhere you can use an evironment variable.
-- `%PAL:CommonFiles%` may now be used within the _Launcher.ini_ configuration file. This environment variable will point to `..\PortableApps\CommonFiles` if applicable. Can be used anywhere you can use an environment variable.
+- `%PAC:CommonFiles%` may now be used within the _Launcher.ini_ configuration file. This environment variable will point to `..\PortableApps\CommonFiles` if applicable. Can be used anywhere you can use an environment variable.
 > Example:
 > ```INI
 > [Environment]
-> PATH=%PATH%;%PAL:CommonFiles%\AndroidSDK
-> JAVA_HOME=%PAL:CommonFiles%\Java64
+> PATH=%PATH%;%PAC:CommonFiles%\AndroidSDK
+> JAVA_HOME=%PAC:CommonFiles%\Java64
 > ```
 
 Added new keys to the `[Activate]` section. They are as follows (a short description of what each key means or does can be found further below):
@@ -97,7 +99,7 @@ DirectoryCleanup=true
 > ```INI
 > [Service1]
 > Name=SomeServiceName
-> Path=%PAL:AppDir%\service32.sys
+> Path=%PAC:AppDir%\service32.sys
 > Type=kernel
 > Start=auto
 > Depend=
@@ -105,7 +107,7 @@ DirectoryCleanup=true
 >
 > [Service2]
 > Name=AnotherService
-> Path=%PAL:DataDir%\service64.exe
+> Path=%PAC:DataDir%\service64.exe
 > Type=own
 > Start=demand
 > Depend=
@@ -117,11 +119,11 @@ DirectoryCleanup=true
 > ```INI
 > [RegisterDLL1]
 > ProgID=MyAppControlPanel
-> File=%PAL:AppDir%\controller.cpl
+> File=%PAC:AppDir%\controller.cpl
 >
 > [RegisterDLL2]
 > ProgID=DynamicLibrary
-> File=%PAL:DataDir%\dynlib.dll
+> File=%PAC:DataDir%\dynlib.dll
 > ```
 
 * __Tasks:__ Enable the TaskCleanup segment for removing any Windows Tasks that were added during runtime.
@@ -156,7 +158,7 @@ DirectoryCleanup=true
 > To use this feature add the section `[FilesCleanup]` to the `Launcher.ini` file. Each entry should be the path to the file that needs deleting. Supports environment variables. Example usage:
 > ```INI
 > [FilesCleanup]
-> 1=%PAL:DataDir%\uselessUpgradeFile.xml
+> 1=%PAC:DataDir%\uselessUpgradeFile.xml
 > 2=%APPDATA%\MyProgram\purposelessCfg.ini
 > ```
 
@@ -290,15 +292,6 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 
 * __GetBetween:__ Include the `GetBetween.nsh` file.
 
-## Documentation
-----------
-
-I've begin a small website dedicated to documenting anything I've deemed invaluable in my findings while I've devoted my time to PAFing. You should know that the content you find there is (or will be over time) a collection of help files and guides mostly focused on the making of PAFs. In some circles it's considered the most complete guide to making PAFs with PAL. So I encourage any novice PAFers to give it a visit; you can read up on a wide range of related topics from Registry best-practices to making your own self-signed certificates to sign your PAFs with. 
-
-I've started this because the documentation which is supplied with PAL by PortableApps.com doesn't have, in my humble opinion, any solid information on the power and complexities it's framework has. So I've taken it upon myself to start working on jotting down this unofficial, but my official, guide to making a PAF with PAL. As time has gone by the website has taken on new meaning which now helps developers to better understand the inner workings of the PAL I'm working on here. Not only that but it also goes into great detail in explaining how certain applications and their components are used on a system; which will help you better understand what you're using in this project and why.
-
-Because I am only just one man who has to live outside of my computer, the documentation project (like this project) will take sometime to finish (if ever) so please forgive me on it's incompleteness. This will also serve as a reference/cheat-sheet for those (I know I'll need it, which is partly why I've started it) who need a quick reminder on certain functions and macros for use within the `custom.nsh` file. As an added bonus, all (not yet but most) of the source code I've used here is outlined and better explained/documented there as well. For instance, visit this [page][DocsRegDLL] for a short guide on registering DLLs and all the macros I used to create the `RegisterDLL.nsh` segment. You can visit this [page][DocsServices] for an exhaustive tutorial on dealing with Windows Services; plus it explains what each macro is and does within the `Services.nsh` segment and how to use them in action.
-
 #### __Visit the Docs:__ [The PAF Docs][DocsHome]
 
 ## Contributors
@@ -306,7 +299,6 @@ Because I am only just one man who has to live outside of my computer, the docum
 
 This project has been started by [demon.devin][author] and hopefully maintained on a regular basis. However, if you would like to be a part of this then please do not hesitate on getting involved! I'm always open to new ideas and a willingness for the betterment of all things code. =)
 
-Thanks to [zodi](http://compucode.blogspot.com/) for developing the GUI (coming soon).
 Thanks to [DoomStorm][TekSpert] for all the suggestions and heavily testing for bugs.
 
 Thank you to the following people; Dave Green (RIP), HandyPAF, all those on the [Discord Workbench][DiscordWorkbench] and anyone else who makes use of this version to *port and let portable!* 
