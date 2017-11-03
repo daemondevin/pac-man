@@ -83,6 +83,8 @@ SetCompressorDictSize 32
 !define ENABLEREDIR		`kernel32::Wow64EnableWow64FsRedirection(i1)`
 !define GETCURRPROC		`kernel32::GetCurrentProcess()i.s`
 !define WOW				`kernel32::IsWow64Process(is,*i.r0)`
+!define PrimaryInstance	`$SecondaryLaunch != true`
+!define SecondInstance	`$SecondaryLaunch == true`
 
 ;= MACROS
 ;= ################
@@ -354,12 +356,6 @@ Var WaitForProgram
 	Var JavaMode
 	Var JavaDirectory
 !endif
-!ifdef GHOSTSCRIPT
-	Var GSMode
-	Var GSDirectory
-	Var GSRegExists
-	Var GSExecutable
-!endif
 
 ;= LOAD SEGMENTS
 ;= ################
@@ -544,7 +540,7 @@ FunctionEnd
 		!appendfile "${FONTFILE}" "$\tThe launcher will have to load and unload any fonts in this directory.$\n"
 		!appendfile "${FONTFILE}" "$\tThe more fonts you have will mean a longer work load for the launcher.$\n$\n"
 		!appendfile "${FONTFILE}" "Fonts Supported:$\n"
-		!appendfile "${FONTFILE}" " • .fon$\n • .fnt$\n • .ttf$\n • .ttc$\n • .fot$\n • .otf$\n • .mmm$\n • .pfb$\n • .pfm$\n"
+		!appendfile "${FONTFILE}" " â€¢ .fon$\n â€¢ .fnt$\n â€¢ .ttf$\n â€¢ .ttc$\n â€¢ .fot$\n â€¢ .otf$\n â€¢ .mmm$\n â€¢ .pfb$\n â€¢ .pfm$\n"
 		!system 'copy /Y /A "${FONTFILE}" "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" /A'
 		!delfile "${FONTFILE}"
 		!undef FONTFILE
@@ -610,13 +606,13 @@ Function Init
 	!ifdef FONTS_ENABLED
 		Call CreateFontsFolder
 	!endif
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		${RunSegment} Language
 		${RunSegment} Environment
 		${RunSegment} Custom
 	${EndIf}
 	${RunSegment} Core
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		${RunSegment} PathChecks
 		${RunSegment} DriveLetter
 	${EndIf}
@@ -632,11 +628,11 @@ Function Init
 		${RunSegment} Ghostscript
 	!endif
 	${RunSegment} RunLocally
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		${RunSegment} Temp
 	${EndIf}
 	${RunSegment} InstanceManagement
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		${RunSegment} Settings
 	${EndIf}
 	;${RunSegment} SplashScreen
@@ -660,7 +656,7 @@ Function Pre
 			System::Call `${DISABLEREDIR}`
 		!endif
 	!endif
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
@@ -697,7 +693,7 @@ Function PrePrimary
 			System::Call `${DISABLEREDIR}`
 		!endif
 	!endif
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		!ifdef FileCleanup
 			${RunSegment} FilesCleanup
 		!endif
@@ -713,13 +709,13 @@ Function PrePrimary
 	!ifdef REGISTRY
 		${RunSegment} RegistryKeys
 		!ifdef RegCopy
-			${If} $SecondaryLaunch != true
+			${If} ${PrimaryInstance}
 				${RunSegment} RegistryCopyKeys
 			${EndIf}
 		!endif
 		${RunSegment} RegistryValueBackupDelete
 	!endif
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
 		!endif
@@ -728,7 +724,7 @@ Function PrePrimary
 		;=== this belongs here after Registering DLLs.
 		${RunSegment} RegistryValueWrite
 	!endif
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
@@ -782,7 +778,7 @@ Function PreExec
 		!endif
 	!endif
 	${RunSegment} Custom
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
 		!endif
@@ -967,7 +963,7 @@ Function PostPrimary
 			System::Call `${DISABLEREDIR}`
 		!endif
 	!endif
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
 		!endif
@@ -980,7 +976,7 @@ Function PostPrimary
 	${EndIf}
 	!ifdef REGISTRY
 		${RunSegment} RegistryValueBackupDelete
-		${If} $SecondaryLaunch != true
+		${If} ${PrimaryInstance}
 			!ifdef RegCopy
 				${RunSegment} RegistryCopyKeys
 			!endif
@@ -988,7 +984,7 @@ Function PostPrimary
 		${RunSegment} RegistryKeys
 		${RunSegment} RegistryCleanup
 	!endif
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		${RunSegment} Qt
 		!ifdef FileCleanup
 			${RunSegment} FilesCleanup
@@ -1070,7 +1066,7 @@ Function Unload
 		!endif
 	!endif
 	;${RunSegment} XML
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
 		!endif
@@ -1105,7 +1101,7 @@ FunctionEnd
 	!if ${_rev} == +
 		Call ${_func}
 	!endif
-	${If} $SecondaryLaunch == true
+	${If} ${SecondInstance}
 		Call ${_func}Secondary
 	${Else}
 		Call ${_func}Primary
@@ -1140,14 +1136,14 @@ Section
 		Quit
 	${EndIf}
 	${IfNot} ${FileExists} `${RUNTIME}`
-	${OrIf} $SecondaryLaunch == true
-		${If} $SecondaryLaunch != true
+	${OrIf} ${SecondInstance}
+		${If} ${PrimaryInstance}
 			System::Call 'Kernel32::CreateMutex(i0, i0, t"${PAC}${APPNAME}-${APPNAME}::Starting") i.r0'
 			StrCpy $StatusMutex $0
 		${EndIf}
 		${CallPS} Pre +
 		${CallPS} PreExec +
-		${If} $SecondaryLaunch != true
+		${If} ${PrimaryInstance}
 			StrCpy $0 $StatusMutex
 			System::Call 'Kernel32::CloseHandle(ir0) ?e'
 			Pop $R9
@@ -1156,7 +1152,7 @@ Section
 	${Else}
 		MessageBox MB_ICONSTOP $(LauncherCrashCleanup)
 	${EndIf}
-	${If} $SecondaryLaunch != true
+	${If} ${PrimaryInstance}
 		System::Call 'Kernel32::CreateMutex(i0, i0, t"${PAC}${APPNAME}-${APPNAME}::Stopping")'
 	${EndIf}
 	${If} $WaitForProgram != false
