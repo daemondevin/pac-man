@@ -13,7 +13,7 @@ ${SegmentPrePrimary}
 			${ParseLocations} $R1
 			${GetParent} $R1 $R2
 			${GetFilename} $R1 $R3
-			${registry::MoveValue} $R2 $R3 HKCU\Software\PortableApps.com\Values $R1 $R4
+			${registry::MoveValue} $R2 $R3 HKCU\Software\PortableApps\Values $R1 $R4
 			IntOp $R0 $R0 + 1
 		${Loop}
 	${EndIf}
@@ -36,11 +36,11 @@ ${SegmentPostPrimary}
 			${GetParent} $R1 $R2
 			${GetFilename} $R1 $R3
 			${registry::DeleteValue} $R2 $R3 $R4
-			${registry::MoveValue} HKCU\Software\PortableApps.com\Values $R1 $R2 $R3 $R4
+			${registry::MoveValue} HKCU\Software\PortableApps\Values $R1 $R2 $R3 $R4
 			IntOp $R0 $R0 + 1
 		${Loop}
-		${registry::DeleteKeyEmpty} HKCU\Software\PortableApps.com\Values $R4
-		${registry::DeleteKeyEmpty} HKCU\Software\PortableApps.com $R4
+		${registry::DeleteKeyEmpty} HKCU\Software\PortableApps\Values $R4
+		${registry::DeleteKeyEmpty} HKCU\Software\PortableApps $R4
 	${EndIf}
 	!ifmacrodef UnPostRegistryValue
 		!insertmacro UnPostRegistryValue

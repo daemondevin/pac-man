@@ -1,20 +1,9 @@
-/* The PortableApps.com Launcher now does everything in it in "segments".
- * This means code can be grouped together by what it does rather than by when it runs.
- *
- * To facilitate this, there are a number of "hooks" you can latch onto.
- * The Primary and Secondary variants are for primary and secondary instances of the application.
- *   .onInit                     - things which must go in .onInit
- *   Init                        - load data into variables, do startup stuff
- *   Pre(Primary|Secondary)?     - Set up portability
- *   PreExec(Primary|Secondary)? - Just before it gets executed
- *   PostExec(Primary|Secondary)? - Just after it gets executed
- *   Post(Primary|Secondary)?    - Move settings and whatnot back
- *   Unload                      - Unload plug-ins, clean up the launcher itself
- *
- * When a new segment is created, be sure to add it below in RunSegmentAction(Reverse).
- */
-
-; Create segment file definitions {{{1
+;=#
+;
+; Segments.nsh
+; 
+; This file is similar to that of the Segments.nsh file found with PA.c Launcher
+; 
 !macro _CreateSegmentDef _TYPE
 	!ifdef Segment${_TYPE}
 		!undef Segment${_TYPE}

@@ -25,10 +25,10 @@ ${SegmentInit}
 			Quit
 		${EndIf}
 	${EndIf}
-	${SetEnvironmentVariablesPath} PAL:PackagePartialDir $1
-	${SetEnvironmentVariablesPath} PAL:LastPackagePartialDir $LastDirectory
+	${SetEnvironmentVariablesPath} PAC:PackagePartialDir $1
+	${SetEnvironmentVariablesPath} PAC:LastPackagePartialDir $LastDirectory
 !macroend
 ${SegmentPrePrimary}
-	ReadEnvStr $0 PAL:PackagePartialDir
+	ReadEnvStr $0 PAC:PackagePartialDir
 	${WriteSettings} $0 LastDirectory
 !macroend

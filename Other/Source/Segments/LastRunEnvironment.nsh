@@ -4,8 +4,8 @@ ${SegmentFile}
 
 ; Next, restore the saved values before [Environment] is parsed.
 ${SegmentPre}
-	; First, load PAL's own last run environment
-	${ForEachINIPairWithFile} $EXEDIR\Data\settings\$AppIDSettings.ini PortableApps.comLauncherLastRunEnvironment $0 $1
+	; First, load PAC's own last run environment
+	${ForEachINIPairWithFile} $EXEDIR\Data\settings\$AppIDSettings.ini PortableAppsCompilerLastRunEnvironment $0 $1
 		${DebugMsg} "Setting internal last run environment variable $0 to $1"
 		; Treat all LREs as paths
 		${SetEnvironmentVariablesPath} $0 $1
@@ -34,13 +34,13 @@ ${SegmentPre}
 
 ${SegmentPrePrimary}
 	; Write some internal LREs not written anywhere else
-	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAL:LastAppDirectory                       PAL:AppDir
-	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAL:LastDataDirectory                      PAL:DataDir
-	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAL:LastPortableAppsDirectory              PAL:PortableAppsDir
-	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAL:LastPortableApps.comDocumentsDirectory PortableApps.comDocuments
-	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAL:LastPortableApps.comPicturesDirectory  PortableApps.comPictures
-	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAL:LastPortableApps.comMusicDirectory     PortableApps.comMusic
-	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAL:LastPortableApps.comVideosDirectory    PortableApps.comVideos
+	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAC:LastAppDirectory                       PAC:AppDir
+	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAC:LastDataDirectory                      PAC:DataDir
+	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAC:LastPortableAppsDirectory              PAC:PortableAppsDir
+	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAC:LastPortableAppsDocumentsDirectory PortableAppsDocuments
+	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAC:LastPortableAppsPicturesDirectory  PortableAppsPictures
+	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAC:LastPortableAppsMusicDirectory     PortableAppsMusic
+	!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable PAC:LastPortableAppsVideosDirectory    PortableAppsVideos
 !macroend
 
 
@@ -78,5 +78,5 @@ ${SegmentPreExecPrimary}
 !macro _LastRunEnvironment_WriteInternalFromEnvironmentVariable name envvar
 	ReadEnvStr $R0 `${envvar}`
 	${DebugMsg} "Saving internal last run environment variable `${name}` from `${envvar}` as `$R0`"
-	WriteINIStr $DataDirectory\settings\$AppIDSettings.ini PortableApps.comLauncherLastRunEnvironment `${name}` $R0
+	WriteINIStr $DataDirectory\settings\$AppIDSettings.ini PortableAppsCompilerLastRunEnvironment `${name}` $R0
 !macroend

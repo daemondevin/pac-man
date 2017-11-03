@@ -74,12 +74,12 @@ ${SegmentFile}
 !macro SetEnvironmentVariablesPath_
 	/* This function sets environment variables with different formats for paths.
 	 * For example:
-	 *   ${SetEnvironmentVariablesPath} PortableApps.comAppDirectory $EXEDIR\App
+	 *   ${SetEnvironmentVariablesPath} PortableAppsAppDirectory $EXEDIR\App
 	 * Will produce the following environment variables:
-	 *   %PAL:AppDir%                 = X:\PortableApps\AppNamePortable\App
-	 *   %PAL:AppDir:Forwardslash%    = X:/PortableApps/AppNamePortable/App
-	 *   %PAL:AppDir:DoubleBackslash% = X:\\PortableApps\\AppNamePortable\\App
-	 *   %PAL:AppDir:java.util.prefs% = /X:///Portable/Apps///App/Name/Portable///App
+	 *   %PAC:AppDir%                 = X:\PortableApps\AppNamePortable\App
+	 *   %PAC:AppDir:Forwardslash%    = X:/PortableApps/AppNamePortable/App
+	 *   %PAC:AppDir:DoubleBackslash% = X:\\PortableApps\\AppNamePortable\\App
+	 *   %PAC:AppDir:java.util.prefs% = /X:///Portable/Apps///App/Name/Portable///App
 	 */
 	Exch $R0 ; path
 	Exch
@@ -184,44 +184,44 @@ ${SegmentInit}
 	!endif
 	StrCpy $AppDirectory `$EXEDIR\App`
 	StrCpy $DataDirectory `$EXEDIR\Data`
-	${SetEnvironmentVariablesPath} PAL:AppDir  $AppDirectory
-	${SetEnvironmentVariablesPath} PAL:DataDir $DataDirectory
+	${SetEnvironmentVariablesPath} PAC:AppDir  $AppDirectory
+	${SetEnvironmentVariablesPath} PAC:DataDir $DataDirectory
 	${GetParentUNC} $EXEDIR $PortableAppsDirectory
 	StrCpy $PortableAppsCommonFiles $PortableAppsDirectory\CommonFiles
-	${SetEnvironmentVariablesPath} PAL:PortableAppsDir $PortableAppsDirectory
-	${SetEnvironmentVariablesPath} PAL:CommonFiles $PortableAppsDirectory\CommonFiles
+	${SetEnvironmentVariablesPath} PAC:PortableAppsDir $PortableAppsDirectory
+	${SetEnvironmentVariablesPath} PAC:CommonFiles $PortableAppsDirectory\CommonFiles
 	${GetParentUNC} $PortableAppsDirectory $PortableAppsBaseDirectory
-	${SetEnvironmentVariablesPath} PAL:PortableAppsBaseDir $PortableAppsBaseDirectory
+	${SetEnvironmentVariablesPath} PAC:PortableAppsBaseDir $PortableAppsBaseDirectory
 	ClearErrors
-	ReadINIStr `$LastPortableAppsBaseDirectory` `${SETINI}` PortableApps.comLauncherLastRunEnvironment PAL:LastPortableAppsBaseDir
+	ReadINIStr `$LastPortableAppsBaseDirectory` `${SETINI}` PortableAppsCompilerLastRunEnvironment PAC:LastPortableAppsBaseDir
 	${IfNot} ${Errors}
-		${SetEnvironmentVariablesPath} PAL:LastPortableAppsBaseDir $LastPortableAppsBaseDirectory
+		${SetEnvironmentVariablesPath} PAC:LastPortableAppsBaseDir $LastPortableAppsBaseDirectory
 	${EndIf}
-	ReadEnvStr $0 PortableApps.comDocuments
+	ReadEnvStr $0 PortableAppsDocuments
 	${If} $0 == ""
 	${OrIfNot} ${FileExists} $0
 		${GetRoot} $EXEDIR $1
 		StrCpy $0 `$1\Documents`
 	${EndIf}
-	${SetEnvironmentVariablesPath} PortableApps.comDocuments $0
-	ReadEnvStr $1 PortableApps.comPictures
+	${SetEnvironmentVariablesPath} PortableAppsDocuments $0
+	ReadEnvStr $1 PortableAppsPictures
 	${If} $1 == ""
 	${OrIfNot} ${FileExists} $1
 		StrCpy $1 `$0\Pictures`
 	${EndIf}
-	${SetEnvironmentVariablesPath} PortableApps.comPictures $1
-	ReadEnvStr $1 PortableApps.comMusic
+	${SetEnvironmentVariablesPath} PortableAppsPictures $1
+	ReadEnvStr $1 PortableAppsMusic
 	${If} $1 == ""
 	${OrIfNot} ${FileExists} $1
 		StrCpy $1 `$0\Music`
 	${EndIf}
-	${SetEnvironmentVariablesPath} PortableApps.comMusic $1
-	ReadEnvStr $1 PortableApps.comVideos
+	${SetEnvironmentVariablesPath} PortableAppsMusic $1
+	ReadEnvStr $1 PortableAppsVideos
 	${If} $1 == ""
 	${OrIfNot} ${FileExists} $1
 		StrCpy $1 `$0\Videos`
 	${EndIf}
-	${SetEnvironmentVariablesPath} PortableApps.comVideos $1
+	${SetEnvironmentVariablesPath} PortableAppsVideos $1
 	${SetEnvironmentVariablesPathFromEnvironmentVariable} ALLUSERSPROFILE
 	${SetEnvironmentVariablesPathFromEnvironmentVariable} USERPROFILE
 	${SetEnvironmentVariablesPath} LOCALAPPDATA $LOCALAPPDATA
@@ -236,5 +236,5 @@ ${SegmentInit}
 	!endif
 !macroend
 ${SegmentPrePrimary}
-	WriteINIStr `${SETINI}` ${PAL}LastRunEnvironment PAL:LastPortableAppsBaseDir `$PortableAppsBaseDirectory`
+	WriteINIStr `${SETINI}` ${PAC}LastRunEnvironment PAC:LastPortableAppsBaseDir `$PortableAppsBaseDirectory`
 !macroend

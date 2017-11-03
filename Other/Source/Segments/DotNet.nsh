@@ -98,7 +98,7 @@ ${SegmentInit}
 	; Added by demon.devin
 	;  - (4.7|4.6.2|4.6.1|4.6|4.5.2|4.5.1|4.5)
 	; 
-	ReadINIStr $0 $EXEDIR\App\AppInfo\appinfo.ini Dependencies UsesDotNetVersion
+	ReadINIStr $0 "${INFOINI}" Dependencies UsesDotNetVersion
 	${If} $0 <= "4.0"
 		!define dotNETVersion "$0"
 		${IfNot} ${HasDotNet4.0}

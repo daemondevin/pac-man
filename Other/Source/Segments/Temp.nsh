@@ -22,7 +22,7 @@ Function RemoveLastDirectoryFromPath
 FunctionEnd
 ${Segment.onInit}
 	ClearErrors
-	ReadEnvStr $R0 PAL:_TEMP
+	ReadEnvStr $R0 PAC:_TEMP
 	${If} ${Errors}
 		!if ${RequestLevel} == ADMIN
 			GetTempFileName $R0
@@ -72,7 +72,7 @@ ${SegmentPre}
 	StrCpy $R1 $R0
 	${SetEnvironmentVariablesPath} TEMP $R1
 	${SetEnvironmentVariable} TMP $R1
-	${SetEnvironmentVariable} PAL:_TEMP $R0
+	${SetEnvironmentVariable} PAC:_TEMP $R0
 !macroend
 ${SegmentPostPrimary}
 	!ifmacrodef TEMP

@@ -24,8 +24,8 @@ ${SegmentPre}
 		${If} ${FileExists} `$R0\${APPNAME}Live`
 			${SetFileAttributesDirectoryNormal} `$R0\${APPNAME}Live`
 		${EndIf}
-		${SetEnvironmentVariablesPath} PAL:AppDir $AppDirectory
-		${SetEnvironmentVariablesPath} PAL:DataDir $DataDirectory
+		${SetEnvironmentVariablesPath} PAC:AppDir $AppDirectory
+		${SetEnvironmentVariablesPath} PAC:DataDir $DataDirectory
 		StrCmpS $SecondaryLaunch true +2
 		StrCpy $WaitForProgram true
 	${EndIf}

@@ -1,10 +1,4 @@
 ${SegmentFile}
-
-Var GSMode
-Var GSDirectory
-Var GSRegExists
-Var GSExecutable
-
 Function _Ghostscript_ValidateInstall
 	${If} $Bit = 64
 		${If} ${FileExists} $GSDirectory\bin\gswin64c.exe

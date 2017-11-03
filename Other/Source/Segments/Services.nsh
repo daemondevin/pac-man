@@ -170,7 +170,7 @@
 	Pop ${_ERR2} ;=== 1 = running
 	StrCmpS ${_ERR1} 1 0 +4
 	StrCmpS ${_ERR2} 1 0 +3
-	${WriteRuntimeData} ${PAL} ${_SC}_Status running
+	${WriteRuntimeData} ${PAC} ${_SC}_Status running
 !macroend
 ; 
 ; The following macros were added by demon.devin using the ServiceLib.nsh

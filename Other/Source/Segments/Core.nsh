@@ -1480,7 +1480,7 @@ ${SegmentInit}
 	!endif
 !macroend
 ${SegmentPreExecPrimary}
-	${WriteRuntimeData} ${PAL} PluginsDir $PLUGINSDIR
+	${WriteRuntimeData} ${PAC} PluginsDir $PLUGINSDIR
 !macroend
 ${SegmentUnload}
 	!ifmacrodef UnloadEXE
@@ -1498,7 +1498,7 @@ ${SegmentUnload}
 	Delete `$PLUGINSDIR\launcher.ini`
 	Delete `${LAUNCHER2}`
 	StrCmpS $SecondaryLaunch true +10
-	${ReadRuntimeData} $0 ${PAL} PluginsDir
+	${ReadRuntimeData} $0 ${PAC} PluginsDir
 	StrCmpS $0 "" +3
 	StrCmp `$0` `$PLUGINSDIR` +2
 	RMDir /r `$0`

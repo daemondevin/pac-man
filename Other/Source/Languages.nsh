@@ -9,37 +9,27 @@
 	!appendfile "${LangAutoDetectFile}" "${Case} ${LANG_${_LANG}}$\n"
 !macroend
 !define IncludeLang "!insertmacro IncludeLang"
-${IncludeLang} English
-${IncludeLang} Armenian
-${IncludeLang} Bulgarian
-${IncludeLang} Danish
-${IncludeLang} Dutch
-${IncludeLang} Estonian
-${IncludeLang} Finnish
-${IncludeLang} French
-${IncludeLang} Galician
-${IncludeLang} German
-${IncludeLang} Hebrew
-${IncludeLang} Hungarian
-${IncludeLang} Indonesian
-${IncludeLang} Italian
-${IncludeLang} Japanese
-${IncludeLang} Polish
-${IncludeLang} Portuguese
-${IncludeLang} PortugueseBR
-${IncludeLang} Romanian
-${IncludeLang} SimpChinese
-${IncludeLang} Slovenian
-${IncludeLang} Spanish
-${IncludeLang} Sundanese
-${IncludeLang} Swedish
-${IncludeLang} Thai
-${IncludeLang} TradChinese
-${IncludeLang} Turkish
-${IncludeLang} Vietnamese
-
-; Use the Case statements formed above.
-; Used in Segments/Language.nsh
+	${IncludeLang} ARABIC
+	${IncludeLang} CATALAN
+	${IncludeLang} CZECH
+	${IncludeLang} ENGLISH
+	${IncludeLang} FRENCH
+	${IncludeLang} GERMAN
+	${IncludeLang} GREEK
+	${IncludeLang} HEBREW
+	${IncludeLang} HUNGARIAN
+	${IncludeLang} ITALIAN
+	${IncludeLang} KOREAN
+	${IncludeLang} POLISH
+	${IncludeLang} PORTUGUESE
+	${IncludeLang} RUSSIAN
+	${IncludeLang} SIMPCHINESE
+	${IncludeLang} SLOVENIAN
+	${IncludeLang} SPANISH
+	${IncludeLang} SWEDISH
+	${IncludeLang} TRADCHINESE
+	${IncludeLang} TURKISH
+	${IncludeLang} UKRAINIAN
 !macro LanguageCases
 	!include "${LangAutoDetectFile}"
 	!delfile "${LangAutoDetectFile}"

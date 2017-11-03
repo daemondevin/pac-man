@@ -14,16 +14,16 @@ ${SegmentInit}
 	!ifmacrodef LangInit
 		!insertmacro LangInit
 	!endif
-	!ifndef DisablePAL:LanguageCustom
+	!ifndef DisablePAC:LanguageCustom
 		ClearErrors
-		ReadEnvStr $8 PAL:LanguageCustom
+		ReadEnvStr $8 PAC:LanguageCustom
 		${If} ${Errors}
 			ReadEnvStr $R0 PortableApps.comLanguageCode
-			ReadEnvStr $R1 PAL:_IgnoreLanguage
+			ReadEnvStr $R1 PAC:_IgnoreLanguage
 			${If} $R0 == ""
 			${OrIf} $R1 == true
 				StrCpy $9 pap-missing
-				${SetEnvironmentVariable} PAL:_IgnoreLanguage true
+				${SetEnvironmentVariable} PAC:_IgnoreLanguage true
 			${EndIf}
 			${SetEnvironmentVariableDefault} PortableApps.comLanguageCode en
 			${SetEnvironmentVariableDefault} PortableApps.comLocaleCode2 en
@@ -110,12 +110,12 @@ ${SegmentInit}
 								StrCpy $R8 $R8 "" $R1    ; so cut it off
 							${EndIf}
 						${EndIf}
-						${SetEnvironmentVariable} PAL:LanguageCustom $R8
+						${SetEnvironmentVariable} PAC:LanguageCustom $R8
 					${EndIf}
 				${EndIf}
 			${EndIf}
 			ClearErrors
-			ReadEnvStr $8 PAL:LanguageCustom
+			ReadEnvStr $8 PAC:LanguageCustom
 			${If} ${Errors}
 				${ReadLauncherConfig} $0 Language Base
 				${If} $0 != ""
@@ -131,14 +131,14 @@ ${SegmentInit}
 							StrCpy $1 $0
 						${EndIf}
 					${EndIf}
-					${SetEnvironmentVariable} PAL:LanguageCustom $1
+					${SetEnvironmentVariable} PAC:LanguageCustom $1
 					${ReadLauncherConfig} $2 Language CheckIfExists
 					${If} $2 != ""
 						${ParseLocations} $2
 						${IfNot} ${FileExists} $2
 							${ReadLauncherConfig} $1 Language DefaultIfNotExists
 							${ParseLocations} $1
-							${SetEnvironmentVariable} PAL:LanguageCustom $1
+							${SetEnvironmentVariable} PAC:LanguageCustom $1
 						${EndIf}
 					${EndIf}
 				${EndIf}

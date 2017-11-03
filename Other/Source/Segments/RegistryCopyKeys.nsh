@@ -1,5 +1,5 @@
 !ifndef PAF
-	!define PAF `HKCU\Software\PortableApps.com`
+	!define PAF `HKCU\Software\PortableApps`
 !endif
 !ifndef PAFKEYS
 	!define PAFKEYS `${PAF}\Keys`

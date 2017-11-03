@@ -23,7 +23,7 @@ ${SegmentPrePrimary}
 			${If} $4 != true
 			${AndIf} $4 != false
 			${AndIfNot} ${Errors}
-				MessageBox MB_OK|MB_ICONSTOP `Error: invalid value '$4' for [FileWrite$R0]:CaseSensitive. Please refer to the Manual for valid values.`
+				MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid value '$4' for [FileWrite$R0]:CaseSensitive. Please refer to the Manual for valid values.`
 				${Continue}
 			${EndIf}
 		${ElseIf} $0 == INI
@@ -72,7 +72,7 @@ ${SegmentPrePrimary}
 			${Else}
 				${If} $4 != false
 				${AndIfNot} ${Errors}
-					MessageBox MB_OK|MB_ICONSTOP `Error: invalid value '$4' for [FileWrite$R0]:CaseSensitive. Please refer to the Manual for valid values.`
+					MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid value '$4' for [FileWrite$R0]:CaseSensitive. Please refer to the Manual for valid values.`
 				${EndIf}
 				${If} $2 != $3
 					StrCpy $5 replace
@@ -87,7 +87,7 @@ ${SegmentPrePrimary}
 			${Continue}
 !endif
 		${Else}
-			MessageBox MB_OK|MB_ICONSTOP `Error: invalid value '$0' for [FileWrite$R0]:Type. Please refer to the Manual for valid values.`
+			MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid value '$0' for [FileWrite$R0]:Type. Please refer to the Manual for valid values.`
 			${Continue}
 		${EndIf}
 		${ForEachFile} $R1 $R4 $7
@@ -137,7 +137,7 @@ ${SegmentPrePrimary}
 					FileClose $9
 				${ElseIf} $5 != UTF-16LE
 				${AndIf} $5 != ANSI
-					MessageBox MB_OK|MB_ICONSTOP `Error: invalid value '$5' for [FileWrite$R0]:Encoding. Please refer to the Manual for valid values.`
+					MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid value '$5' for [FileWrite$R0]:Encoding. Please refer to the Manual for valid values.`
 				${EndIf}
 				${If} $5 == UTF-16LE
 					${If} $4 == true
