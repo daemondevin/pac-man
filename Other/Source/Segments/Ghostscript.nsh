@@ -1,4 +1,7 @@
-${SegmentFile}
+Var GSMode
+Var GSDirectory
+Var GSRegExists
+Var GSExecutable
 Function _Ghostscript_ValidateInstall
 	${If} $Bit = 64
 		${If} ${FileExists} $GSDirectory\bin\gswin64c.exe
@@ -34,7 +37,7 @@ FunctionEnd
 	!insertmacro _== $_LOGICLIB_TEMP true `${_t}` `${_f}`
 !macroend
 !define IsValidGhostscriptInstall `"" Ghostscript_ValidateInstall ""`
-
+${SegmentFile}
 ${SegmentInit}
 	; If [Activate]:Ghostscript=find|require, search for Ghostscript in the
 	; following locations (in order):
