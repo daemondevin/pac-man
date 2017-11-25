@@ -3,7 +3,7 @@ ${Segment.onInit}
 	!ifmacrodef Lang
 		!insertmacro Lang
 	!endif
-	ReadEnvStr $0 PortableApps.comLocaleID
+	ReadEnvStr $0 PortableAppsLocaleID
 	${Switch} $0
 		!insertmacro LanguageCases
 			StrCpy $LANGUAGE $0
@@ -18,24 +18,24 @@ ${SegmentInit}
 		ClearErrors
 		ReadEnvStr $8 PAC:LanguageCustom
 		${If} ${Errors}
-			ReadEnvStr $R0 PortableApps.comLanguageCode
+			ReadEnvStr $R0 PortableAppsLanguageCode
 			ReadEnvStr $R1 PAC:_IgnoreLanguage
 			${If} $R0 == ""
 			${OrIf} $R1 == true
 				StrCpy $9 pap-missing
 				${SetEnvironmentVariable} PAC:_IgnoreLanguage true
 			${EndIf}
-			${SetEnvironmentVariableDefault} PortableApps.comLanguageCode en
-			${SetEnvironmentVariableDefault} PortableApps.comLocaleCode2 en
-			${SetEnvironmentVariableDefault} PortableApps.comLocaleCode3 eng
-			${SetEnvironmentVariableDefault} PortableApps.comLocaleglibc en_US
-			${SetEnvironmentVariableDefault} PortableApps.comLocaleID 1033
-			${SetEnvironmentVariableDefault} PortableApps.comLocaleWinName LANG_ENGLISH
-			ReadEnvStr $R0 PortableApps.comLocaleName
+			${SetEnvironmentVariableDefault} PortableAppsLanguageCode en
+			${SetEnvironmentVariableDefault} PortableAppsLocaleCode2 en
+			${SetEnvironmentVariableDefault} PortableAppsLocaleCode3 eng
+			${SetEnvironmentVariableDefault} PortableAppsLocaleglibc en_US
+			${SetEnvironmentVariableDefault} PortableAppsLocaleID 1033
+			${SetEnvironmentVariableDefault} PortableAppsLocaleWinName LANG_ENGLISH
+			ReadEnvStr $R0 PortableAppsLocaleName
 			${If} $R0 == ""
-				ReadEnvStr $R0 PortableApps.comLocaleWinName
+				ReadEnvStr $R0 PortableAppsLocaleWinName
 				StrCpy $R0 $R0 "" 5
-				${SetEnvironmentVariable} PortableApps.comLocaleName $R0
+				${SetEnvironmentVariable} PortableAppsLocaleName $R0
 			${EndIf}
 			${If} $9 == pap-missing
 				ClearErrors
