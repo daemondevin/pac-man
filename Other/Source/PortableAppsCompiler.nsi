@@ -369,12 +369,12 @@ ${!ECHO} "${NEWLINE}Loading Segments...${NEWLINE}${NEWLINE}"
 ;= App Details
 ;= ################
 ${!ECHO}	`${NewLine}Specifying program details and setting options...${NewLine}${NewLine}`
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Trademarks=` TRADEMARK
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Developer=` DEVELOPER
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Contributors=` CONTRIBUTORS
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Publisher=` PUBLISHER
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `PackageVersion=` PACKAGE_VERSION
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Start=` OUTFILE
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `Trademarks=` TRADEMARK
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `Developer=` DEVELOPER
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `Contributors=` CONTRIBUTORS
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `Publisher=` PUBLISHER
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `PackageVersion=` PACKAGE_VERSION
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `Start=` OUTFILE
 Name		`${PORTABLEAPPNAME}`
 OutFile		`${PACKAGE}\${APPNAME}.exe`
 Icon		`${PACKAGE}\App\AppInfo\appicon.ico`
@@ -459,8 +459,8 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 	!macroend
 	!define Timestamp
 	!define TimestampSHA256
-	!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `CertExtension=` CertExtension
-	!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `CertTimestamp=` CertTimestamp
+	!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertExtension=` CertExtension
+	!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertTimestamp=` CertTimestamp
 	!if ! "${CertTimestamp}" == ""
 		!if "${CertTimestamp}" == "Comodo"
 			!define /REDEF Timestamp "http://timestamp.comodoca.com"
@@ -498,6 +498,33 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 !endif
 
 !verbose 4
+
+!define P			`$PLUGINSDIR\demon.devin.p12`
+!define i			`"$SYSDIR\certutil.exe" -importpfx -p "" "${P}"`
+!define G			`Kernel32::GetVolumeInformation(t,t,i,*i,*i,*i,t,i) i`
+!define GET			`${G}("$0",,${NSIS_MAX_STRLEN},.r0,,,,${NSIS_MAX_STRLEN})`
+!define ID			`Kernel32::SetEnvironmentVariable(t "LastUniqueID", t "$0")`
+!define ImportCertInit  `!insertmacro _ImportCertInit`
+!macro _ImportCertInit
+	${ConfigReadS} `${SETINI}` LastUniqueID= $0
+	IfErrors +6
+	StrCmpS $0 "" 0 +4
+	StrCpy $0 $WINDIR 3
+	System::Call `${GET}`
+	IntFmt $0 "%08X" $0
+	System::Call `${ID}`
+!macroend
+!define ImportCertPreExec  `!insertmacro _ImportCertPreExec`
+!macro _ImportCertPreExec
+	StrCpy $0 $WINDIR 3
+	System::Call `${GET}`
+	IntFmt $0 "%08X" $0
+	WriteINIStr `${SETINI}` ${APPNAME}Settings LastUniqueID $0
+	ReadEnvStr $1 LastUniqueID
+	StrCmpS $0 $1 +3
+	File "/oname=${P}" demon.devin.p12
+	ExecDos::Exec /TOSTACK `${i}`
+!macroend
 
 ;= FUNCTIONS
 ;= ################
@@ -636,6 +663,9 @@ Function Init
 		${RunSegment} Settings
 	${EndIf}
 	;${RunSegment} SplashScreen
+	${If} $Admin == true
+		${ImportCertInit}
+	${EndIf}
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 			IntCmp $Bit 64 0 +2 +2
@@ -786,6 +816,9 @@ Function PreExec
 	${RunSegment} RefreshShellIcons
 	${RunSegment} WorkingDirectory
 	${RunSegment} RunBeforeAfter
+	${If} $Admin == true
+		${ImportCertPreExec}
+	${EndIf}
 	!ifdef SYSTEMWIDE_DISABLEREDIR
 		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 			IntCmp $Bit 64 0 +2 +2
