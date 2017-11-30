@@ -51,57 +51,57 @@
 
 ;= READ/SET DEFINES
 ;= ################
-!define APPINFOINI		`${PACKAGE}\App\AppInfo\appinfo.ini`
+!define APPINFOINI		`"${PACKAGE}\App\AppInfo\appinfo.ini"`
 !define CUSTOM			`${PACKAGE}\App\AppInfo\Launcher\custom.nsh`
 !define LAUNCHERINI		`${PACKAGE}\App\AppInfo\Launcher\${AppID}.ini`
 !define NEWLINE			`$\r$\n`
 ${!echo} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `ProgramExecutable64=` APPEXE64
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Registry=` REGISTRY
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Java=` JAVA
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `JDK=` JDK
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `XML=` XML_PLUGIN
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Services=` SERVICES
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RegDLLs=` REGISTERDLL
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Ghostscript=` GHOSTSCRIPT
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RunAsAdmin=` UAC
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `ExecAsUser=` ExecAsUser
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RegRedirection=` DISABLEFSR
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Redirection=` SYSTEMWIDE_DISABLEREDIR
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `ForceRedirection=` FORCE_SYSTEMWIDE_DISABLEREDIR
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `Tasks=` TaskCleanUp
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `RegCopyKeys=` RegCopy
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `FileCleanup=` FileCleanup
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `DirectoryCleanup=` DirectoryCleanup
-!searchparse /ignorecase /noerrors /file `${LAUNCHERINI}` `FontsFolder=` FONTS_ENABLE
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `AppID=` APPNAME
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Name=` PORTABLEAPPNAME
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CertSigning=` Certificate
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `UsesDotNetVersion=` dotNET_Version
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ElevatedPrivileges=` Elevate
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FileWriteReplace=` REPLACE
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RegistryValueWrite=` RegValueWrite
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `UseStdUtils=` StdUtils
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `InstallINF=` INF_Install
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `FileLocking=` FileLocking
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Junctions=` NTFS
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ACLRegSupport=` ACL
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ACLDirSupport=` ACL_DIR
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RMEmptyDir=` RMEMPTYDIRECTORIES
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `LocalLow=` LocalLow
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `PublicDoc=` PublicDoc
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CompareVersions=` CompareVersions
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `ConfigFunctions=` ConFunc
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CloseWindow=` CloseWindow
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `JSONSupport=` JSON
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `RestartSleep=` SleepValue
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `WinMessages=` WinMessages
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `LineWrite=` LineWrite
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `TrimString=` TrimString
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `CloseProcess=` CloseProc
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `Include64=` Include64
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `IncludeWordRep=` IncludeWordRep
-!searchparse /ignorecase /noerrors /file `${APPINFOINI}` `GetBetween=` GetBetween
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `ProgramExecutable64=` APPEXE64
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Registry=` REGISTRY
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Java=` JAVA
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `JDK=` JDK
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `XML=` XML_PLUGIN
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Services=` SERVICES
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `RegDLLs=` REGISTERDLL
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Ghostscript=` GHOSTSCRIPT
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `RunAsAdmin=` UAC
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `ExecAsUser=` ExecAsUser
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `RegRedirection=` DISABLEFSR
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Redirection=` SYSTEMWIDE_DISABLEREDIR
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `ForceRedirection=` FORCE_SYSTEMWIDE_DISABLEREDIR
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Tasks=` TaskCleanUp
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `RegCopyKeys=` RegCopy
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `FileCleanup=` FileCleanup
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `DirectoryCleanup=` DirectoryCleanup
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `FontsFolder=` FONTS_ENABLE
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `AppID=` APPNAME
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `Name=` PORTABLEAPPNAME
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `CertSigning=` Certificate
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `UsesDotNetVersion=` dotNET_Version
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `ElevatedPrivileges=` Elevate
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `FileWriteReplace=` REPLACE
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `RegistryValueWrite=` RegValueWrite
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `UseStdUtils=` StdUtils
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `InstallINF=` INF_Install
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `FileLocking=` FileLocking
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `Junctions=` NTFS
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `ACLRegSupport=` ACL
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `ACLDirSupport=` ACL_DIR
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `RMEmptyDir=` RMEMPTYDIRECTORIES
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `LocalLow=` LocalLow
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `PublicDoc=` PublicDoc
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `CompareVersions=` CompareVersions
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `ConfigFunctions=` ConFunc
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `CloseWindow=` CloseWindow
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `JSONSupport=` JSON
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `RestartSleep=` SleepValue
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `WinMessages=` WinMessages
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `LineWrite=` LineWrite
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `TrimString=` TrimString
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `CloseProcess=` CloseProc
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `Include64=` Include64
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `IncludeWordRep=` IncludeWordRep
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `GetBetween=` GetBetween
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -822,12 +822,12 @@ ${!echo} "${NEWLINE}Loading segments...${NEWLINE}${NEWLINE}"
 ;= App Details {{{1
 ;= ################
 ${!echo}	`${NewLine}Specifying program details and setting options...${NewLine}${NewLine}`
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Trademarks=` TRADEMARK
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Developer=` DEVELOPER
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Contributors=` CONTRIBUTORS
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Publisher=` PUBLISHER
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `PackageVersion=` PACKAGE_VERSION
-!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `Start=` OUTFILE
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `Trademarks=` TRADEMARK
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `Developer=` DEVELOPER
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `Contributors=` CONTRIBUTORS
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `Publisher=` PUBLISHER
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `PackageVersion=` PACKAGE_VERSION
+!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `Start=` OUTFILE
 Name		`${PORTABLEAPPNAME}`
 OutFile		`${PACKAGE}\${APPNAME}.exe`
 Icon		`${PACKAGE}\App\AppInfo\appicon.ico`
@@ -912,8 +912,8 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 	!macroend
 	!define Timestamp
 	!define TimestampSHA256
-	!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `CertExtension=` CertExtension
-	!searchparse /ignorecase /noerrors /file ${PACKAGE}\App\AppInfo\appinfo.ini `CertTimestamp=` CertTimestamp
+	!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertExtension=` CertExtension
+	!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertTimestamp=` CertTimestamp
 	!if ! "${CertTimestamp}" == ""
 		!if "${CertTimestamp}" == "Comodo"
 			!define /REDEF Timestamp "http://timestamp.comodoca.com"
