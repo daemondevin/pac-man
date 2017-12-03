@@ -1,0 +1,9 @@
+inect has many flaws.. 
+one of which is HTTPS and certificate issues.
+
+Some users may not be able to download due to Browser's security settings.
+http://stackoverflow.com/questions/23467843/sending-https-request-using-inetc
+
+ie. go into Browser settings > select "Use TLS 1.x"
+
+http://en.wikipedia.org/wiki/Transport_Layer_Security#Web_browsers

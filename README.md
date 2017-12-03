@@ -1,17 +1,90 @@
 # PortableApps Compiler - _Development Branch_
 ----------
 
-This branch is meant for the cutting-edge of development. Don't expect this version to work flawlessly. There may be bugs hidden throughout this experimental version of PortableApps Compiler. With this branch you will find the code stylings of Chris Morgan, FukenGruven, Azure Zanculmarktum, and myself (demon.devin). You will also see minor influence from other contributors like LegendaryHawk, DoomStorm, and other fellow developers as well. So you can expect to see great things to come out of this experimental build.
+This branch is meant for the cutting-edge of development. Don't expect this version to work flawlessly. There may be bugs hidden throughout this experimental version of PortableApps Compiler. With this branch you will find the coding practices of Chris Morgan, FukenGruven, Azure Zanculmarktum, and myself (daemon.devin). You will also see minor influence from contributors like LegendaryHawk, DoomStorm, and other fellow developers as well. So you can expect to see great things to come out of this experimental build.
 
 With all that said, enjoy the fresh ideas which are currently being worked out.
 
 ## CHANGES
 ----------
 
+##### Environment Variables
 - All environment variables that start with `PAL` have been changed to `PAC` 
   - _I.E._ `%PAL:AppDir%` is now `%PAC:AppDir%` and so on..
 - All environment variables that start with `PortableApps.com` have been changed to `PortableApps` 
   - _I.E._ `%PortableApps.comDocuments%` is now `%PortableAppsDocuments%` and so on..
+
+##### Folder Structure
+- I've changed the folder structure. To illustrate the new directory layout let's imagine we're looking at a portable version of 7-Zip which was compiled using this new design layout.
+
+> Example Directory Tree:
+> ```
+> 7-ZipPortable (Root)
+>       |   7-ZipPortable.exe (Portable Launcher)
+>       |   7-ZipPortable.ini (User Config File)
+>       |   
+>       +---app
+>       |    +---AppInfo   (Kept for Compatibility with PA.c Menu)
+>       |    |       AppIcon.ico            (Needed with PA.c Menu)
+>       |    |       AppIcon_128.png          ' '     ' '     ' '
+>       |    |       AppIcon_16.png           ' '     ' '     ' '
+>       |    |       AppIcon_32.png           ' '     ' '     ' '
+>       |    |       AppInfo.ini              ' '     ' '     ' '
+>       |    |       CompilerInstaller.ini  (Formally Installer.ini)
+>       |    |       CompilerWrapper.ini    (Formally Launcher.ini)
+>       |    |       EULA.txt
+>       |    |       ExtendedInstaller.nsh  (Formally InstallerCustom.nsh)
+>       |    |       ExtendedWrapper.nsh    (Formally Custom.nsh)
+>       |    |       
+>       |    \---DefaultSettings (Formally DefaultData)
+>       |        |   DEFAULT 7-ZIP SETTINGS HERE
+>       |        |
+>       |        \---Config (Formally Default Settings)
+>       |            7-Zip.reg
+>       |               
+>       +---bin
+>       |    +---7-Zip (32-Bit Program Files)
+>       |    |   |   7-zip.dll
+>       |    |   |   7z.dll
+>       |    |   |   7z.exe
+>       |    |   |   7zFM.exe
+>       |    |   |   '' '' ''
+>       |    |   |   
+>       |    |   \---Lang
+>       |    |        af.txt
+>       |    |        an.txt
+>       |    |        ar.txt
+>       |    |        ''  ''
+>       |    |
+>       |    +---7-Zip64 (64-Bit Program Files)
+>       |    |   |    7-zip.dll
+>       |    |   |    7z.dll
+>       |    |   |    7z.exe
+>       |    |   |    7zFM.exe
+>       |    |   |    '' '' ''
+>       |    |   |   
+>       |    |   \---Lang
+>       |    |        af.txt
+>       |    |        an.txt
+>       |    |        ar.txt
+>       |    |        ''  ''
+>       |    |
+>       |    \---Settings (Fromally Data)
+>       |        |    7-ZIP SETTINGS HERE
+>       |        |   
+>       |        \---Config (Fromally Settings)
+>       |             7-Zip.reg
+>       |             7-ZipPortableSettings.ini
+>       |
+>       \---etc
+>            7-ZipPortable.ini
+>            README
+>            UNLICENSE (using Unlicense.org/ now)
+> ```
+
+##### PAF to PAC Conversion
+- The compiler can now handle converting PAF PortableApps to the above folder layout. Everything is handled automatically so you do not need to manually set the files in the correct place. I also added support for converting FukenGruven's old PAFs as well.
+- Do not expect the PA.c Installer to work out of the box for this new folder structure. Since I've renamed and moved around the applicable configuration files, PA.c Installer won't be able to locate the right files anymore and most likely won't be able to pack your portable anymore. However, I haven't tested this out yet.
 
 ## Features
 ----------
@@ -19,7 +92,7 @@ With all that said, enjoy the fresh ideas which are currently being worked out.
 The following is a list of features that is currently available with PortableApps Compiler. Everything listed here has been tested and is in working order.
 
 - Everything that is available with [PortableApps.com Launcher](https://portableapps.com/apps/development/portableapps.com_launcher) is also available with PortableApps Compiler.
-- Minipulating Windows Services.
+- Manipulating Windows Services.
 - Dealing with Windows Tasks.
 - Registering DLL files.
 - Registry redirection support.
@@ -34,7 +107,7 @@ The following is a list of features that is currently available with PortableApp
 
 __Environment Variables__
 
-- `%PROGRAMDATA%` has now been added and kept `%ALLUSERSAPPDATA%` for backwards compatibility. Both can be used anywhere you can use an evironment variable.
+- `%PROGRAMDATA%` has now been added and kept `%ALLUSERSAPPDATA%` for backwards compatibility. Both can be used anywhere you can use an environment variable.
 - `%PAC:CommonFiles%` may now be used within the _Launcher.ini_ configuration file. This environment variable will point to `..\PortableApps\CommonFiles` if applicable. Can be used anywhere you can use an environment variable.
 > Example:
 > ```INI
@@ -240,7 +313,7 @@ GetBetween=true
 
 * __UsesGhostscript:__ Specifies whether the portable application makes use of [Ghostscript Portable][GhostscriptPortable].
 
-* __UsesDotNetVersion:__ Specify the minimum required version of the .NET framework the portable application needs. Values can be from `1.0` thru `4.7` (*e.g.* `UsesDotNetVersion=1.1` or `UsesDotNetVersion=4.6.2`).
+* __UsesDotNetVersion:__ Specify the minimum required version of the .NET framework the portable application needs. Values can be from `1.0` through `4.7` (*e.g.* `UsesDotNetVersion=1.1` or `UsesDotNetVersion=4.6.2`).
 
 * __UseStdUtils:__ Include the _StdUtils_ plug-in without `ExecAsUser`
 

@@ -1,0 +1,160 @@
+Switch ao. The "ao" switch allows you to specify whether you want to overwrite old files. Be careful—you cannot restore an overwritten file normally. This switch takes another argument.
+
+Switch -aoa:
+This switch overwrites all destination files. Use it when the new versions are preferred.
+
+Switch -aos:
+Skip over existing files without overwriting. Use this for files where the earliest version is most important.
+
+Switch -aou:
+Avoid name collisions. New files extracted will have a number appending to their names. You will have to deal with them later.
+
+Switch -aot:
+Rename existing files. This will not rename the new files, just the old ones already there.
+
+Examples:
+7z x test.zip -aoa
+
+7z:       use the 7-zip executable
+x:        use the extract command
+test.zip: extract files from this archive
+-aoa:     overwrite all existing files
+
+Command Line Syntax
+
+7z <command> [<switch>...] <base_archive_name> [<arguments>...]
+<arguments> ::= <switch> | <wildcard> | <filename> | <list_file>
+<switch>::= <switch_symbol><switch_characters>[<option>]
+<switch_symbol> ::= '/' | '-' 
+<list_file> ::= @{filename}
+Expressions in square brackets (between '[' and ']') are optional.
+
+Expressions in curly braces ('{' and '}') mean that instead of that Expression (including braces), the user must substitute some string.
+
+Expression
+
+expression1 | expression2 | ... | expressionN
+means that any (but only one) from these expressions must be specified.
+
+Commands and switches can be entered in upper or lower case.
+
+Command is the first non-switch argument.
+
+The "base_archive_name" must be the first filename on the command line after the command.
+
+The switches and other filenames can be in any order.
+
+Wildcards or filenames with spaces must be quoted:
+
+    "Dir\Program files\*"
+    Dir\"Program files"\*
+Switch options can be combined to save command line length. However, some switch options take optional string arguments and therefore, must be the last option in a combined argument token string because 7-Zip accepts the rest of the argument token as the optional argument.
+
+7-Zip uses wild name matching similar to Windows 95:
+
+'*' means a sequence of arbitrary characters.
+'?' means any character.
+7-Zip doesn't uses the system wildcard parser. 7-Zip doesn't follow the archaic rule by which *.* means any file. 7-Zip treats *.* as matching the name of any file that has an extension. To process all files, you must use a * wildcard.
+
+Examples:
+
+*.txt	means all files with an extension of ".txt"
+?a*	means all files with a second character of "a"
+*1*	means all names that contains character "1"
+*.*.*	means all names that contain two at least "." characters
+The default wildcard "*" will be used if there is no filename/wildcard in the command line.
+
+Slash ('\') at the end of a path means a directory. Without a Slash ('\') at the end of the path, the path can refer either to a file or a directory.
+
+List file
+
+You can supply one or more filenames or wildcards for special list files (files containing lists of files). The filenames in such list file must be separated by new line symbol(s).
+
+For list files, 7-Zip uses UTF-8 encoding by default. You can change encoding using -scs switch.
+
+Multiple list files are supported.
+
+For example, if the file "listfile.txt" contains the following:
+
+    My programs\*.cpp
+    Src\*.cpp
+then the command
+
+    7z a -tzip archive.zip @listfile.txt
+adds to the archive "archive.zip" all "*.cpp" files from directories "My programs" and "Src".
+
+Short and Long File Names
+
+7-Zip supports short file names (like FILENA~1.TXT) in some cases. However, it's strongly recommended to use only the real (long) file names.
+
+
+
+
+
+
+
+Command Line Switches
+
+Syntax
+
+<switch>::= <switch_symbol><switch_characters>[<option>]
+<switch_symbol> ::= '/' | '-' 
+
+On the command line, a switch consists of a switch specifier, either a dash (-) or a forward slash (/), followed by the name of the switch. Switch names cannot be abbreviated.
+
+Some switches take an argument after the switch name. No spaces or tabs are allowed within a switch specification. Switch names are not case sensitive, but arguments can be case sensitive.
+
+Switch can be used in any place in command line.
+
+See also Command Line Syntax for more details about using the command line.
+
+Switch quick reference
+
+Switch	Description
+--	Stop switches parsing
+-ai	Include archive filenames
+-an	Disable parsing of archive_name
+-ao	Overwrite mode
+-ax	Exclude archive filenames
+-i	Include filenames
+-m	Set Compression Method
+-o	Set Output directory
+-p	Set Password
+-r	Recurse subdirectories
+-scc	Set charset for for console input/output
+-scs	Set charset for list files
+-seml	Send archive by email
+-slp	Set Large Pages mode
+-slt	Show technical information
+-sfx	Create SFX archive
+-si	Read data from StdIn
+-so	Write data to StdOut
+-ssc	Set Sensitive Case mode
+-ssw	Compress files open for writing
+-t	Type of archive
+-u	Update options
+-v	Create Volumes
+-w	Set Working directory
+-x	Exclude filenames
+-y	Assume Yes on all queries
+
+
+Command Line Commands
+
+The command is the first non-switch argument on the command line.
+
+Command names are not case sensitive.
+
+See also Command Line Syntax for more details about using the command line.
+
+Commands quick reference
+
+Command	Description
+a	Add
+b	Benchmark
+d	Delete
+e	Extract
+l	List
+t	Test
+u	Update
+x	eXtract with full paths
