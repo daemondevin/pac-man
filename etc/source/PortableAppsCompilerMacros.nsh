@@ -101,3 +101,27 @@
 !macro _DeleteSettings _KEY
 	DeleteINIStr "${CONFIGINI}" "${APPNAME}Settings" "${_KEY}"
 !macroend
+!define DISABLE_REDIRECTION "!insertmacro _DISABLE_REDIRECTION"
+!macro _DISABLE_REDIRECTION
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${DISABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${DISABLEREDIR}`
+		!endif
+	!endif
+!macroend
+!define ENABLE_REDIRECTION "!insertmacro _ENABLE_REDIRECTION"
+!macro _ENABLE_REDIRECTION
+	!ifdef SYSTEMWIDE_DISABLEREDIR
+		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
+			IntCmp $Bit 64 0 +2 +2
+			System::Call `${ENABLEREDIR}`
+		!else
+			StrCmpS $APP ${APP64} 0 +2
+			System::Call `${ENABLEREDIR}`
+		!endif
+	!endif
+!macroend

@@ -121,4 +121,4 @@
 
 !define OverrideExecute "!macro OverrideExecuteFunction"
 
-!include /nonfatal "${PACKAGE}\app\AppInfo\ExtendedWrapper.nsh"
+!include /nonfatal "${PACKAGE}\app\AppInfo\ExtendWrapper.nsh"

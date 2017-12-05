@@ -49,7 +49,7 @@ ${!ECHO} "${NEWLINE}Reading/Writing Package Definitions...${NEWLINE}${NEWLINE}"
 !define CONF			`${BIN}\Settings\Config`
 !define DEFSET			`$EXEDIR\app\DefaultSettings`
 !define DEFCONF			`${DEFSET}\Config`
-!define WRAPPER			`${APPINFO}\CompilerWrapper.ini`
+!define WRAPPER			`${APPINFO}\Wrapper.ini`
 !define WRAPPER2		`$PLUGINSDIR\wrapper.ini`
 !define RUNTIME         `${BIN}\PortableAppsCompilerRuntimeData-${APPNAME}.ini`
 !define RUNTIME2        `$PLUGINSDIR\runtimedata.ini`
@@ -223,6 +223,7 @@ ${!ECHO} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 ;= ################
 ${!ECHO} "${NEWLINE}Initialising variables and macros...${NEWLINE}${NEWLINE}"
 Var Bit
+Var App
 Var Admin
 Var AppID
 Var BaseName
@@ -330,11 +331,8 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 	${Finalize::Sign}	`${SHA256}`
 !endif
 
-!verbose 4
-
 ;= FUNCTIONS
 ;= ################
-;=# Check 64-bit
 Function IsWOW64
 	!macro _WOW64 _RETURN
 		Push ${_RETURN}
@@ -347,9 +345,8 @@ Function IsWOW64
 	System::Call `${WOW}`
 	Exch $0
 FunctionEnd
-;=# Prevent Shutdown
 !include nsDialogs.nsh
-!define /ifndef WS_POPUP 0x80000000
+!define /ifndef WS_POPUP	0x80000000
 !define CreateWinEx1		`USER32::CreateWindowEx(i0,t"STATIC",t"$(^Name)",`
 !define CreateWinEx2		`i${WS_CHILD}|${WS_POPUP},i0,i0,i0,i0,pr1,i0,i0,i0)p.r1`
 !define BlockReason1		`USER32::ShutdownBlockReasonCreate(pr1,w`
@@ -361,26 +358,27 @@ Function CreateShutdownBlockReason
 	${EndIf}
 	System::Call `${BlockReason1}${BlockReason2}`
 FunctionEnd
-;=# Fonts Folder
 !ifdef FONTS_ENABLED
-	Function CreateFontsFolder
-		IfFileExists "${PACKAGE}\App\DefaultSettings\Fonts" +2
-		CreateDirectory /SILENT "${PACKAGE}\App\DefaultSettings\Fonts"
-		IfFileExists "${PACKAGE}\App\DefaultSettings\Fonts\.Portable.Fonts.txt" +11
-		!tempfile FONTFILE
-		!appendfile "${FONTFILE}" "Font(s) added here will be loaded on launch and accessible during runtime.$\n$\n"
-		!appendfile "${FONTFILE}" "NOTE:$\n"
-		!appendfile "${FONTFILE}" "$\tThe wrapper will have to load and unload any fonts in this directory.$\n"
-		!appendfile "${FONTFILE}" "$\tThe more fonts you have will mean a longer work load for the wrapper.$\n$\n"
-		!appendfile "${FONTFILE}" "Fonts Supported:$\n"
-		!appendfile "${FONTFILE}" " • .fon$\n • .fnt$\n • .ttf$\n • .ttc$\n • .fot$\n • .otf$\n • .mmm$\n • .pfb$\n • .pfm$\n"
-		!system 'copy /Y /A "${FONTFILE}" "${PACKAGE}\App\DefaultSettings\Fonts\.Portable.Fonts.txt" /A'
-		!delfile "${FONTFILE}"
-		!undef FONTFILE
-	FunctionEnd
+Function CreateFontsFolder
+	IfFileExists "${PACKAGE}\App\DefaultSettings\Fonts" +2
+	CreateDirectory /SILENT "${PACKAGE}\App\DefaultSettings\Fonts"
+	IfFileExists "${PACKAGE}\App\DefaultSettings\Fonts\.Portable.Fonts.txt" +11
+	!tempfile FONTFILE
+	!appendfile "${FONTFILE}" "Font(s) added here will be loaded on launch and accessible during runtime.$\n$\n"
+	!appendfile "${FONTFILE}" "NOTE:$\n"
+	!appendfile "${FONTFILE}" "$\tThe wrapper will have to load and unload any fonts in this directory.$\n"
+	!appendfile "${FONTFILE}" "$\tThe more fonts you have will mean a longer work load for the wrapper.$\n$\n"
+	!appendfile "${FONTFILE}" "Fonts Supported:$\n"
+	!appendfile "${FONTFILE}" " • .fon$\n • .fnt$\n • .ttf$\n • .ttc$\n • .fot$\n • .otf$\n • .mmm$\n • .pfb$\n • .pfm$\n"
+	!system 'copy /Y /A "${FONTFILE}" "${PACKAGE}\App\DefaultSettings\Fonts\.Portable.Fonts.txt" /A'
+	!delfile "${FONTFILE}"
+	!undef FONTFILE
+FunctionEnd
 !endif
+
+!verbose 4
+
 Function .onInit
-	Call CreateShutdownBlockReason
 	Push $0
 	!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
 		!ifndef SYSTEMWIDE_DISABLEREDIR
@@ -398,15 +396,22 @@ Function .onInit
 	StrCpy $Bit 64
 	Goto +2
 	StrCpy $Bit 32
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+	!ifdef HYBRID
+		StrCmpS $Bit 32 +6
+		IfFileExists `${EXE64}` 0 +5
+		SetRegView 64
+		StrCpy $App ${APP64}
+		System::Call `${SET64}`
+		Goto +3
+		StrCpy $App ${APP}
+		System::Call `${SET32}`
+	!else if /FileExists "${EXE64}"
+		SetRegView 64
+		StrCpy $App ${APP64}
+	!else
+		StrCpy $App ${APP}
+	!endif	
+	${DISABLE_REDIRECTION}
 	${RunSegment} Core
 	${RunSegment} Custom
 	${RunSegment} Temp
@@ -415,30 +420,11 @@ Function .onInit
 	!ifdef UAC
 		${RunSegment} RunAsAdmin
 	!endif
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 	Pop $0
 FunctionEnd
 Function Init
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
-	!ifdef FONTS_ENABLED
-		Call CreateFontsFolder
-	!endif
+	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
 		${RunSegment} Language
 		${RunSegment} Environment
@@ -468,26 +454,13 @@ Function Init
 	${If} ${PrimaryInstance}
 		${RunSegment} Settings
 	${EndIf}
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
+	!ifdef FONTS_ENABLED
+		Call CreateFontsFolder
 	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function Pre
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
 		!ifdef SERVICES
 			${RunSegment} Services
@@ -505,26 +478,10 @@ Function Pre
 	;${RunSegment} LastRunEnvironment
 	${RunSegment} Environment
 	${RunSegment} ExecString
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function PrePrimary        
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
 		!ifdef FileCleanup
 			${RunSegment} FilesCleanup
@@ -553,7 +510,6 @@ Function PrePrimary
 		!endif
 	${EndIf}
 	!ifdef REGISTRY
-		;=== this belongs here after Registering DLLs.
 		${RunSegment} RegistryValueWrite
 	!endif
 	${If} ${PrimaryInstance}
@@ -567,48 +523,15 @@ Function PrePrimary
 			${RunSegment} Fonts
 		!endif
 	${EndIf}
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function PreSecondary        
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+	${DISABLE_REDIRECTION}
 	${RunSegment} Custom
-	;${RunSegment} *
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function PreExec        
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+	${DISABLE_REDIRECTION}
 	${RunSegment} Custom
 	${If} ${PrimaryInstance}
 		!ifdef REGISTERDLL
@@ -618,71 +541,22 @@ Function PreExec
 	${RunSegment} RefreshShellIcons
 	${RunSegment} WorkingDirectory
 	${RunSegment} RunBeforeAfter
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function PreExecPrimary        
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+	${DISABLE_REDIRECTION}
 	${RunSegment} Custom
 	${RunSegment} Core
 	;${RunSegment} LastRunEnvironment
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function PreExecSecondary        
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+	${DISABLE_REDIRECTION}
 	${RunSegment} Custom
-	;${RunSegment} *
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function Execute
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+	${DISABLE_REDIRECTION}
 	!ifmacrodef OverrideExecuteFunction
 		!insertmacro OverrideExecuteFunction
 	!else
@@ -764,15 +638,7 @@ Function Execute
 			${EndIf}
 		${EndIf}
 	!endif
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function PostExecPrimary
 	${RunSegment} Custom
@@ -785,15 +651,7 @@ Function PostExec
 	${RunSegment} Custom
 FunctionEnd
 Function PostPrimary        
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
@@ -829,74 +687,24 @@ Function PostPrimary
 	${RunSegment} RunLocally
 	${RunSegment} Temp
 	${RunSegment} Custom
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function PostSecondary        
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
-	;${RunSegment} *
+	${DISABLE_REDIRECTION}
 	${RunSegment} Custom
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function Post        
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+	${DISABLE_REDIRECTION}
 	!ifdef GHOSTSCRIPT
 		${RunSegment} Ghostscript
 	!endif
 	${RunSegment} RefreshShellIcons
 	${RunSegment} Custom
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 Function Unload        
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
-	;${RunSegment} XML
+	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
@@ -916,15 +724,7 @@ Function Unload
 	${EndIf}
 	${RunSegment} Core
 	${RunSegment} Custom
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 FunctionEnd
 !define CallPS `!insertmacro CallPS`
 !macro CallPS _func _rev
@@ -940,16 +740,9 @@ FunctionEnd
 		Call ${_func}
 	!endif
 !macroend
-Section        
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${DISABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${DISABLEREDIR}`
-		!endif
-	!endif
+Section
+	Call CreateShutdownBlockReason
+	${DISABLE_REDIRECTION}
 	Call Init
 	System::Call 'Kernel32::OpenMutex(i1048576, b0, t"${PAC}${APPNAME}-${APPNAME}::Starting") i.R0 ?e'
 	System::Call 'Kernel32::CloseHandle(iR0)'
@@ -989,15 +782,7 @@ Section
 		${CallPS} Post -
 	${EndIf}
 	Call Unload
-	!ifdef SYSTEMWIDE_DISABLEREDIR
-		!ifdef FORCE_SYSTEMWIDE_DISABLEREDIR
-			IntCmp $Bit 64 0 +2 +2
-			System::Call `${ENABLEREDIR}`
-		!else
-			StrCmpS $APP ${APP64} 0 +2
-			System::Call `${ENABLEREDIR}`
-		!endif
-	!endif
+	${ENABLE_REDIRECTION}
 SectionEnd
 Function .onInstFailed        
 	Call Unload

@@ -24,17 +24,16 @@ With all that said, enjoy the fresh ideas which are currently being worked out.
 >       |   7-ZipPortable.ini (User Config File)
 >       |   
 >       +---app
->       |    +---AppInfo   (Kept for Compatibility with PA.c Menu)
+>       |    +---AppInfo    (Kept for Compatibility with PA.c Menu)
 >       |    |       AppIcon.ico            (Needed with PA.c Menu)
 >       |    |       AppIcon_128.png          ' '     ' '     ' '
 >       |    |       AppIcon_16.png           ' '     ' '     ' '
 >       |    |       AppIcon_32.png           ' '     ' '     ' '
 >       |    |       AppInfo.ini              ' '     ' '     ' '
->       |    |       CompilerInstaller.ini  (Formally Installer.ini)
->       |    |       CompilerWrapper.ini    (Formally Launcher.ini)
+>       |    |       Installer.ini
 >       |    |       EULA.txt
->       |    |       ExtendedInstaller.nsh  (Formally InstallerCustom.nsh)
->       |    |       ExtendedWrapper.nsh    (Formally Custom.nsh)
+>       |    |       ExtendWrapper.nsh       (Formally Custom.nsh)
+>       |    |       Wrapper.ini            (Formally Launcher.ini)
 >       |    |       
 >       |    \---DefaultSettings (Formally DefaultData)
 >       |        |   DEFAULT 7-ZIP SETTINGS HERE
@@ -84,7 +83,7 @@ With all that said, enjoy the fresh ideas which are currently being worked out.
 
 ##### PAF to PAC Conversion
 - The compiler can now handle converting PAF PortableApps to the above folder layout. Everything is handled automatically so you do not need to manually set the files in the correct place. I also added support for converting FukenGruven's old PAFs as well.
-- Do not expect the PA.c Installer to work out of the box for this new folder structure. Since I've renamed and moved around the applicable configuration files, PA.c Installer won't be able to locate the right files anymore and most likely won't be able to pack your portable anymore. However, I haven't tested this out yet.
+- Do not expect the PA.c Installer to work out of the box for this new folder structure. Since I've renamed and moved around the applicable configuration files, PA.c Installer won't be able to locate the right files any more and most likely won't be able to pack your portable. However, I haven't tested this out yet.
 
 ## Features
 ----------
@@ -92,7 +91,7 @@ With all that said, enjoy the fresh ideas which are currently being worked out.
 The following is a list of features that is currently available with PortableApps Compiler. Everything listed here has been tested and is in working order.
 
 - Everything that is available with [PortableApps.com Launcher](https://portableapps.com/apps/development/portableapps.com_launcher) is also available with PortableApps Compiler.
-- Manipulating Windows Services.
+- Minipulating Windows Services.
 - Dealing with Windows Tasks.
 - Registering DLL files.
 - Registry redirection support.
@@ -107,7 +106,7 @@ The following is a list of features that is currently available with PortableApp
 
 __Environment Variables__
 
-- `%PROGRAMDATA%` has now been added and kept `%ALLUSERSAPPDATA%` for backwards compatibility. Both can be used anywhere you can use an environment variable.
+- `%PROGRAMDATA%` has now been added and kept `%ALLUSERSAPPDATA%` for backwards compatibility. Both can be used anywhere you can use an evironment variable.
 - `%PAC:CommonFiles%` may now be used within the _Launcher.ini_ configuration file. This environment variable will point to `..\PortableApps\CommonFiles` if applicable. Can be used anywhere you can use an environment variable.
 > Example:
 > ```INI
@@ -120,6 +119,7 @@ Added new keys to the `[Activate]` section. They are as follows (a short descrip
 > Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
 ```INI
 [Activate]
+DualMode=7-ZIP
 Registry=true
 RegRedirection=true
 RegCopyKeys=true
@@ -138,12 +138,14 @@ FileCleanup=true
 DirectoryCleanup=true
 ```
 
+* __DualMode:__ For a x86_64 hybrid wrapper. If you want to run 32-bit/64-bit side-by-side in _"Dual Mode"_. Just specify a short name (usually the AppID in all caps) in which you may use inside the Wrapper.ini as an environment variable. (e.g. `%7-ZIP%`)
+
 * __Registry:__ Add support for manipulating the Windows Registry.
 
 * __RegRedirection:__ Enable support for enabling/disabling registry redirection.
 
 * __RegCopyKeys:__ Enable support for copying registry keys to a special hive (`HKCU\Software\PortableApps.com`) before launching the application and restoring the keys after the application exits. See `RegistryCopyKeys.nsh` in the Segments directory.
-> To use this feature add the section `[RegistryCopyKeys]` to the `Launcher.ini` file. Each entry should be the path to the registry key to be copied back and forth. Example usage:
+> To use this feature add the section `[RegistryCopyKeys]` to the `Wrapper.ini` file. Each entry should be the path to the registry key to be copied back and forth. Example usage:
 > ```INI
 > [RegistryCopyKeys]
 > 1=HKCU\Software\MyProgram\ExtraCareNeededKey
@@ -154,10 +156,10 @@ DirectoryCleanup=true
 
 * __ForceRedirection:__ Checks using the variable `$Bit` to disable/enable file system redirection.
 
-* __ExecAsUser:__ For applications which need to run as normal user but need the launcher to have elevated privileges. [Read this](http://mdb-blog.blogspot.com/2013/01/nsis-lunch-program-as-user-from-uac.html) for more information on this concept.
+* __ExecAsUser:__ For applications which need to run as normal user but need the wrapper to have elevated privileges. [Read this](http://mdb-blog.blogspot.com/2013/01/nsis-lunch-program-as-user-from-uac.html) for more information on this concept.
 
 * __Services:__ Add support for handling Windows Services.
-> To use this feature add the section `[Service1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports six keys which are as follows:
+> To use this feature add the section `[Service1]` (numerical ordering) to the `Wrapper.ini` file. Each entry supports six keys which are as follows:
 
 | __Key__ 	| __Value__ 	|
 |:--------	|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------	|
@@ -188,7 +190,7 @@ DirectoryCleanup=true
 > ```
 
 * __RegDLLs:__ Add support for handling library (DLLs) file registration.
-> To use this feature add the section `[RegisterDLL1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports two keys; _ProgID_ (The DLL's ProgID) and _File_ (The path to DLL. Supports environment variables). Example usage:
+> To use this feature add the section `[RegisterDLL1]` (numerical ordering) to the `Wrapper.ini` file. Each entry supports two keys; _ProgID_ (The DLL's ProgID) and _File_ (The path to DLL. Supports environment variables). Example usage:
 > ```INI
 > [RegisterDLL1]
 > ProgID=MyAppControlPanel
@@ -200,7 +202,7 @@ DirectoryCleanup=true
 > ```
 
 * __Tasks:__ Enable the TaskCleanup segment for removing any Windows Tasks that were added during runtime.
-> To use this feature add the section `[TaskCleanup]` to the `Launcher.ini` file. Each entry should be the Windows Task name to be removed. Example usage:
+> To use this feature add the section `[TaskCleanup]` to the `Wrapper.ini` file. Each entry should be the Windows Task name to be removed. Example usage:
 > ```INI
 > [TaskCleanup]
 > 1=MyAppTask1
@@ -215,7 +217,7 @@ DirectoryCleanup=true
 
 * __Ghostscript:__ Add Ghostscript support.
 
-* __FontsFolder:__ Allows the portable application to support fonts within the directory `..\Data\Fonts`. Any fonts added in this folder will be added and are available for usage during runtime. Be aware, the more fonts to process the longer it will take for the launcher to load and unload these fonts.
+* __FontsFolder:__ Allows the portable application to support fonts within the directory `..\Data\Fonts`. Any fonts added in this folder will be added and are available for usage during runtime. Be aware, the more fonts to process the longer it will take for the wrapper to load and unload these fonts.
 > Supported Fonts: 
 > - .fon
 > - .fnt
@@ -227,15 +229,15 @@ DirectoryCleanup=true
 > - .pfb
 > - .pfm
 
-* __FileCleanup:__ Enable support for adding the section `[FilesCleanup]` in `Launcher.ini`. See `FilesCleanup.nsh` in the Segments directory.
-> To use this feature add the section `[FilesCleanup]` to the `Launcher.ini` file. Each entry should be the path to the file that needs deleting. Supports environment variables. Example usage:
+* __FileCleanup:__ Enable support for adding the section `[FilesCleanup]` in `Wrapper.ini`. See `FilesCleanup.nsh` in the Segments directory.
+> To use this feature add the section `[FilesCleanup]` to the `Wrapper.ini` file. Each entry should be the path to the file that needs deleting. Supports environment variables. Example usage:
 > ```INI
 > [FilesCleanup]
 > 1=%PAC:DataDir%\uselessUpgradeFile.xml
 > 2=%APPDATA%\MyProgram\purposelessCfg.ini
 > ```
 
-* __DirectoryCleanup:__ Enable support for the sections `[DirectoriesCleanupIfEmpty]` and `[DirectoriesCleanupForce]` in `Launcher.ini`. See `DirectoriesCleanup.nsh` in the Segments directory.
+* __DirectoryCleanup:__ Enable support for the sections `[DirectoriesCleanupIfEmpty]` and `[DirectoriesCleanupForce]` in `Wrapper.ini`. See `DirectoriesCleanup.nsh` in the Segments directory.
 
 ----------
 
@@ -257,7 +259,7 @@ CertTimestamp=VeriSign
 
 * __Creator:__ Specify here the original developer of the PAF if you're updating someone else's work.
 
-* __CertSigning:__ If set to true, the `Launcher.exe` will automatically be signed using dual signature hashing algorithm standards (_SHA256_ and _SHA1_). I decided to use dual signing because Windows 8 supports SHA256 Code Signing Certificates (SHA-2 hashing algorithm); whereas, Windows 7 may only support SHA-1 Code Signing Certificates (SHA-1 hashing algorithm). It should be noted that Windows 10 has stopped accepting SHA-1 certificates and certificate chains for Authenticode-signed binaries (unless a timestamp marked the binary as being signed before 1/1/2016). You can visit this [Microsoft Security Advisory article][MSAdvisory] on the availability of SHA-2 code signing support for Windows 7 and Windows Server 2008 R2 for more information about this topic.
+* __CertSigning:__ If set to true, the `Wrapper.exe` will automatically be signed using dual signature hashing algorithm standards (_SHA256_ and _SHA1_). I decided to use dual signing because Windows 8 supports SHA256 Code Signing Certificates (SHA-2 hashing algorithm); whereas, Windows 7 may only support SHA-1 Code Signing Certificates (SHA-1 hashing algorithm). It should be noted that Windows 10 has stopped accepting SHA-1 certificates and certificate chains for Authenticode-signed binaries (unless a timestamp marked the binary as being signed before 1/1/2016). You can visit this [Microsoft Security Advisory article][MSAdvisory] on the availability of SHA-2 code signing support for Windows 7 and Windows Server 2008 R2 for more information about this topic.
 >__*ATTENTION:*__ As it is written right now, the `PortableApps.comLauncherGenerator.exe` expects the certificate file to be the developer's name (same as the `[Team]Developer` key's value) and located in `..\Other\Source\Contrib\certificates`. 
 > 
 > _NOTE_: If your certificate requires you to use a password, refer to lines 741 and 742 and input your password on column 62.
@@ -313,7 +315,7 @@ GetBetween=true
 
 * __UsesGhostscript:__ Specifies whether the portable application makes use of [Ghostscript Portable][GhostscriptPortable].
 
-* __UsesDotNetVersion:__ Specify the minimum required version of the .NET framework the portable application needs. Values can be from `1.0` through `4.7` (*e.g.* `UsesDotNetVersion=1.1` or `UsesDotNetVersion=4.6.2`).
+* __UsesDotNetVersion:__ Specify the minimum required version of the .NET framework the portable application needs. Values can be from `1.0` thru `4.7` (*e.g.* `UsesDotNetVersion=1.1` or `UsesDotNetVersion=4.6.2`).
 
 * __UseStdUtils:__ Include the _StdUtils_ plug-in without `ExecAsUser`
 

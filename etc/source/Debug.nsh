@@ -118,4 +118,4 @@
 !macroend
 !define DebugMsg "!insertmacro DebugMsg" ; }}}
 
-!include /NONFATAL "${PACKAGE}\app\AppInfo\ExtendedDebug.nsh"
+!include /NONFATAL "${PACKAGE}\app\AppInfo\Debug.nsh"

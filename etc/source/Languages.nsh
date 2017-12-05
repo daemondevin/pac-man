@@ -22,31 +22,70 @@
 	!appendfile "${LangAutoDetectFile}" "${Case} ${LANG_${_LANG}}$\n"
 !macroend
 !define IncludeLang "!insertmacro IncludeLang"
-	${IncludeLang} ARABIC
+	${IncludeLang} AFRIKAANS
+	${IncludeLang} AZERBAIJANI
+	${IncludeLang} BELARUSIAN
+	${IncludeLang} BULGARIAN
 	${IncludeLang} CATALAN
 	${IncludeLang} CZECH
-	${IncludeLang} DUTCH
+	${IncludeLang} WELSH
+	${IncludeLang} DANISH
+	${IncludeLang} GERMAN
+	${IncludeLang} GREEK
 	${IncludeLang} ENGLISH
+	${IncludeLang} ESPERANTO
+	${IncludeLang} SPANISH
+	${IncludeLang} ESTONIAN
+	${IncludeLang} BASQUE
 	${IncludeLang} FARSI
 	${IncludeLang} FINNISH
 	${IncludeLang} FRENCH
-	${IncludeLang} GERMAN
-	${IncludeLang} GREEK
+	${IncludeLang} IRISH
+	${IncludeLang} GALICIAN
+	${IncludeLang} GUJARATI
+	${IncludeLang} HEBREW
+	${IncludeLang} HINDI
+	${IncludeLang} CROATIAN
 	${IncludeLang} HUNGARIAN
+	${IncludeLang} ARMENIAN
+	${IncludeLang} INDONESIAN
+	${IncludeLang} ICELANDIC
 	${IncludeLang} ITALIAN
 	${IncludeLang} JAPANESE
+	${IncludeLang} GEORGIAN
 	${IncludeLang} KOREAN
+	${IncludeLang} LITHUANIAN
+	${IncludeLang} KURDISH
+	${IncludeLang} LATVIAN
+	${IncludeLang} MACEDONIAN
+	${IncludeLang} MONGOLIAN
+	${IncludeLang} MARATHI
+	${IncludeLang} MALAY
+	${IncludeLang} NORWEGIAN
+	${IncludeLang} NEPALI
+	${IncludeLang} DUTCH
+	${IncludeLang} NORWEGIANNYNORSK
+	${IncludeLang} PUNJABI
 	${IncludeLang} POLISH
 	${IncludeLang} PORTUGUESE
 	${IncludeLang} PORTUGUESEBR
+	${IncludeLang} ROMANIAN
 	${IncludeLang} RUSSIAN
-	${IncludeLang} SIMPCHINESE
+	${IncludeLang} SINHALESE
+	${IncludeLang} SLOVAK
 	${IncludeLang} SLOVENIAN
-	${IncludeLang} SPANISH
+	${IncludeLang} ALBANIAN
+	${IncludeLang} SERBIAN
+	${IncludeLang} SERBIANLATIN
 	${IncludeLang} SWEDISH
-	${IncludeLang} TRADCHINESE
+	${IncludeLang} TAMIL
+	${IncludeLang} THAI
 	${IncludeLang} TURKISH
+	${IncludeLang} UKRAINIAN
+	${IncludeLang} VALENCIAN
 	${IncludeLang} VIETNAMESE
+	${IncludeLang} SIMPCHINESE
+	${IncludeLang} TRADCHINESE
 !macro LanguageCases
 	!include "${LangAutoDetectFile}"
 	!delfile "${LangAutoDetectFile}"

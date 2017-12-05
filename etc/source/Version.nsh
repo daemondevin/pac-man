@@ -10,5 +10,5 @@
 ; This file defines the version of PortableApps Compiler.
 ; 
 
-!define PACVER		"2.0.1.0"
-!define PACUSERVER	"2.0.1"
+!define PACVER		"2.1.0.0"
+!define PACUSERVER	"2.1.0"
