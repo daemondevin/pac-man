@@ -189,7 +189,7 @@ DirectoryCleanup=true
 > ```
 
 * __RegDLLs:__ Add support for handling library (DLLs) file registration.
-> To use this feature add the section `[RegisterDLL1]` (numerical ordering) to the `Wrapper.ini` file. Each entry supports two keys; _ProgID_ (The DLL's ProgID) and _File_ (The path to DLL. Supports environment variables). All available values for `Type` are as follows: _REGDLL_, _REGTLB for user_, _REGTLB_, _REGDLLTLB_, and _REGEXE_. Refer to the `TypeLib.nsh` file for reference. Example usage:
+> To use this feature add the section `[RegisterDLL1]` (numerical ordering) to the `Wrapper.ini` file. Each entry supports two keys; _Type_ and _File_. All available values for `Type` are as follows: _REGDLL_, _REGTLB for user_, _REGTLB_, _REGDLLTLB_, and _REGEXE_. Refer to the `TypeLib.nsh` file for reference. Example usage:
 > ```INI
 > [RegisterDLL1]
 > Tyoe=REGEXE
