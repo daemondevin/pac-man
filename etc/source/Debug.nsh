@@ -1,10 +1,10 @@
 ;=#
 ; 
 ; PORTABLEAPPS COMPILER 
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ; 
 ; SEGMENT
 ;   Debug.nsh
@@ -82,13 +82,13 @@
 			!endif
 			!ifndef _DebugMsg_FileOpened
 				Var /GLOBAL _DebugMsg_File
-				FileOpen $_DebugMsg_File $EXEDIR\bin\Settings\debug.log w
+				FileOpen $_DebugMsg_File $EXEDIR\cfg\debug.log w
 				FileWrite $_DebugMsg_File "PortableApps Compiler ${Version} debug messages for ${NamePortable} (${AppID})$\r$\n"
 				; TODO: hg revision number from .hg/branch, branchheads.cache
 				; My ${!ifexist} doesn't work in Wine, not sure if I can fix it
 				!define _DebugMsg_FileOpened
 			!else
-				FileOpen  $_DebugMsg_File $EXEDIR\bin\Settings\debug.log a
+				FileOpen  $_DebugMsg_File $EXEDIR\cfg\debug.log a
 				FileSeek  $_DebugMsg_File 0 END
 			!endif
 			FileWrite $_DebugMsg_File "${_DebugMsg_Seg} (line ${__LINE__}): ${_MSG}$\r$\n$\r$\n"

@@ -1,10 +1,10 @@
 ;=#
 ; 
 ; PORTABLEAPPS COMPILER 
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ; 
 ; SEGMENT
 ;   LastRunEnvironment.nsh
@@ -13,7 +13,7 @@
 
 !macro ReadLastRunEnvironmentVariable out var
 	${DebugMsg} "Reading last run environment variable ${var} into $${out}"
-	ReadINIStr ${out} ${CONFIGINI} LastRunEnvironment `${var}`
+	ReadINIStr ${out} ${SETINI} LastRunEnvironment `${var}`
 !macroend
 !define ReadLastRunEnvironmentVariable "!insertmacro ReadLastRunEnvironmentVariable"
 !macro WriteLastRunEnvironmentVariable var value
@@ -21,21 +21,21 @@
 	ExpandEnvStrings $R0 `${value}`
 	${DebugMsg} "Environment variable expansion on $$R0:$\r$\nBefore: `${value}`$\r$\nAfter: `$R0`"
 	${DebugMsg} "Persisting environment variable ${var} with value `$R0`"
-	WriteINIStr ${CONFIGINI} LastRunEnvironment `${var}` $R0
+	WriteINIStr ${SETINI} LastRunEnvironment `${var}` $R0
 	Pop $R0
 !macroend
 !define WriteLastRunEnvironmentVariable "!insertmacro WriteLastRunEnvironmentVariable"
 !macro _LastRunEnvironment_WriteInternalFromEnvironmentVariable name envvar
 	ReadEnvStr $R0 `${envvar}`
 	${DebugMsg} "Saving internal last run environment variable `${name}` from `${envvar}` as `$R0`"
-	WriteINIStr ${CONFIGINI} PortableAppsCompilerLastRunEnvironment `${name}` $R0
+	WriteINIStr ${SETINI} PortableAppsCompilerLastRunEnvironment `${name}` $R0
 !macroend
 !define LREWriteFromEV "!insertmacro _LastRunEnvironment_WriteInternalFromEnvironmentVariable"
 
 ${SegmentFile}
 ${SegmentPre}
 	; First, load PAC's own last run environment
-	${ForEachINIPairWithFile} ${CONFIGINI} PortableAppsCompilerLastRunEnvironment $0 $1
+	${ForEachINIPairWithFile} ${SETINI} PortableAppsCompilerLastRunEnvironment $0 $1
 		${DebugMsg} "Setting internal last run environment variable $0 to $1"
 		; Treat all LREs as paths
 		${SetEnvironmentVariablesPath} $0 $1
@@ -63,7 +63,7 @@ ${SegmentPre}
 ${SegmentPrePrimary}
 	; Write some internal LREs not written anywhere else
 	${LREWriteFromEV} PAC:LastAppDirectory						PAC:AppDir
-	${LREWriteFromEV} PAC:LastDataDirectory						PAC:DataDir
+	${LREWriteFromEV} PAC:LastConfigDirectory					PAC:ConfigDir
 	${LREWriteFromEV} PAC:LastPortableAppsDirectory				PAC:PortableAppsDir
 	${LREWriteFromEV} PAC:LastPortableAppsDocumentsDirectory	PortableAppsDocuments
 	${LREWriteFromEV} PAC:LastPortableAppsPicturesDirectory		PortableAppsPictures

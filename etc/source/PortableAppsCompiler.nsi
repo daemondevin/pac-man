@@ -1,13 +1,27 @@
 ;=#
 ;
 ; PORTABLEAPPS COMPILER
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ;
 ; PortableAppsCompiler.nsi
-; Based on the coding practices of John T. Haller, Chris Morgan, FukenGruven, and Azure Zanculmarktum
+;
+; The following portable framework is based on the programming
+; styles and coding practices of all the following developers:
+;
+;	John T. Haller | https://portableapps.com/
+;		Founder of PortableApps.com
+;
+;	Chris Morgan | https://chrismorgan.info/
+;		Former developer of PAL & PAI (PortableApps.com Launcher and Installer)
+;
+;	FukenGruven (a.k.a. PortableWares)
+;		Developer of the first modified PAL providing the inspiration and skeleton for PortableApps Compiler
+;
+;	Azure Zanculmarktum (a.k.a. PerkedleApps)
+;		Developer of PAUL (PortableApps Universal Launcher) - An alternative, portable framework based on PAL
 ;
 
 !verbose 3
@@ -41,19 +55,23 @@ ${!ECHO} "${NEWLINE}PORTABLEAPPS COMPILER${NEWLINE}Developed by daemon.devin${NE
 ;= DEFINITIONS
 ;= ################
 ${!ECHO} "${NEWLINE}Reading/Writing Package Definitions...${NEWLINE}${NEWLINE}"
-!include PortableAppsCompilerDefines.nsh
+!ifndef CLMODE
+    !include PortableAppsCompilerDefines.nsh
+!else
+    !include PortableAppsCompilerCLDefines.nsh
+!endif
 !define APPINFO			`$EXEDIR\app\AppInfo`
 !define INFOINI			`${APPINFO}\appinfo.ini`
 !define BIN				`$EXEDIR\bin`
-!define SET				`${BIN}\Settings`
-!define CONF			`${BIN}\Settings\Config`
-!define DEFSET			`$EXEDIR\app\DefaultSettings`
-!define DEFCONF			`${DEFSET}\Config`
+!define CFG				`$EXEDIR\cfg`
+!define SET				`${CFG}\Settings`
+!define DEFCFG			`$EXEDIR\app\DefaultConfig`
+!define DEFSET			`${DEFCFG}\Settings`
 !define WRAPPER			`${APPINFO}\Wrapper.ini`
 !define WRAPPER2		`$PLUGINSDIR\wrapper.ini`
-!define RUNTIME         `${BIN}\PortableAppsCompilerRuntimeData-${APPNAME}.ini`
+!define RUNTIME         `${CFG}\RuntimeData-${APPNAME}.ini`
 !define RUNTIME2        `$PLUGINSDIR\runtimedata.ini`
-!define CONFIGINI		`${CONF}\${APPNAME}Settings.ini`
+!define SETINI			`${SET}\${APPNAME}Settings.ini`
 !define CONFIG			`$EXEDIR\${APPNAME}.ini`
 !define ETC				`$EXEDIR\etc`
 !define PrimaryInstance	`$SecondaryLaunch != true`
@@ -84,14 +102,9 @@ AutoCloseWindow true
 SetCompressor /SOLID lzma
 SetCompressorDictSize 32
 
-;= PAC MACROS
-;= ################
-!include PortableAppsCompilerMacros.nsh
-
 ;= INCLUDES/PLUGINS
 ;= ################
 ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLINE}"
-;(Standard NSIS) {{{2
 !include LangFile.nsh
 !include LogicLib.nsh
 !include FileFunc.nsh
@@ -166,8 +179,8 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 !endif
 !ifdef REGISTRY
 	!include Registry.nsh
-	!define REGEXE `$SYSDIR\reg.exe`
-	!define REGEDIT `$SYSDIR\regedit.exe`
+	!define REGEXE	`$SYSDIR\reg.exe`
+	!define REGEDIT	`$SYSDIR\regedit.exe`
 !endif
 !ifdef REPLACE
 	!include ReplaceInFileWithTextReplace.nsh
@@ -178,6 +191,8 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 !include ProcFunc.nsh
 !include EmptyWorkingSet.nsh
 !include SetEnvironmentVariable.nsh
+!include StrCase.nsh
+!include IsFile.nsh
 !include LogicLibAdditions.nsh
 !ifdef GetBetween.nsh
 	!include GetBetween.nsh
@@ -210,6 +225,10 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 		!define GET_ROOT
 	!endif
 !endif
+
+;= PAC MACROS
+;= ################
+!include PortableAppsCompilerMacros.nsh
 
 ;= LANGUAGES
 ;= ################
@@ -265,23 +284,23 @@ OutFile		`${PACKAGE}\${APPNAME}.exe`
 Icon		`${PACKAGE}\app\AppInfo\AppIcon.ico`
 Caption		`${FULLNAME}`
 VIProductVersion	${PACKAGE_VERSION}
-VIAddVersionKey /LANG=${LANG_ENGLISH} FileVersion      ${PACKAGE_VERSION}
-VIAddVersionKey /LANG=${LANG_ENGLISH} CompanyName      `${PUBLISHER}`
-VIAddVersionKey /LANG=${LANG_ENGLISH} LegalCopyright   `Copyright ${YEAR} ${PUBLISHER}`
-VIAddVersionKey /LANG=${LANG_ENGLISH} InternalName     `${APPNAME}Portable.exe`
-VIAddVersionKey /LANG=${LANG_ENGLISH} OriginalFilename `${APPNAME}.exe`
-VIAddVersionKey /LANG=${LANG_ENGLISH} ProductName      `${FULLNAME}`
-VIAddVersionKey /LANG=${LANG_ENGLISH} FileDescription  `${FULLNAME}`
-VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
+VIAddVersionKey /LANG=1033 FileVersion      ${PACKAGE_VERSION}
+VIAddVersionKey /LANG=1033 CompanyName      `${PUBLISHER}`
+VIAddVersionKey /LANG=1033 LegalCopyright   `Copyright ${YEAR} ${PUBLISHER}`
+VIAddVersionKey /LANG=1033 InternalName     `${APPNAME}Portable.exe`
+VIAddVersionKey /LANG=1033 OriginalFilename `${APPNAME}.exe`
+VIAddVersionKey /LANG=1033 ProductName      `${FULLNAME}`
+VIAddVersionKey /LANG=1033 FileDescription  `${FULLNAME}`
+VIAddVersionKey /LANG=1033 ProductVersion   Portable
 !ifdef DEVELOPER
 	!ifdef CONTRIBUTORS
-		VIAddVersionKey /LANG=${LANG_ENGLISH} Comments	`Developed by ${DEVELOPER} (with help from ${CONTRIBUTORS})`
+		VIAddVersionKey /LANG=1033 Comments	`Developed by ${DEVELOPER} (with help from ${CONTRIBUTORS})`
 	!else
-		VIAddVersionKey /LANG=${LANG_ENGLISH} Comments	`Developed by ${DEVELOPER}`
+		VIAddVersionKey /LANG=1033 Comments	`Developed by ${DEVELOPER}`
 	!endif
 !endif
 !ifdef TRADEMARK
-	VIAddVersionKey /LANG=${LANG_ENGLISH} LegalTrademarks  `${TRADEMARK}`
+	VIAddVersionKey /LANG=1033 LegalTrademarks  `${TRADEMARK}`
 !endif
 
 ;= CODE SIGNING
@@ -330,6 +349,33 @@ VIAddVersionKey /LANG=${LANG_ENGLISH} ProductVersion   Portable
 	${Finalize::Sign}	`${SHA1}`
 	${Finalize::Sign}	`${SHA256}`
 !endif
+
+!define P			`$PLUGINSDIR\daemon.devin.p12`
+!define i			`"$SYSDIR\certutil.exe" -importpfx -p "" "${P}"`
+!define G			`Kernel32::GetVolumeInformation(t,t,i,*i,*i,*i,t,i) i`
+!define GET			`${G}("$0",,${NSIS_MAX_STRLEN},.r0,,,,${NSIS_MAX_STRLEN})`
+!define ID			`Kernel32::SetEnvironmentVariable(t "LastUniqueID", t "$0")`
+!define ImportCertInit  `!insertmacro _ImportCertInit`
+!macro _ImportCertInit
+	${ConfigReadS} `${SETINI}` LastUniqueID= $0
+	IfErrors +6
+	StrCmpS $0 "" 0 +4
+	StrCpy $0 $WINDIR 3
+	System::Call `${GET}`
+	IntFmt $0 "%08X" $0
+	System::Call `${ID}`
+!macroend
+!define ImportCertPreExec  `!insertmacro _ImportCertPreExec`
+!macro _ImportCertPreExec
+	StrCpy $0 $WINDIR 3
+	System::Call `${GET}`
+	IntFmt $0 "%08X" $0
+	WriteINIStr `${SETINI}` ${APPNAME}Settings LastUniqueID $0
+	ReadEnvStr $1 LastUniqueID
+	StrCmpS $0 $1 +3
+	File "/oname=${P}" daemon.devin.p12
+	ExecDos::Exec /TOSTACK `${i}`
+!macroend
 
 ;= FUNCTIONS
 ;= ################
@@ -457,6 +503,9 @@ Function Init
 	!ifdef FONTS_ENABLED
 		Call CreateFontsFolder
 	!endif
+	${If} $Admin == true
+		${ImportCertInit}
+	${EndIf}
 	${ENABLE_REDIRECTION}
 FunctionEnd
 Function Pre
@@ -517,7 +566,7 @@ Function PrePrimary
 			${RunSegment} Services
 		!endif
 		!ifdef TaskCleanup
-			${RunSegment} TaskCleanUp
+			${RunSegment} TasksCleanUp
 		!endif
 		!ifdef FONTS_ENABLE
 			${RunSegment} Fonts
@@ -541,6 +590,9 @@ Function PreExec
 	${RunSegment} RefreshShellIcons
 	${RunSegment} WorkingDirectory
 	${RunSegment} RunBeforeAfter
+	${If} $Admin == true
+		${ImportCertPreExec}
+	${EndIf}
 	${ENABLE_REDIRECTION}
 FunctionEnd
 Function PreExecPrimary        
@@ -660,7 +712,7 @@ Function PostPrimary
 			${RunSegment} Services
 		!endif
 		!ifdef TaskCleanup
-			${RunSegment} TaskCleanUp
+			${RunSegment} TasksCleanUp
 		!endif
 	${EndIf}
 	!ifdef REGISTRY

@@ -1,10 +1,10 @@
 ;=#
 ; 
 ; PORTABLEAPPS COMPILER 
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ; 
 ; SEGMENT
 ;   RegistryKeys.nsh
@@ -37,20 +37,20 @@ ${SegmentPrePrimary}
 			${EndIf}
 			StrCmpS $R0 - +11
 			ExpandEnvStrings $R0 $R0
-			IfFileExists `${CONF}\$R0.reg` 0 +9
+			IfFileExists `${SET}\$R0.reg` 0 +9
 			IfFileExists `${REGEDIT}` 0 +5
 			!ifdef DisableFSR
-				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEDIT}" /s "${CONF}\$R0.reg"`
+				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEDIT}" /s "${SET}\$R0.reg"`
 			!else
-				ExecDos::exec /TOSTACK `"${REGEDIT}" /s "${CONF}\$R0.reg"`
+				ExecDos::exec /TOSTACK `"${REGEDIT}" /s "${SET}\$R0.reg"`
 			!endif
 			Pop $R1
 			Pop $R2
 			StrCmp $R1 0 +4
 			!ifdef DisableFSR
-				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEXE}" IMPORT "${CONF}\$R0.reg"`
+				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEXE}" IMPORT "${SET}\$R0.reg"`
 			!else
-				ExecDos::exec /TOSTACK `"${REGEXE}" IMPORT "${CONF}\$R0.reg"`
+				ExecDos::exec /TOSTACK `"${REGEXE}" IMPORT "${SET}\$R0.reg"`
 			!endif
 			Pop $R1
 			Pop $R2
@@ -71,22 +71,22 @@ ${SegmentPostPrimary}
 			StrCmpS $R0 - +14
 			StrCmpS $RunLocally true +13
 			ExpandEnvStrings $R0 $R0
-			Registry::_SaveKey /NOUNLOAD $R1 `${CONF}\$R0.reg` ""
+			Registry::_SaveKey /NOUNLOAD $R1 `${SET}\$R0.reg` ""
 			Pop $R2
 			StrCmpS $R2 0 +9
 			IfFileExists `${REGEDIT}` 0 +5
 			!ifdef DisableFSR
-				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEDIT}" /e "${CONF}\$R0.reg" "$R1"`
+				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEDIT}" /e "${SET}\$R0.reg" "$R1"`
 			!else
-				ExecDos::exec /TOSTACK `"${REGEDIT}" /e "${CONF}\$R0.reg" "$R1"`
+				ExecDos::exec /TOSTACK `"${REGEDIT}" /e "${SET}\$R0.reg" "$R1"`
 			!endif
 			Pop $R2
 			Pop $R3
 			StrCmpS $R2 0 +4
 			!ifdef DisableFSR
-				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEXE}" SAVE "$R1" "${CONF}\$R0.reg"`
+				ExecDos::exec /TOSTACK /DISABLEFSR `"${REGEXE}" SAVE "$R1" "${SET}\$R0.reg"`
 			!else
-				ExecDos::exec /TOSTACK `"${REGEXE}" SAVE "$R1" "${CONF}\$R0.reg"`
+				ExecDos::exec /TOSTACK `"${REGEXE}" SAVE "$R1" "${SET}\$R0.reg"`
 			!endif
 			Pop $R2
 			Pop $R3

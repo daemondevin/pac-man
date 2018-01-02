@@ -1,13 +1,13 @@
 ;=#
 ;
 ; PORTABLEAPPS COMPILER
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ;
 ; Segments.nsh
-; This file is responsible for handling the execution of each segment file.
+; 	This file is responsible for handling the execution of each segment file.
 ; 
 
 !macro _CreateSegmentDef _TYPE

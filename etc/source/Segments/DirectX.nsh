@@ -1,9 +1,9 @@
 ;=#
 ;
 ; PORTABLEAPPS COMPILER
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
+; For support, visit the GitHub project:
 ; https://github.com/daemondevin/pac-man
 ;
 ; DirectX.nsh
@@ -14,16 +14,16 @@
 !define FindRegDirectXRuntimes `!insertmacro _FindRegDirectXRuntimes`
 !macro _FindRegDirectXRuntimes _DLL
 	StrCmpS $Bit 64 0 +6
-	System::Call ${DISABLEREDIR}
+	${DISABLEREDIR}
 	IfFileExists "$SYSDIR\${_DLL}" +3 0
 	IfFileExists "$PortableAppsCommonFiles\DirectX64\bin\${_DLL}" 0 +7
 	ExecDos::Exec /TOSTACK /DISABLEFSR `"${REGSVR}" /s "$PortableAppsCommonFiles\DirectX64\bin\${_DLL}"` "" ""
-	System::Call ${ENABLEREDIR}
+	${ENABLEREDIR}
 	IfFileExists "$SYSDIR\${_DLL}" +3 0
 	IfFileExists "$PortableAppsCommonFiles\DirectX\bin\${_DLL}" 0 +4
 	ExecDos::Exec /TOSTACK `"${REGSVR}" /s "$PortableAppsCommonFiles\DirectX\bin\${_DLL}"` "" ""
 	Goto +5
-	System::Call ${ENABLEREDIR}
+	${ENABLEREDIR}
 	MessageBox MB_ICONSTOP|MB_TOPMOST "The ${_DLL} runtime DLL was not found locally or portably!$\r$\n$\r$\nPlease install the DirectX Runtimes Portable plugin to play ${APPNAME}. Aborting!$\r$\n$\r$\nBoth x86/x64 DirectX plugins can be found at:$\r$\nhttp://softables.tk/depository/plugins"
 	Call Unload
 	Quit
@@ -31,7 +31,7 @@
 ; ${UnRegDirectXRuntimes} "DLL"
 !define UnRegDirectXRuntimes `!insertmacro _UnRegDirectXRuntimes`
 !macro _UnRegDirectXRuntimes _DLL
-	${IfThen} $Bit == 64 ${|} System::Call ${DISABLEREDIR} ${|}
+	${IfThen} $Bit == 64 ${|} ${DISABLEREDIR} ${|}
 	${IfNot} ${FileExists} "$SYSDIR\${_DLL}"
 		${If} $Bit == 64
 			ExecDos::Exec /TOSTACK /DISABLEFSR `"${REGSVR}" /s /u "$PortableAppsCommonFiles\DirectX64\bin\${_DLL}"` "" ""
@@ -39,7 +39,7 @@
 			ExecDos::Exec /TOSTACK `"${REGSVR}" /s /u "$PortableAppsCommonFiles\DirectX64\bin\${_DLL}"` "" ""
 		${EndIf}
 	${EndIf}
-	${IfThen} $Bit == 64 ${|} System::Call ${ENABLEREDIR} ${|}
+	${IfThen} $Bit == 64 ${|} ${ENABLEREDIR} ${|}
 !macroend
 
 ${SegmentFile}

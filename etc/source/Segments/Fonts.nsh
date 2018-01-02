@@ -1,19 +1,19 @@
 ;=#
 ; 
 ; PORTABLEAPPS COMPILER 
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ; 
 ; SEGMENT
 ;   Fonts.nsh
 ;   This file provides support for handling importing/restoring of fonts.
 ; 
 
-!define FNTDIR    `${SET}\Fonts`
+!define FNTDIR    `${CFG}\Fonts`
 !define FNTXT     `${FNTDIR}\.Portable.Fonts.txt`
-!define DEFFNTXT  `${DEFSET}\Fonts\.Portable.Fonts.txt`
+!define DEFFNTXT  `${DEFCFG}\Fonts\.Portable.Fonts.txt`
 !define FNT1      `• Font(s) added in here are portabilized and are available for usage during runtime.$\r$\n`
 !define FNT2      `• Supported: .fon, .fnt, .ttf, .ttc, .fot, .otf, .mmm, .pfb, .pfm.`
 Function Fonts::Import

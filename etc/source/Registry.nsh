@@ -1,13 +1,13 @@
 ;=#
 ;
 ; PORTABLEAPPS COMPILER
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ;
 ; Registry.nsh
-; This file declares and defines all the macros for registry manipulation.
+; 	This file declares and defines all the macros for registry manipulation.
 ; 
 
 !define Registry::Open `!insertmacro Registry::Open`

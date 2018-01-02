@@ -1,3 +1,6 @@
+!ifndef TYPELIB_NSH_INCLUDED
+!define TYPELIB_NSH_INCLUDED
+
 !macro MyDebug
 	!ifdef ?e
 		!undef ?e
@@ -276,3 +279,5 @@ ITypeLib::ReleaseTLibAttr	= 12
    wLibFlags AS WORD
  END TYPE
 */
+
+!endif

@@ -1,10 +1,10 @@
 ;=#
 ; 
 ; PORTABLEAPPS COMPILER 
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ; 
 ; SEGMENT
 ;   RunLocally.nsh
@@ -25,24 +25,24 @@ ${SegmentPre}
 		${OrIf} ${Errors}
 			StrCmpS $SecondaryLaunch true +3
 			CreateDirectory `$R0\${APPNAME}Live`
-			CopyFiles /SILENT `$EXEDIR\App` `$R0\${APPNAME}Live`
+			CopyFiles /SILENT `$EXEDIR\bin` `$R0\${APPNAME}Live`
 			StrCpy $AppDirectory `$R0\${APPNAME}Live\bin`
 		${ElseIf} $0 != false
 			${InvalidValueError} [LiveMode]:CopyApp $0
 		${EndIf}
 		StrCmpS $SecondaryLaunch true +3
 		CreateDirectory `$R0\${APPNAME}Live`
-		CopyFiles /SILENT `${SET}` `$R0\${APPNAME}Live`
-		StrCpy $DataDirectory `$R0\${APPNAME}Live\bin\Settings`
+		CopyFiles /SILENT `${CFG}` `$R0\${APPNAME}Live`
+		StrCpy $ConfigDirectory `$R0\${APPNAME}Live\cfg`
 		${If} ${FileExists} `$R0\${APPNAME}Live`
 			${SetFileAttributesDirectoryNormal} `$R0\${APPNAME}Live`
 		${EndIf}
 		${SetEnvironmentVariablesPath} PAC:AppDir $AppDirectory
-		${SetEnvironmentVariablesPath} PAC:DataDir $DataDirectory
+		${SetEnvironmentVariablesPath} PAC:CfgDir $ConfigDirectory
 		StrCmpS $SecondaryLaunch true +2
 		StrCpy $WaitForProgram true
 	${EndIf}
-	CreateDirectory $DataDirectory
+	CreateDirectory $ConfigDirectory
 !macroend
 ${SegmentPostPrimary}
 	StrCmp $RunLocally true +3

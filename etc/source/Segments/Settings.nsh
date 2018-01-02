@@ -1,10 +1,10 @@
 ;=#
 ; 
 ; PORTABLEAPPS COMPILER 
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ; 
 ; SEGMENT
 ;   Settings.nsh
@@ -26,26 +26,26 @@
 !define Init::File "!insertmacro _Init::File"
 !macro _Init::File _DIR _FILE
 	StrCmpS `${_FILE}` "" 0 +4
-	IfFileExists `${SET}\${_DIR}` +10
-	CreateDirectory `${SET}\${_DIR}`
+	IfFileExists `${CFG}\${_DIR}` +10
+	CreateDirectory `${CFG}\${_DIR}`
 	Goto +8
 	StrCmpS `${_DIR}` "" 0 +4
-	IfFileExists `${SET}\${_FILE}` +6
-	CopyFiles /SILENT `${DEFSET}\${_FILE}` `${SET}`
+	IfFileExists `${CFG}\${_FILE}` +6
+	CopyFiles /SILENT `${DEFCFG}\${_FILE}` `${CFG}`
 	Goto +4
-	IfFileExists `${SET}\${_DIR}\${_FILE}` +3
-	CreateDirectory `${SET}\${_DIR}`
-	CopyFiles /SILENT `${DEFSET}\${_DIR}\${_FILE}` `${SET}\${_DIR}`
+	IfFileExists `${CFG}\${_DIR}\${_FILE}` +3
+	CreateDirectory `${CFG}\${_DIR}`
+	CopyFiles /SILENT `${DEFCFG}\${_DIR}\${_FILE}` `${CFG}\${_DIR}`
 !macroend
 ${SegmentFile}
 ${SegmentInit}
 	; Check for settings
-	${IfNot} ${FileExists} ${SET}
-		${DebugMsg} "${SET} does not exist. Creating it."
-		CreateDirectory ${SET}
-		${If} ${FileExists} ${DEFSET}\*.*
-			${DebugMsg} "Copying default data from ${DEFSET} to ${SET}."
-			CopyFiles /SILENT ${DEFSET}\*.* ${SET}
+	${IfNot} ${FileExists} ${CFG}
+		${DebugMsg} "${CFG} does not exist. Creating it."
+		CreateDirectory ${CFG}
+		${If} ${FileExists} ${DEFCFG}\*.*
+			${DebugMsg} "Copying default data from ${DEFCFG} to ${CFG}."
+			CopyFiles /SILENT ${DEFCFG}\*.* ${CFG}
 		${EndIf}
 	${EndIf}
 	!ifmacrodef Init

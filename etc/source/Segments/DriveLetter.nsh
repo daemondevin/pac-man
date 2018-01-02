@@ -1,10 +1,10 @@
 ;=#
 ; 
 ; PORTABLEAPPS COMPILER 
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ; 
 ; SEGMENT
 ;   DriveLetter.nsh
@@ -16,7 +16,7 @@ ${SegmentInit}
 	!ifmacrodef Drive
 		!insertmacro Drive
 	!endif
-	ReadINIStr $1 "${CONFIGINI}" "${APPNAME}Settings" LastDrive
+	ReadINIStr $1 "${SETINI}" "${APPNAME}Settings" LastDrive
 	${GetRoot} $EXEDIR $0
 	${IfThen} $1 == "" ${|} StrCpy $1 $0 ${|}
 	${SetEnvironmentVariable} PAC:Drive $0
@@ -32,5 +32,5 @@ ${SegmentPrePrimary}
 		!insertmacro PreDrive
 	!endif
 	ReadEnvStr $0 PAC:Drive
-	WriteINIStr `${CONFIGINI}` `${APPNAME}Settings` LastDrive `$0`
+	WriteINIStr `${SETINI}` `${APPNAME}Settings` LastDrive `$0`
 !macroend

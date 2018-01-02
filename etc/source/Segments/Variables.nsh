@@ -1,10 +1,10 @@
 ;=#
 ; 
 ; PORTABLEAPPS COMPILER 
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ; 
 ; SEGMENT
 ;   Variables.nsh
@@ -187,7 +187,7 @@ ${SegmentFile}
 !macroend
 !define ParseLocations "!insertmacro ParseLocations"
 Var AppDirectory
-Var DataDirectory
+Var ConfigDirectory
 Var PortableAppsDirectory
 Var PortableAppsCommonFiles
 Var PortableAppsBaseDirectory
@@ -198,9 +198,9 @@ ${SegmentInit}
 		!insertmacro EnvironmentVariables
 	!endif
 	StrCpy $AppDirectory `$EXEDIR\bin`
-	StrCpy $DataDirectory `$EXEDIR\bin\Settings`
-	${SetEnvironmentVariablesPath} PAC:AppDir  $AppDirectory
-	${SetEnvironmentVariablesPath} PAC:DataDir $DataDirectory
+	StrCpy $ConfigDirectory `$EXEDIR\cfg`
+	${SetEnvironmentVariablesPath} PAC:AppDir $AppDirectory
+	${SetEnvironmentVariablesPath} PAC:CfgDir $ConfigDirectory
 	${GetParentUNC} $EXEDIR $PortableAppsDirectory
 	StrCpy $PortableAppsCommonFiles $PortableAppsDirectory\CommonFiles
 	${SetEnvironmentVariablesPath} PAC:PortableAppsDir $PortableAppsDirectory
@@ -208,7 +208,7 @@ ${SegmentInit}
 	${GetParentUNC} $PortableAppsDirectory $PortableAppsBaseDirectory
 	${SetEnvironmentVariablesPath} PAC:PortableAppsBaseDir $PortableAppsBaseDirectory
 	ClearErrors
-	ReadINIStr `$LastPortableAppsBaseDirectory` `${CONFIGINI}` PortableAppsCompilerLastRunEnvironment PAC:LastPortableAppsBaseDir
+	ReadINIStr `$LastPortableAppsBaseDirectory` `${SETINI}` PortableAppsCompilerLastRunEnvironment PAC:LastPortableAppsBaseDir
 	${IfNot} ${Errors}
 		${SetEnvironmentVariablesPath} PAC:LastPortableAppsBaseDir $LastPortableAppsBaseDirectory
 	${EndIf}
@@ -251,5 +251,5 @@ ${SegmentInit}
 	!endif
 !macroend
 ${SegmentPrePrimary}
-	WriteINIStr `${CONFIGINI}` ${PAC}LastRunEnvironment PAC:LastPortableAppsBaseDir `$PortableAppsBaseDirectory`
+	WriteINIStr `${SETINI}` ${PAC}LastRunEnvironment PAC:LastPortableAppsBaseDir `$PortableAppsBaseDirectory`
 !macroend

@@ -1,20 +1,13 @@
 ;=#
 ; 
 ; PORTABLEAPPS COMPILER 
-; Developed by daemon.devin
+; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
-; For support visit the GitHub project:
-; https://github.com/demondevin/pac-man
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
 ; 
 ; WrapperCompiler.nsi
-; Version 1.1
 ;
-
-;= RUNTIME SWITCHES
-;= ################
-Unicode true 
-ManifestDPIAware true
-RequestExecutionLevel user
 
 !define CustomIconAndName
 
@@ -30,18 +23,28 @@ RequestExecutionLevel user
 ;= ################
 Name "PortableApps Compiler"
 OutFile ..\..\PortableAppsCompiler.exe
-Icon ..\..\app\AppInfo\appicon.ico
+Icon ..\..\app\appinfo\appicon.ico
 Caption "PortableApps Compiler"
 VIProductVersion ${PACVER}
-VIAddVersionKey ProductName "PortableApps Compiler"
-VIAddVersionKey Comments "A small utility for generating a portable wrapper for an application."
-VIAddVersionKey CompanyName "How Dumb, LLC"
-VIAddVersionKey LegalCopyright "Copyright daemon.devin"
-VIAddVersionKey FileDescription "PortableApps Compiler"
-VIAddVersionKey FileVersion ${PACVER}
-VIAddVersionKey ProductVersion ${PACVER}
-VIAddVersionKey InternalName "PortableApps Compiler"
-VIAddVersionKey OriginalFilename PortableAppsCompiler.exe
+VIAddVersionKey /LANG=1033 ProductName "PortableApps Compiler"
+VIAddVersionKey /LANG=1033 Comments "A small utility for generating a portable wrapper for an application."
+VIAddVersionKey /LANG=1033 CompanyName "How Dumb, LLC"
+VIAddVersionKey /LANG=1033 LegalCopyright "Copyright daemon.devin"
+VIAddVersionKey /LANG=1033 FileDescription "PortableApps Compiler"
+VIAddVersionKey /LANG=1033 FileVersion ${PACVER}
+VIAddVersionKey /LANG=1033 ProductVersion ${PACVER}
+VIAddVersionKey /LANG=1033 InternalName "PortableApps Compiler"
+VIAddVersionKey /LANG=1033 OriginalFilename PortableAppsCompiler.exe
+
+;= RUNTIME SWITCHES
+;= ################
+Unicode true
+ManifestSupportedOS all
+ManifestDPIAware true
+CRCCheck on
+WindowIcon off
+RequestExecutionLevel user
+XPStyle on
 
 ;= COMPRESSION
 ;= ################
@@ -52,19 +55,19 @@ SetDatablockOptimize On
 
 ;= INCLUDES/PLUGINS
 ;= ################
-;(Standard)
 !include FileFunc.nsh
 !include LogicLib.nsh
 !include MUI.nsh
 !include nsDialogs.nsh
 !include NewTextReplace.nsh
-!AddPluginDir Plugins
 !include ReplaceInFileWithTextReplace.nsh
 !include ForEachPath.nsh
+!include LogicLibAdditions.nsh
+!AddPluginDir Plugins
 
 ;= ICON & STYLE
 ;= ################
-!define MUI_ICON "..\..\App\AppInfo\AppIcon.ico"
+!define MUI_ICON "..\..\app\appinfo\appicon.ico"
 !define MUI_HEADERIMAGE
 !define MUI_HEADERIMAGE_RIGHT
 !define MUI_HEADERIMAGE_BITMAP header.bmp
@@ -75,6 +78,9 @@ SubCaption 3 " | Compiling Portable Wrapper"
 
 ;= VARIABLES
 ;= ################
+Var COMMANDLINEMODE
+Var VERBOSITY
+Var STATE
 Var FINISHTEXT
 Var FINISHTITLE
 Var NSIS
@@ -109,12 +115,12 @@ Page instfiles
 !define MUI_FINISHPAGE_RUN_NOTCHECKED
 !define MUI_FINISHPAGE_RUN_TEXT "Test Wrapper"
 !define MUI_FINISHPAGE_RUN_FUNCTION "RunOnFinish"
-!define MUI_FINISHPAGE_SHOWREADME "$EXEDIR\bin\WrapperCompilerLog.txt"
+!define MUI_FINISHPAGE_SHOWREADME "$EXEDIR\cfg\WrapperCompilerLog.txt"
 !define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
 !define MUI_FINISHPAGE_SHOWREADME_TEXT "Review Log"
 !insertmacro MUI_PAGE_FINISH
 
-;= DEFINITIONS
+;= DEFINE FLAGS
 ;= ################
 !define NEWLINE		"$\r$\n"
 !define DBUG		"Debug.nsh"
@@ -123,23 +129,55 @@ Page instfiles
 !define INSTALLINI	"Installer.ini"
 !define EXTEND		"ExtendWrapper.nsh"
 !define EXTINS		"ExtendInstaller.nsh"
-!define APPINFOPATH	"$PACKAGE\App\AppInfo\${APPINFOINI}"
-!define WRAPPERPATH	"$PACKAGE\App\AppInfo\${WRAPPERINI}"
-!define EXTENDPATH	"$PACKAGE\App\AppInfo\${EXTEND}"
-!define EXTINSPATH	"$PACKAGE\App\AppInfo\${EXTINS}"
-!define DEFINEINC	"$EXEDIR\etc\Source\PortableAppsCompilerDefines.nsh"
-!define DEFHEADER	"${DEFHEADER1}${DEFHEADER2}${DEFHEADER3}${DEFHEADER4}${DEFHEADER5}"
-!define DEFHEADER1	";=# ${NEWLINE}; ${NEWLINE}; PORTABLEAPPS COMPILER${NEWLINE}; Developed by daemon.devin"
-!define DEFHEADER2	"${NEWLINE}; ${NEWLINE}; For support visit the GitHub project:${NEWLINE}; "
-!define DEFHEADER3	"https://github.com/demondevin/pac-man${NEWLINE}; ${NEWLINE}; PortableAppsCompilerDefines.nsh${NEWLINE}; "
-!define DEFHEADER4	"This file was generated automatically by the PortableApps Compiler.${NEWLINE}; "
-!define DEFHEADER5	"It's also created as well as deleted for each new creation process.${NEWLINE}; ${NEWLINE}"
+!define APPDIRPATH	"$PACKAGE\app"
+!define APPINFODIR	"${APPDIRPATH}\AppInfo"
+!define CFGDIR		"$PACKAGE\cfg"
+!define APPINFOPATH	"${APPINFODIR}\${APPINFOINI}"
+!define WRAPPERPATH	"${APPINFODIR}\${WRAPPERINI}"
+!define EXTENDPATH	"${APPINFODIR}\${EXTEND}"
+!define EXTINSPATH	"${APPINFODIR}\${EXTINS}"
+!define PACMODE		"$COMMANDLINEMODE != true"
+!define CMDLINE		"$COMMANDLINEMODE == true"
+!define DEFINEINC	"$EXEDIR\etc\source\PortableAppsCompilerDefines.nsh"
+!define DEFHEADER	"${DEFHEADER1}${DEFHEADER2}${DEFHEADER3}${DEFHEADER4}${DEFHEADER5}${DEFHEADER6}"
+!define DEFHEADER1	";=# ${NEWLINE}; ${NEWLINE}; PORTABLEAPPS COMPILER${NEWLINE}"
+!define DEFHEADER2	"; Developed by daemon.devin (daemon.devin@gmail.com)"
+!define DEFHEADER3	"${NEWLINE}; ${NEWLINE}; For support visit the GitHub project:${NEWLINE}; "
+!define DEFHEADER4	"https://github.com/daemondevin/pac-man${NEWLINE}; ${NEWLINE}; PortableAppsCompilerDefines.nsh${NEWLINE}; "
+!define DEFHEADER5	"$\tThis file was generated automatically by the PortableApps Compiler.${NEWLINE}; "
+!define DEFHEADER6	"$\tIt's also created as well as deleted for each new creation process.${NEWLINE}; ${NEWLINE}"
 !define EXTHEADER	"${NEWLINE}${EXTHEADER1}${EXTHEADER2}${EXTHEADER3}${EXTHEADER4}"
 !define EXTHEADER1	";= WRAPPER${NEWLINE};= ################${NEWLINE};  "
 !define EXTHEADER2	"This portable application was compiled with${NEWLINE};  "
 !define EXTHEADER3	"PortableApps Compiler: Development Edition:${NEWLINE};  "
 !define EXTHEADER4	"https://github.com/daemondevin/pac-man/tree/dev${NEWLINE}; ${NEWLINE}"
 !define PAInstaller "${EXTINS} -> PortableApps.comInstallerCustom.nsh${NEWLINE}I haven't built an installer compiler yet.${NEWLINE}${NEWLINE}Creating a dummy help.html file so you can still package this build with PA.c Installer"
+!define /ifndef BM_GETCHECK 		0x00F0
+!define /ifndef BM_SETCHECK 		0x00F1
+!define /ifndef BST_UNCHECKED 		0
+!define /ifndef BST_CHECKED 		1
+!define /ifndef CB_ADDSTRING 		0x0143
+!define /ifndef CB_SELECTSTRING 	0x014D
+!define /ifndef WS_CHILD 			0x40000000
+!define /ifndef WS_VISIBLE 			0x10000000
+!define /ifndef WS_CLIPSIBLINGS 	0x04000000
+!define /ifndef WS_CLIPCHILDREN 	0x02000000
+!define /ifndef WS_VSCROLL 			0x00200000
+!define /ifndef WS_TABSTOP 			0x00010000
+!define /ifndef WS_EX_TRANSPARENT 	0x00000020
+!define /ifndef WS_EX_WINDOWEDGE 	0x00000100
+!define /ifndef WS_EX_CLIENTEDGE 	0x00000200
+!define /ifndef CBS_DROPDOWNLIST 	0x0003
+!define /ifndef CBS_AUTOHSCROLL 	0x0040
+!define /ifndef CBS_HASSTRINGS 		0x0200
+!define /ifndef SS_NOTIFY 			0x00000100
+!define /ifndef BS_AUTOCHECKBOX 	0x00000003
+!define /ifndef BS_GROUPBOX 		0x00000007
+!define /ifndef BS_AUTORADIOBUTTON 	0x00000009
+!define /ifndef BS_TEXT 			0x00000000
+!define /ifndef BS_VCENTER 			0x00000C00
+!define /ifndef BS_MULTILINE 		0x00002000
+!define /ifndef ES_AUTOHSCROLL 		0x00000080
 
 ;= MACROS
 ;= ################
@@ -170,7 +208,7 @@ Page instfiles
 !macroend
 !define WriteErrorLog "!insertmacro _WriteErrorLog"
 !macro _WriteErrorLog _ERROR
-	FileOpen $9 "$EXEDIR\bin\WrapperCompilerLog.txt" a
+	FileOpen $9 "$EXEDIR\cfg\WrapperCompilerLog.txt" a
 	FileSeek $9 0 END
 	FileWrite $9 `ERROR: ${_ERROR}`
 	FileWriteByte $9 "13"
@@ -263,7 +301,7 @@ Function LineReadInFile
 	IfErrors +4
 	StrCmp $3 $1 0 -3
 	FileClose $2
-	goto end
+	Goto end
 	FileClose $2
  
 	error:
@@ -390,41 +428,126 @@ Function ReplaceLineInFile
 FunctionEnd
 Function .onInit
 	!insertmacro MUI_INSTALLOPTIONS_EXTRACT "WrapperCompilerForm.ini"
+	
 	SetOutPath $EXEDIR
 	
-	CreateDirectory $EXEDIR\bin
-	
-	ReadINIStr $SKIPWELCOMEPAGE $EXEDIR\bin\settings.ini WrapperCompiler SkipWelcomePage
-	ReadINIStr $0 $EXEDIR\bin\settings.ini WrapperCompiler Drive
-	ReadINIStr $PACKAGE $EXEDIR\bin\settings.ini WrapperCompiler Package
-	; Update drive letter; doesn't matter if $0 == ""
-	StrLen $1 $0
-	StrCpy $2 $PACKAGE $1
-	${If} $2 == $0
-		StrCpy $PACKAGE $PACKAGE "" $1
-		StrCpy $PACKAGE $0$PACKAGE
-	${EndIf}
+	CreateDirectory $EXEDIR\cfg
 
 	;StrCpy $NSIS "$EXEDIR\App\NSIS\makensis.exe"
-	ReadINIStr $NSIS $EXEDIR\bin\settings.ini WrapperCompiler makensis
+	ReadINIStr $NSIS $EXEDIR\cfg\settings.ini WrapperCompiler makensis
 	${If} $NSIS == ""
 		StrCpy $NSIS ..\NSISPortable\App\NSIS\makensis.exe
-		WriteINIStr $EXEDIR\bin\settings.ini WrapperCompiler makensis $NSIS
-	${EndIf}	
+		WriteINIStr $EXEDIR\cfg\settings.ini WrapperCompiler makensis $NSIS
+	${EndIf}
 
+	; Are we running from the commandline?
+	${GetParameters} $0
+	${If} $0 != ""
+		${If}   $0 options -w
+		${OrIf} $0 options -i
+			StrCpy $COMMANDLINEMODE true
+			${IfNot} $0 options -d
+				SetSilent silent
+			${EndIf}
+		${ElseIf} $0 options -c
+			Call CommandLineMode
+			Quit
+		${EndIf}
+	${EndIf}
+	
+	${If} ${PACMODE}
+		ReadINIStr $SKIPWELCOMEPAGE $EXEDIR\cfg\settings.ini WrapperCompiler SkipWelcomePage
+		ReadINIStr $0 $EXEDIR\cfg\settings.ini WrapperCompiler Drive
+		ReadINIStr $PACKAGE $EXEDIR\cfg\settings.ini WrapperCompiler Package
+		; Update drive letter; doesn't matter if $0 == ""
+		StrLen $1 $0
+		StrCpy $2 $PACKAGE $1
+		${If} $2 == $0
+			StrCpy $PACKAGE $PACKAGE "" $1
+			StrCpy $PACKAGE $0$PACKAGE
+		${EndIf}
+	${Else} ; ${CMDLINE}
+		${If} $0 options -w
+			StrCpy $STATE Wrapper
+		${ElseIf} $0 options -i
+			StrCpy $STATE Installer
+		${EndIf}
+		
+		StrCpy $SKIPWELCOMEPAGE true
+		StrCpy $AUTOMATICCOMPILE true
+		
+		; Check path for a quotes symbol (")
+		StrCpy $3 no-quote
+		StrCpy $1 $0 1 -1
+		${If} $1 == '"'
+			StrCpy $3 quote
+		${EndIf}
+
+		; Get last part of passed parameter
+		StrCpy $PACKAGE $1
+		${For} $2 2 ${NSIS_MAX_STRLEN}
+			; Read a string bit-by-bit from right
+			StrCpy $1 $0 1 -$2
+
+			${If} $1 == ""
+				${ExitFor} ; done if the whole string has already being scanned
+			${EndIf}
+
+			${If} $3 != quote
+				; If path doesn't contain " (quote),
+				; stop reading the string when reaching
+				; a white-space character
+				${If} $1 == " "
+					${ExitFor}
+				${EndIf}
+			${EndIf}
+
+			; Store it in $PACKAGE
+			StrCpy $PACKAGE $1$PACKAGE
+
+			${If} $3 == quote
+				; If the path contains a quote (")
+				; than stop reading the string when
+				; a quote is reached
+				${If} $1 == '"'
+					StrCpy $PACKAGE $PACKAGE -1 1 ; trim quote
+					${ExitFor}
+				${EndIf}
+			${EndIf}
+		${Next}
+
+		; Set the verbosity
+		${If} $0 options "-v 4"
+			StrCpy $VERBOSITY 4
+		${ElseIf} $0 options "-v 3"
+			StrCpy $VERBOSITY 3
+		${ElseIf} $0 options "-v 2"
+			StrCpy $VERBOSITY 2
+		${ElseIf} $0 options "-v 1"
+			StrCpy $VERBOSITY 1
+		${ElseIf} $0 options "-v 0"
+			StrCpy $VERBOSITY 0
+		${Else}
+			StrCpy $VERBOSITY 3
+		${EndIf}
+
+		; LeaveOptionsWindow function not being
+		; called when in command line mode, so
+		; call it manually
+		Call LeaveOptionsWindow
+	${EndIf}
+	
 	${GetParameters} $R0
 	StrCmp $R0 "" PreFillForm
 		StrCpy $PACKAGE $R0
-		StrCpy $SKIPWELCOMEPAGE "true"
-		StrCpy $AUTOMATICCOMPILE "true"
-		;Strip quotes from $PACKAGE
+		StrCpy $SKIPWELCOMEPAGE true
+		StrCpy $AUTOMATICCOMPILE true
 		StrCpy $R0 $PACKAGE 1
 		StrCmp $R0 `"` "" PreFillForm
 		StrCpy $PACKAGE $PACKAGE "" 1
 		StrCpy $PACKAGE $PACKAGE -1
 
 	PreFillForm:
-		;=== Pre-Fill Path with Directory
 		WriteINIStr $PLUGINSDIR\WrapperCompilerForm.ini "Field 2" "State" "$PACKAGE"
 FunctionEnd
 
@@ -439,6 +562,7 @@ Function ShowOptionsWindow
 	${IfThen} $AUTOMATICCOMPILE == "true" ${|} Abort ${|}
 	InstallOptions::InitDialog /NOUNLOAD "$PLUGINSDIR\WrapperCompilerForm.ini"
     Pop $0
+	
     InstallOptions::Show
 FunctionEnd
 
@@ -452,6 +576,42 @@ Function LeaveOptionsWindow
 	${GetRoot} $EXEDIR $0
 	WriteINIStr $EXEDIR\bin\settings.ini WrapperCompiler Drive $0
 	WriteINIStr $EXEDIR\bin\settings.ini WrapperCompiler Package $PACKAGE
+	
+	; ReadINIStr $0 $PLUGINSDIR\WrapperCompilerForm.ini "Field 3" "State"
+	; StrCmp $0 3 CLMessageBox
+	
+	; CLMessageBox:
+	; Call CommandLineMode
+FunctionEnd
+
+Function CommandLineMode
+	Pop $0 # HWND
+
+	Push "\
+	NOTE: This feature is not being used yet.$\r$\n$\r$\n\
+	Usage:$\r$\n\
+	PortableAppsCompiler.exe options package_dir$\r$\n\
+	$\r$\n\
+	Options:$\r$\n\
+	-w|-i [-v 4|3|2|1|0] [-d]$\r$\n\
+	$\r$\n\
+	-w$\tBuild the package wrapper$\r$\n\
+	-p$\tBuild the package installer$\r$\n\
+	$\r$\n\
+	-v 4$\tSet the level of verbosity to all$\r$\n\
+	-v 3$\tSet the level of verbosity to no script$\r$\n\
+	-v 2$\tSet the level of verbosity to no info$\r$\n\
+	-v 1$\tSet the level of verbosity to no warnings$\r$\n\
+	-v 0$\tSet the level of verbosity to none$\r$\n\
+	$\r$\n\
+	-d$\tShow details view$\r$\n\
+	$\r$\n\
+	Example:$\r$\n\
+	PortableAppsCompiler.exe -w X:\PortableApps\AppNamePortable$\r$\n\
+	PortableAppsCompiler.exe -i X:\PortableApps\AppNamePortable"
+	Pop $0
+	MessageBox MB_TOPMOST|MB_USERICON $0
+	Abort
 FunctionEnd
 
 Function ConvertLanguageEnvironmentVariables
@@ -523,12 +683,10 @@ Function ConvertDefines
 		${ReplaceInFileUTF16LE} $9 $0LAUNCHER}						$0WRAPPER}
 		${ReplaceInFileUTF16LE} $9 $0LAUNCHER2}						$0WRAPPER2}
 		${ReplaceInFileUTF16LE} $9 $0OTHER}							$0ETC}
-		${ReplaceInFileUTF16LE} $9 $0SETINI}						$0CONFIGINI}
 		${ReplaceInFileUTF16LE} $9 $0PAL}							$0PAC}
-		${ReplaceInFileUTF16LE} $9 $0DEFSET}						$0DEFCONF}
-		${ReplaceInFileUTF16LE} $9 $0SET}							$0CONF}
 		${ReplaceInFileUTF16LE} $9 $0DEFDATA}						$0DEFSET}
-		${ReplaceInFileUTF16LE} $9 $0DATA}							$0SET}
+		${ReplaceInFileUTF16LE} $9 $0DEFSET}						$0DEFCFG}
+		${ReplaceInFileUTF16LE} $9 $0DATA}							$0CFG}
 		${ReplaceInFileUTF16LE} $9 $0ReadLauncherConfig}			$0ReadWrapperConfig}
 		${ReplaceInFileUTF16LE} $9 $0WriteLauncherConfig}			$0WriteWrapperConfig}
 		${ReplaceInFileUTF16LE} $9 $0DeleteLauncherConfig}			$0DeleteWrapperConfig}
@@ -544,39 +702,41 @@ Function ConvertDefines
 		${ReplaceInFileUTF16LE} $9 PAL:LocaleName					PAC:LanguageName
 		${ReplaceInFileUTF16LE} $9 PAL:LocaleID						PAC:LanguageLCID
 		${ReplaceInFileUTF16LE} $9 PAL:LanguageCustom				PAC:LanguageCustom
+		${ReplaceInFileUTF16LE} $9 PAL:DataDir						PAC:ConfigDir
+		${ReplaceInFileUTF16LE} $9 PAC:DataDir						PAC:ConfigDir
 	${Else}
-		${ReplaceInFile} $9 PortableApps.comLanguageCode		PortableAppsLanguageCode
-		${ReplaceInFile} $9 PortableApps.comLocaleCode2			PortableAppsLocaleCode2
-		${ReplaceInFile} $9 PortableApps.comLocaleCode3			PortableAppsLocaleCode3
-		${ReplaceInFile} $9 PortableApps.comLocaleGlibc			PortableAppsLocaleGlibc
-		${ReplaceInFile} $9 PortableApps.comLocaleWinName		PortableAppsLocaleWinName
-		${ReplaceInFile} $9 PortableApps.comLocaleName			PortableAppsLocaleName
-		${ReplaceInFile} $9 PortableApps.comLocaleID			PortableAppsLocaleID
-		${ReplaceInFile} $9 $0ReadUser}							$0ReadUserConfig}
-		${ReplaceInFile} $9 $0LAUNCHER}							$0WRAPPER}
-		${ReplaceInFile} $9 $0LAUNCHER2}						$0WRAPPER2}
-		${ReplaceInFile} $9 $0OTHER}							$0ETC}
-		${ReplaceInFile} $9 $0SETINI}							$0CONFIGINI}
-		${ReplaceInFile} $9 $0PAL}								$0PAC}
-		${ReplaceInFile} $9 $0DEFSET}							$0DEFCONF}
-		${ReplaceInFile} $9 $0SET}								$0CONF}
-		${ReplaceInFile} $9 $0DEFDATA}							$0DEFSET}
-		${ReplaceInFile} $9 $0DATA}								$0SET}
-		${ReplaceInFile} $9 $0ReadLauncherConfig}				$0ReadWrapperConfig}
-		${ReplaceInFile} $9 $0WriteLauncherConfig}				$0WriteWrapperConfig}
-		${ReplaceInFile} $9 $0DeleteLauncherConfig}				$0DeleteWrapperConfig}
-		${ReplaceInFile} $9 $0DeleteLauncherConfigSec}			$0DeleteWrapperConfigSec}
-		${ReplaceInFile} $9 $0ReadLauncherConfigWithDefault}	$0ReadWrapperConfigWithDefault}
-		${ReplaceInFile} $9 $0PAF}								$0TREE}
-		${ReplaceInFile} $9 $0PAFKEYS}							$0TREEKEYS}		
-		${ReplaceInFile} $9 PAL:LanguageCode					PAC:LanguageCode
-		${ReplaceInFile} $9 PAL:LocaleCode2						PAC:LanguageCode2
-		${ReplaceInFile} $9 PAL:LocaleCode3						PAC:LanguageCode3
-		${ReplaceInFile} $9 PAL:LocaleGlibc						PAC:LanguageGlibc
-		${ReplaceInFile} $9 PAL:LocaleWinName					PAC:LanguageNSIS
-		${ReplaceInFile} $9 PAL:LocaleName						PAC:LanguageName
-		${ReplaceInFile} $9 PAL:LocaleID						PAC:LanguageLCID
-		${ReplaceInFile} $9 PAL:LanguageCustom					PAC:LanguageCustom
+		${ReplaceInFile} $9 PortableApps.comLanguageCode			PortableAppsLanguageCode
+		${ReplaceInFile} $9 PortableApps.comLocaleCode2				PortableAppsLocaleCode2
+		${ReplaceInFile} $9 PortableApps.comLocaleCode3				PortableAppsLocaleCode3
+		${ReplaceInFile} $9 PortableApps.comLocaleGlibc				PortableAppsLocaleGlibc
+		${ReplaceInFile} $9 PortableApps.comLocaleWinName			PortableAppsLocaleWinName
+		${ReplaceInFile} $9 PortableApps.comLocaleName				PortableAppsLocaleName
+		${ReplaceInFile} $9 PortableApps.comLocaleID				PortableAppsLocaleID
+		${ReplaceInFile} $9 $0ReadUser}								$0ReadUserConfig}
+		${ReplaceInFile} $9 $0LAUNCHER}								$0WRAPPER}
+		${ReplaceInFile} $9 $0LAUNCHER2}							$0WRAPPER2}
+		${ReplaceInFile} $9 $0OTHER}								$0ETC}
+		${ReplaceInFile} $9 $0PAL}									$0PAC}
+		${ReplaceInFile} $9 $0DEFDATA}								$0DEFSET}
+		${ReplaceInFile} $9 $0DEFSET}								$0DEFCFG}
+		${ReplaceInFile} $9 $0DATA}									$0CFG}
+		${ReplaceInFile} $9 $0ReadLauncherConfig}					$0ReadWrapperConfig}
+		${ReplaceInFile} $9 $0WriteLauncherConfig}					$0WriteWrapperConfig}
+		${ReplaceInFile} $9 $0DeleteLauncherConfig}					$0DeleteWrapperConfig}
+		${ReplaceInFile} $9 $0DeleteLauncherConfigSec}				$0DeleteWrapperConfigSec}
+		${ReplaceInFile} $9 $0ReadLauncherConfigWithDefault}		$0ReadWrapperConfigWithDefault}
+		${ReplaceInFile} $9 $0PAF}									$0TREE}
+		${ReplaceInFile} $9 $0PAFKEYS}								$0TREEKEYS}		
+		${ReplaceInFile} $9 PAL:LanguageCode						PAC:LanguageCode
+		${ReplaceInFile} $9 PAL:LocaleCode2							PAC:LanguageCode2
+		${ReplaceInFile} $9 PAL:LocaleCode3							PAC:LanguageCode3
+		${ReplaceInFile} $9 PAL:LocaleGlibc							PAC:LanguageGlibc
+		${ReplaceInFile} $9 PAL:LocaleWinName						PAC:LanguageNSIS
+		${ReplaceInFile} $9 PAL:LocaleName							PAC:LanguageName
+		${ReplaceInFile} $9 PAL:LocaleID							PAC:LanguageLCID
+		${ReplaceInFile} $9 PAL:LanguageCustom						PAC:LanguageCustom
+		${ReplaceInFile} $9 PAL:DataDir								PAC:ConfigDir
+		${ReplaceInFile} $9 PAC:DataDir								PAC:ConfigDir
 	${EndIf}
 	SetDetailsPrint lastused
 FunctionEnd
@@ -585,7 +745,10 @@ Section Main
 	${IfNot} ${FileExists} $NSIS
 		StrCpy $ERROROCCURED true
 		${WriteErrorLog} "NSIS not found at $NSIS."
-		MessageBox MB_ICONSTOP "NSIS was not found! (Looked for it in $NSIS)${NEWLINE}${NEWLINE}You can specify a custom path to makensis.exe in $EXEDIR\bin\settings.ini, [WrapperCompiler]:makensis"
+		MessageBox MB_ICONSTOP "\
+			NSIS was not found! (Looked for it in $NSIS)${NEWLINE} \
+			${NEWLINE}You can specify a custom path to makensis.exe \
+			in $EXEDIR\cfg\settings.ini, [WrapperCompiler]:makensis"
 		Abort
 	${EndIf}
 
@@ -662,7 +825,7 @@ Section Main
 	DetailPrint "Checking for old PAF build to convert to the new format..."
 	DetailPrint " "
 	
-	${If} ${FileExists} "$PACKAGE\App\AppInfo\Launcher\*.*"
+	${If} ${FileExists} "${APPINFODIR}\Launcher\*.*"
 		StrCpy $CONVERT true
 	${EndIf}
 
@@ -676,27 +839,27 @@ Section Main
 	SetDetailsPrint lastused
 	
 	${If} $CONVERT == true
-		${If} ${FileExists} "$PACKAGE\App\AppInfo\Launcher\Custom.nsh"
+		${If} ${FileExists} "${APPINFODIR}\Launcher\Custom.nsh"
 			${ConvertPath} "App\AppInfo\Launcher\Custom.nsh" "App\AppInfo\${EXTEND}"
 		${EndIf}
-		${If} ${FileExists} "$PACKAGE\App\AppInfo\Launcher\Debug.nsh"
+		${If} ${FileExists} "${APPINFODIR}\Launcher\Debug.nsh"
 			${ConvertPath} "App\AppInfo\Launcher\Debug.nsh" "App\AppInfo\${DBUG}"
 		${EndIf}
-		${If} ${FileExists} "$PACKAGE\App\AppInfo\instsller.ini"
+		${If} ${FileExists} "${APPINFODIR}\instsller.ini"
 			${ConvertPath} "App\AppInfo\installer.ini" "App\AppInfo\${INSTALLINI}"
 		${EndIf}
-		${If} ${FileExists} "$PACKAGE\App\AppInfo\Launcher\$AppID.ini"
+		${If} ${FileExists} "${APPINFODIR}\Launcher\$AppID.ini"
 			${ConvertPath} "App\AppInfo\Launcher\$AppID.ini" "App\AppInfo\${WRAPPERINI}"
-			${If} ${FileExists} "$PACKAGE\App\AppInfo\Launcher\Source\*.*"
+			${If} ${FileExists} "${APPINFODIR}\Launcher\Source\*.*"
 				StrCpy $FGBUILD true
 				DetailPrint "Found a PAF built by FukenGruven!"
 				DetailPrint "Preserving his old source files..."
 				DetailPrint "Moving App\AppInfo\Launcher\Source -> etc\FGSource"
 				SetDetailsPrint none
-				CopyFiles /SILENT "$PACKAGE\App\AppInfo\Launcher\Source" "$PACKAGE\etc\FGSource"
-				RMDir /r "$PACKAGE\App\AppInfo\Launcher\Source"
+				CopyFiles /SILENT "${APPINFODIR}\Launcher\Source" "$PACKAGE\etc\FGSource"
+				RMDir /r "${APPINFODIR}\Launcher\Source"
 			${EndIf}
-			RMDir /r "$PACKAGE\App\AppInfo\Launcher"
+			RMDir /r "${APPINFODIR}\Launcher"
 			SetDetailsPrint lastused
 		${EndIf}
 		${If} ${FileExists} "$PACKAGE\App\$AppShortname\*.*"
@@ -719,15 +882,15 @@ Section Main
 			${If} ${FileExists} "$PACKAGE\App\DefaultData\settings\*.*"
 				${ConvertPath} "App\DefaultData\settings" "App\DefaultData\Config"
 			${EndIf}
-			${ConvertPath} "App\DefaultData" "App\DefaultSettings"
+			${ConvertPath} "App\DefaultData" "App\DefaultConfig"
 		${EndIf}
 		${If} ${FileExists} "$PACKAGE\Data\*.*"
 			${If} ${FileExists} "$PACKAGE\Data\settings\*.*"
 				${ConvertPath} "Data\settings" "Data\Config"
 			${EndIf}
-			DetailPrint "Moving Data -> bin\Settings"
+			DetailPrint "Moving Data -> cfg"
 			SetDetailsPrint none
-			CopyFiles /SILENT "$PACKAGE\Data" "$PACKAGE\bin\Settings"
+			CopyFiles /SILENT "$PACKAGE\Data" "$PACKAGE\cfg"
 			RMDir /r "$PACKAGE\Data"
 			SetDetailsPrint lastused
 		${EndIf}
@@ -738,9 +901,9 @@ Section Main
 		${If} ${FileExists} "$PACKAGE\help.html"
 			Delete "$PACKAGE\help.html"
 		${EndIf}
-		${If} ${FileExists} "$PACKAGE\App\AppInfo\eula.txt"
-			Rename "$PACKAGE\App\AppInfo\eula.txt" "$PACKAGE\App\AppInfo\eula.txt.temp"
-			Rename "$PACKAGE\App\AppInfo\eula.txt.temp" "$PACKAGE\App\AppInfo\EULA.txt"
+		${If} ${FileExists} "${APPINFODIR}\eula.txt"
+			Rename "${APPINFODIR}\eula.txt" "${APPINFODIR}\eula.txt.temp"
+			Rename "${APPINFODIR}\eula.txt.temp" "${APPINFODIR}\EULA.txt"
 		${EndIf}
 		${If} ${FileExists} "$PACKAGE\Other\Source\LauncherLicense.txt"
 			Delete "$PACKAGE\Other\Source\LauncherLicense.txt"
@@ -779,24 +942,24 @@ Section Main
 			RMDir /r "$PACKAGE\Other"
 			Rename "$PACKAGE\App" "$PACKAGE\AppTemp"
 			Rename "$PACKAGE\AppTemp" "$PACKAGE\app"
-			Rename "$PACKAGE\App\AppInfo\appinfo.ini" "$PACKAGE\App\AppInfo\appinfo.ini.temp"
-			Rename "$PACKAGE\App\AppInfo\appinfo.ini.temp" "$PACKAGE\App\AppInfo\AppInfo.ini"
-			Rename "$PACKAGE\App\AppInfo\appicon.ico" "$PACKAGE\App\AppInfo\appicon.ico.temp"
-			Rename "$PACKAGE\App\AppInfo\appicon.ico.temp" "$PACKAGE\App\AppInfo\AppIcon.ico"
-			Rename "$PACKAGE\App\AppInfo\appicon_16.png" "$PACKAGE\App\AppInfo\appicon_16.png.temp"
-			Rename "$PACKAGE\App\AppInfo\appicon_16.png.temp" "$PACKAGE\App\AppInfo\AppIcon_16.png"
-			Rename "$PACKAGE\App\AppInfo\appicon_32.png" "$PACKAGE\App\AppInfo\appicon_32.png.temp"
-			Rename "$PACKAGE\App\AppInfo\appicon_32.png.temp" "$PACKAGE\App\AppInfo\AppIcon_32.png"
-			Rename "$PACKAGE\App\AppInfo\appicon_128.png" "$PACKAGE\App\AppInfo\appicon_128.png.temp"
-			Rename "$PACKAGE\App\AppInfo\appicon_128.png.temp" "$PACKAGE\App\AppInfo\AppIcon_128.png"
+			Rename "${APPINFODIR}\appinfo.ini" "${APPINFODIR}\appinfo.ini.temp"
+			Rename "${APPINFODIR}\appinfo.ini.temp" "${APPINFODIR}\AppInfo.ini"
+			Rename "${APPINFODIR}\appicon.ico" "${APPINFODIR}\appicon.ico.temp"
+			Rename "${APPINFODIR}\appicon.ico.temp" "${APPINFODIR}\AppIcon.ico"
+			Rename "${APPINFODIR}\appicon_16.png" "${APPINFODIR}\appicon_16.png.temp"
+			Rename "${APPINFODIR}\appicon_16.png.temp" "${APPINFODIR}\AppIcon_16.png"
+			Rename "${APPINFODIR}\appicon_32.png" "${APPINFODIR}\appicon_32.png.temp"
+			Rename "${APPINFODIR}\appicon_32.png.temp" "${APPINFODIR}\AppIcon_32.png"
+			Rename "${APPINFODIR}\appicon_128.png" "${APPINFODIR}\appicon_128.png.temp"
+			Rename "${APPINFODIR}\appicon_128.png.temp" "${APPINFODIR}\AppIcon_128.png"
 			ClearErrors
-			${If} ${FileExists} "$PACKAGE\App\AppInfo\${EXTINS}"
+			${If} ${FileExists} "${APPINFODIR}\${EXTINS}"
 				MessageBox MB_ICONEXCLAMATION|MB_TOPMOST "${PAInstaller}"					
 				DetailPrint "Converting ${EXTINS} -> PortableApps.comInstallerCustom.nsh"
 				${IfNot} ${FileExists} "$PACKAGE\Other\Source\*.*"
 					CreateDirectory "$PACKAGE\Other\Source"
 				${EndIf}
-				Rename "$PACKAGE\App\AppInfo\${EXTINS}" "$PACKAGE\Other\Source\PortableApps.comInstallerCustom.nsh"
+				Rename "${APPINFODIR}\${EXTINS}" "$PACKAGE\Other\Source\PortableApps.comInstallerCustom.nsh"
 				CopyFiles /SILENT "$EXEDIR\etc\*.html" "$PACKAGE"
 			${EndIf}
 			; ReadINIStr $0 $EXEDIR\bin\settings.ini WrapperCompiler notified
@@ -828,8 +991,8 @@ Section Main
 		DetailPrint "For Example: %PAL:AppDir% -> %PAC:AppDir%"
 		DetailPrint " "
 		SetDetailsPrint none
-		${StringConvertInFile} "$PACKAGE\bin\Settings\Config\$AppIDSettings.ini" "PAL:" "PAC:"
-		${StringConvertInFile} "$PACKAGE\bin\Settings\Config\$AppIDSettings.ini" "PortableApps.comLauncher" "PortableAppsCompiler"
+		${StringConvertInFile} "$PACKAGE\cfg\Settings\$AppIDSettings.ini" "PAL:" "PAC:"
+		${StringConvertInFile} "$PACKAGE\cfg\Settings\$AppIDSettings.ini" "PortableApps.comLauncher" "PortableAppsCompiler"
 		${StringConvertInFile} "${WRAPPERPATH}" "%PAL:" "%PAC:"
 		${StringConvertInFile} "${WRAPPERPATH}" "PortableApps.comLauncher" "PortableAppsCompiler"
 		${StringConvertInFile} "${WRAPPERPATH}" "PortableApps.com" "PortableApps"
@@ -890,7 +1053,7 @@ Section Main
 	DetailPrint " "
 	SetDetailsPrint none
 	
-	Delete "$EXEDIR\bin\WrapperCompilerLog.txt"
+	Delete "$EXEDIR\cfg\WrapperCompilerLog.txt"
 
 	Delete "${DEFINEINC}"
 
@@ -1271,7 +1434,7 @@ Section Main
 
 	${If} $ERROROCCURED != true
 		; Build the thing
-		ExecDos::exec `"$NSIS" /O"$EXEDIR\bin\WrapperCompilerLog.txt" /DPACKAGE="$PACKAGE" /DNamePortable="$Name" /DAppID="$AppID" /DVersion="${PACVER}"$2 "$EXEDIR\etc\source\PortableAppsCompiler.nsi"` "" ""
+		ExecDos::exec `"$NSIS" /O"$EXEDIR\cfg\WrapperCompilerLog.txt" /DPACKAGE="$PACKAGE" /DNamePortable="$Name" /DAppID="$AppID" /DVersion="${PACVER}"$2 "$EXEDIR\etc\source\PortableAppsCompiler.nsi"` "" ""
 		Pop $R1
 		${If} $R1 <> 0
 			StrCpy $ERROROCCURED true
