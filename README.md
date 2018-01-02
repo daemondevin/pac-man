@@ -173,7 +173,7 @@ DirectoryCleanup=true
 > ```INI
 > [Service1]
 > Name=SomeServiceName
-> Path=%PAC:AppDir%\service32.sys
+> Path=%PAC:AppDir%\MyProgram\service32.sys
 > Type=kernel
 > Start=auto
 > Depend=
@@ -181,7 +181,7 @@ DirectoryCleanup=true
 >
 > [Service2]
 > Name=AnotherService
-> Path=%PAC:DataDir%\service64.exe
+> Path=%PAC:ConfigDir%\service64.exe
 > Type=own
 > Start=demand
 > Depend=
@@ -189,15 +189,15 @@ DirectoryCleanup=true
 > ```
 
 * __RegDLLs:__ Add support for handling library (DLLs) file registration.
-> To use this feature add the section `[RegisterDLL1]` (numerical ordering) to the `Wrapper.ini` file. Each entry supports two keys; _ProgID_ (The DLL's ProgID) and _File_ (The path to DLL. Supports environment variables). Example usage:
+> To use this feature add the section `[RegisterDLL1]` (numerical ordering) to the `Wrapper.ini` file. Each entry supports two keys; _ProgID_ (The DLL's ProgID) and _File_ (The path to DLL. Supports environment variables). All available values for `Type` are as follows: _REGDLL_, _REGTLB for user_, _REGTLB_, _REGDLLTLB_, and _REGEXE_. Refer to the `TypeLib.nsh` file for reference. Example usage:
 > ```INI
 > [RegisterDLL1]
-> ProgID=MyAppControlPanel
-> File=%PAC:AppDir%\controller.cpl
+> Tyoe=REGEXE
+> File=%PAC:AppDir%\MyProgram\MyProgram.exe
 >
 > [RegisterDLL2]
-> ProgID=DynamicLibrary
-> File=%PAC:DataDir%\dynlib.dll
+> Tyoe=REGDLL
+> File=%PAC:ConfigDir%\dynlib.dll
 > ```
 
 * __Tasks:__ Enable the TaskCleanup segment for removing any Windows Tasks that were added during runtime.
@@ -232,7 +232,7 @@ DirectoryCleanup=true
 > To use this feature add the section `[FilesCleanup]` to the `Wrapper.ini` file. Each entry should be the path to the file that needs deleting. Supports environment variables. Example usage:
 > ```INI
 > [FilesCleanup]
-> 1=%PAC:DataDir%\uselessUpgradeFile.xml
+> 1=%PAC:ConfigDir%\uselessUpgradeFile.xml
 > 2=%APPDATA%\MyProgram\purposelessCfg.ini
 > ```
 
