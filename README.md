@@ -35,10 +35,10 @@ With all that said, enjoy the fresh ideas which are currently being worked out.
 >       |    |       ExtendWrapper.nsh       (Formally Custom.nsh)
 >       |    |       Wrapper.ini            (Formally Launcher.ini)
 >       |    |       
->       |    \---DefaultSettings (Formally DefaultData)
+>       |    \---DefaultConfig (Formally DefaultData)
 >       |        |   DEFAULT 7-ZIP SETTINGS HERE
 >       |        |
->       |        \---Config (Formally Default Settings)
+>       |        \---Settings
 >       |            7-Zip.reg
 >       |               
 >       +---bin
@@ -56,24 +56,22 @@ With all that said, enjoy the fresh ideas which are currently being worked out.
 >       |    |        ''  ''
 >       |    |
 >       |    +---7-Zip64 (64-Bit Program Files)
->       |    |   |    7-zip.dll
->       |    |   |    7z.dll
->       |    |   |    7z.exe
->       |    |   |    7zFM.exe
->       |    |   |    '' '' ''
->       |    |   |   
->       |    |   \---Lang
->       |    |        af.txt
->       |    |        an.txt
->       |    |        ar.txt
->       |    |        ''  ''
->       |    |
->       |    \---Settings (Fromally Data)
->       |        |    7-ZIP SETTINGS HERE
+>       |        |    7-zip.dll
+>       |        |    7z.dll
+>       |        |    7z.exe
+>       |        |    7zFM.exe
+>       |        |    '' '' ''
 >       |        |   
->       |        \---Config (Fromally Settings)
->       |             7-Zip.reg
->       |             7-ZipPortableSettings.ini
+>       |        \---Lang
+>       |             af.txt
+>       |             an.txt
+>       |             ar.txt
+>       |             ''  ''
+>       |
+>       |---cfg (Formally Data)
+>       |    +--Settings
+>       |            7-Zip.reg
+>       |            7-ZipPortableSettings.ini
 >       |
 >       \---etc
 >            7-ZipPortable.ini
@@ -106,6 +104,7 @@ The following is a list of features that is currently available with PortableApp
 
 __Environment Variables__
 
+- `%PAL:DataDir%`/`%PAC:DataDir%` has been changed to `%PAC:ConfigDir%`  
 - `%PROGRAMDATA%` has now been added and kept `%ALLUSERSAPPDATA%` for backwards compatibility. Both can be used anywhere you can use an evironment variable.
 - `%PAC:CommonFiles%` may now be used within the _Launcher.ini_ configuration file. This environment variable will point to `..\PortableApps\CommonFiles` if applicable. Can be used anywhere you can use an environment variable.
 > Example:
