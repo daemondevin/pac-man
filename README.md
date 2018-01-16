@@ -43,7 +43,7 @@ The following is a list of features that is currently available with PortableApp
 - Registering DLL files.
 - Registry redirection support.
 - File-system redirection support.
-- Automatic [code-signing](#code-signing) with the [CompilerSigner](#compilersigner.exe)
+- Automatic [code-signing](#code-signing) with the [CompilerSigner](#compilersignerexe)
 - Font support for apps that make use of fonts.
 - **Hidden Functionality**  
   - To skip the welcome page and bypass that first message, you can simply add `SkipWelcomePage=true` to the section under `[LauncherCompiler]` in the `settings.ini` file inside the `Data` folder. 
