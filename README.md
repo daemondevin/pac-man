@@ -320,7 +320,7 @@ I have created a small, commandline utility (`CompilerSigner.exe`, source includ
 
 
 ### CompilerSigner.exe
-If you'd like to use `CompilerSigner.exe` outside the compiling wizard, you can use the following commandline parameters to do so.
+If you'd like to use `CompilerSigner.exe` outside the compiling wizard, you can use the following commandline parameters to do so. When you call this tool, be sure to call it from where it's currently located within the `Other\Source` directory because this tool assumes that the `signtool.exe` utility is in `Contrib\bin\signtool`. I'll update it to use a static file from inside the binary but until than, keep the stucture as is otherwise it will not work correctly.
 
 ```
 CompilerSigner.exe --switch=value
