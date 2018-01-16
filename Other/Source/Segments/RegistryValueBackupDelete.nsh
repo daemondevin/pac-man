@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   RegistryValueBackupDelete.nsh
+;   This file reads the CompilerWrapper.ini file and handles the registry values that get backed up and restored later.
+; 
+
 ${SegmentFile}
 ${SegmentPrePrimary}
 	!ifmacrodef PreRegistryValue

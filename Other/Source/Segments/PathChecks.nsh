@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   PathChecks.nsh
+;   This file checks and verifies the current path for UNC/spaces support before launching the wrapper.
+; 
+
 ${SegmentFile}
 ${SegmentInit}
 	${If} $EXEDIR startswith $PROGRAMFILES32

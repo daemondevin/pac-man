@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   Core.nsh
+;   This file provides core functionality and instructions for use with the other segments.
+; 
+
 Var LauncherFile
 ;${If} ${FilesExists}, ${If} ${DirExists}.
 !macro _FilesExists _a _b _t _f
@@ -537,7 +550,6 @@ FunctionEnd
 		Exch $0
 	FunctionEnd
 !endif
-
 !ifdef Include_ReadLine
 	Function ReadLine
 		!macro _ReadLine _FILE _NUMBER _RESULT
@@ -1424,6 +1436,38 @@ Function GetAfterChar
 	Pop $1
 	Exch $0
 FunctionEnd
+!ifdef FONTS_ENABLED
+	Function CreateFontsFolder
+		IfFileExists "${PACKAGE}\App\DefaultData\Fonts" +2
+		CreateDirectory /SILENT "${PACKAGE}\App\DefaultData\Fonts"
+		IfFileExists "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" _FNT_DONE
+		FileOpen $0 "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" w
+		FileWrite $0		"Font(s) added here will be loaded on launch and accessible during runtime."
+		FileWriteByte $0	"13"
+		FileWriteByte $0	"10"
+		FileWrite $0		"NOTE:"
+		FileWriteByte $0	"13"
+		FileWriteByte $0	"10"
+		FileWrite $0		"$\tA lot of fonts will impact the speed/workload of the launcher."
+		FileWriteByte $0	"13"
+		FileWriteByte $0	"10"
+		FileWriteByte $0	"13"
+		FileWriteByte $0	"10"
+		FileWrite $0		"Supported Fonts:${NEWLINE}\
+							$\t • .fon${NEWLINE}\
+							$\t • .fnt${NEWLINE}\
+							$\t • .ttf${NEWLINE}\
+							$\t • .ttc${NEWLINE}\
+							$\t • .fot${NEWLINE}\
+							$\t • .otf${NEWLINE}\
+							$\t • .mmm${NEWLINE}\
+							$\t • .pfb${NEWLINE}\
+							$\t • .pfm${NEWLINE}"
+		FileWriteByte $0 "13"
+		FileWriteByte $0 "10"
+		_FNT_DONE:
+	FunctionEnd
+!endif
 ${SegmentFile}
 ${Segment.onInit}
 	${GetBaseName} $EXEFILE $BaseName

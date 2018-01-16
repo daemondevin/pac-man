@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   FileWrite.nsh
+;   This file handles file writes and text replacements that are declared in the Launcher.ini file.
+; 
+
 ${SegmentFile}
 ${SegmentPrePrimary}
 	!ifmacrodef FileWrite
@@ -23,7 +36,9 @@ ${SegmentPrePrimary}
 			${If} $4 != true
 			${AndIf} $4 != false
 			${AndIfNot} ${Errors}
-				MessageBox MB_OK|MB_ICONSTOP `Error: invalid value '$4' for [FileWrite$R0]:CaseSensitive. Please refer to the Manual for valid values.`
+				MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid Value${NEWLINE} \
+					'$4' for [FileWrite$R0]:CaseSensitive.${NEWLINE}${NEWLINE} \
+					Please refer to the Manual for valid values.`
 				${Continue}
 			${EndIf}
 		${ElseIf} $0 == INI
@@ -72,7 +87,9 @@ ${SegmentPrePrimary}
 			${Else}
 				${If} $4 != false
 				${AndIfNot} ${Errors}
-					MessageBox MB_OK|MB_ICONSTOP `Error: invalid value '$4' for [FileWrite$R0]:CaseSensitive. Please refer to the Manual for valid values.`
+					MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid Value!${NEWLINE} \ 
+						'$4' for [FileWrite$R0]:CaseSensitive.${NEWLINE}${NEWLINE} \
+						Please refer to the Manual for valid values.`
 				${EndIf}
 				${If} $2 != $3
 					StrCpy $5 replace
@@ -83,11 +100,15 @@ ${SegmentPrePrimary}
 			${EndIf}
 !else
 		${ElseIf} $0 == Replace
-			MessageBox MB_OK|MB_ICONSTOP "To use Replace features for [FileWrite$R0] please add 'FileWriteReplace=true' to the AppInfo.ini"
+			MessageBox MB_OK|MB_ICONSTOP "WARNING: [FileWrite]:Type=Replace${NEWLINE} \ 
+				This feature needs [Dependencies]:FileWriteReplace set to true.${NEWLINE}${NEWLINE} \
+				EXAMPLE (AppInfo.ini):${NEWLINE}[Dependencies]${NEWLINE}FileWriteReplace=true"
 			${Continue}
 !endif
 		${Else}
-			MessageBox MB_OK|MB_ICONSTOP `Error: invalid value '$0' for [FileWrite$R0]:Type. Please refer to the Manual for valid values.`
+			MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid Value! ${NEWLINE} \
+				'$0' for [FileWrite$R0]:Type. ${NEWLINE}${NEWLINE} \
+				Please refer to the Manual for valid values.`
 			${Continue}
 		${EndIf}
 		${ForEachFile} $R1 $R4 $7
@@ -137,7 +158,9 @@ ${SegmentPrePrimary}
 					FileClose $9
 				${ElseIf} $5 != UTF-16LE
 				${AndIf} $5 != ANSI
-					MessageBox MB_OK|MB_ICONSTOP `Error: invalid value '$5' for [FileWrite$R0]:Encoding. Please refer to the Manual for valid values.`
+					MessageBox MB_OK|MB_ICONSTOP `ERROR: Invalid Value!${NEWLINE} \
+						'$5' for [FileWrite$R0]:Encoding.${NEWLINE}${NEWLINE} \
+						Please refer to the Manual for valid values.`
 				${EndIf}
 				${If} $5 == UTF-16LE
 					${If} $4 == true

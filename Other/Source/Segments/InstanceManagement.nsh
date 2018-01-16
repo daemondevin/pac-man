@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   InstanceManagement.nsh
+;   This file handles the launch of a secondary instance of an application.
+; 
+
 Var SecondaryLaunch
 !macro _InstanceManagement_QuitIfRunning
 	${If} $SecondaryLaunch != true
@@ -6,6 +19,7 @@ Var SecondaryLaunch
 		Quit
 	${EndIf}
 !macroend
+
 ${SegmentFile}
 ${SegmentInit}
 	System::Call 'kernel32::CreateMutex(i0,i0,t"${APPNAME}-${APPNAME}")?e'

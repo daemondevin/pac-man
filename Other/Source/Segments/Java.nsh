@@ -1,3 +1,17 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   Java.nsh
+;   This file enables support for using Java or JDK.
+; 
+
+!ifdef JAVA
 ${SegmentFile}
 ${SegmentInit}
 	ClearErrors
@@ -54,3 +68,9 @@ ${SegmentInit}
 		${InvalidValueError} [Activate]:Java $JavaMode
 	${EndIf}
 !macroend
+!else
+${SegmentFile}
+${SegmentInit}
+	StrCpy $UsingJavaExecutable false
+!macroend
+!endif

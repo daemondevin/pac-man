@@ -1,3 +1,17 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   DotNet.nsh
+;   This file provides support for checking if the system has the required .NET Framework.
+; 
+
+!ifdef DOTNET
 Function dotNETCheck
 	!define CheckDOTNET "!insertmacro _CheckDOTNET"
 	!macro _CheckDOTNET _RESULT _VALUE
@@ -84,7 +98,9 @@ Function HasDotNETFramework
 	Exch $0
 FunctionEnd
 
-!include DotNetVer.nsh
+!ifndef ___DOTNETVER__NSH___
+	!include DotNetVer.nsh
+!endif
 
 ${SegmentFile}
 ${SegmentInit}
@@ -95,28 +111,33 @@ ${SegmentInit}
 	;  - (1.0|1.1|2.0|3.0|3.5)[SP<n>]
 	;  - 4.0[SP<n>][C|F]
 	;
-	; Added by demon.devin
+	; Added by daemon.devin
 	;  - (4.7|4.6.2|4.6.1|4.6|4.5.2|4.5.1|4.5)
 	; 
-	ReadINIStr $0 $EXEDIR\App\AppInfo\appinfo.ini Dependencies UsesDotNetVersion
-	${If} $0 <= "4.0"
-		!define dotNETVersion "$0"
+	ReadINIStr $DotNETVersion "${INFOINI}" Dependencies UsesDotNetVersion
+	${If} $DotNETVersion <= "4.0"
 		${IfNot} ${HasDotNet4.0}
-			${DebugMsg} "Unable to find .NET Framework ${dotNETVersion}." ; Required .NET version not found
+			${DebugMsg} "Unable to find .NET Framework $DotNETVersion." ; Required .NET version not found
 			MessageBox MB_OK|MB_ICONSTOP `$(LauncherNoDotNet)`
 			Quit
 		${Else}
-			${DebugMsg} ".NET Framework ${dotNETVersion} found." ; Required .NET version found. 4.0 or below.
+			${DebugMsg} ".NET Framework $DotNETVersion found." ; Required .NET version found. 4.0 or below.
 		${EndIf}
-	${ElseIf} $0 >= "4.5"
-		${CheckDOTNET} $R0 $0
-		IfErrors 0 +4
-		${DebugMsg} "Unable to find .NET Framework $0" ; Required .NET version not found
-		MessageBox MB_OK|MB_ICONSTOP `$(LauncherNoDotNet)`
-		Quit
-		${DebugMsg} "The required .NET Framework was found." ; Required .NET version found. Has 4.5 or above.
+	${ElseIf} $DotNETVersion >= "4.5"
+		Push $DotNETVersion
+		Call dotNETCheck
+		Pop $0
+		${If} $0 == false
+		${OrIf} ${Errors}
+			${DebugMsg} "Unable to find .NET Framework $DotNETVersion" ; Required .NET version not found
+			MessageBox MB_OK|MB_ICONSTOP `$(LauncherNoDotNet)`
+			Quit
+		${Else}
+			${DebugMsg} "The required .NET Framework was found." ; Required .NET version found. Has 4.5 or above.
+		${EndIf}
 	${Else}
 		; Invalid .NET version
-		${InvalidValueError} [Dependencies]:UsesDotNetVersion $0
+		${InvalidValueError} [Dependencies]:UsesDotNetVersion $DotNETVersion
 	${EndIf}
 !macroend
+!endif

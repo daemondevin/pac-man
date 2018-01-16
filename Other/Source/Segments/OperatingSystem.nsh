@@ -1,5 +1,22 @@
-!include WinVer.nsh
-!macro _OperatingSystem_CheckOS Check Value
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   OperatingSystem.nsh
+;   This file handles support for the Host's allotted minimum/maximum operating system version.
+; 
+
+!ifndef ___WINVER__NSH___
+	!include WinVer.nsh
+!endif
+
+!define CheckOS "!insertmacro _CheckOS"
+!macro _CheckOS Check Value
 	ClearErrors
 	${ReadLauncherConfig} $0 Launch ${Value}
 	${Select} $0
@@ -48,11 +65,12 @@
 		Quit
 	${EndIf}
 !macroend
+
 ${SegmentFile}
 ${Segment.onInit}
 	!ifmacrodef OS
 		!insertmacro OS
 	!endif
-	!insertmacro _OperatingSystem_CheckOS Least MinOS
-	!insertmacro _OperatingSystem_CheckOS Most MaxOS
+	${CheckOS} Least MinOS
+	${CheckOS} Most MaxOS
 !macroend

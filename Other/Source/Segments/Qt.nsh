@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   Qt.nsh
+;   This file handles the clean up of any Qt registry entries that are declared in the CompilerWrapper.ini file.
+; 
+
 ${SegmentFile}
 ${SegmentPostPrimary}
 	!ifmacrodef PreQT

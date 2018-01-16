@@ -1,3 +1,17 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   Fonts.nsh
+;   This file provides support for handling importing/restoring of fonts.
+; 
+
+!ifdef FONTS_ENABLE
 !define FNTDIR    `${DATA}\Fonts`
 !define FNTXT     `${FNTDIR}\.Portable.Fonts.txt`
 !define DEFFNTXT  `${DEFDATA}\Fonts\.Portable.Fonts.txt`
@@ -88,3 +102,4 @@ ${SegmentUnload}
 	Push `${FNTDIR}`
 	Call Fonts::Restore
 !macroend
+!endif

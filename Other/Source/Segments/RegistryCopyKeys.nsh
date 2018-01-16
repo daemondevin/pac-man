@@ -1,9 +1,24 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   RegistryCopyKeys.nsh
+;   This file handles the copying of registry keys that are declared in the Launcher.ini file.
+; 
+
+!ifdef RegCopy
 !ifndef PAF
 	!define PAF `HKCU\Software\PortableApps.com`
 !endif
 !ifndef PAFKEYS
 	!define PAFKEYS `${PAF}\Keys`
 !endif
+
 ${SegmentFile}
 ${SegmentPrePrimary}
 	${If} $Registry == true
@@ -83,3 +98,4 @@ ${SegmentPostPrimary}
 		Pop $R2
 	${EndIf}
 !macroend
+!endif

@@ -1,14 +1,26 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   ExecString.nsh
+;   This file handles the $ExecString and prepares it before the wrapper can execute.
+; 
+
 ${SegmentFile}
+
 Var ExecString
-!ifdef ExecAsUser
-	Var Parameters
-!endif
+
 ${SegmentPre}
-	${If} $UsingJavaExecutable != true
-		StrCpy $ExecString `"$AppDirectory\$ProgramExecutable"`
-	${Else}
+	!ifdef JAVA
 		StrCpy $ExecString `"$JavaDirectory\bin\$ProgramExecutable"`
-	${EndIf}
+	!else
+		StrCpy $ExecString `"$AppDirectory\$ProgramExecutable"`
+	!endif
 	!ifmacrodef ExecString
 		!insertmacro ExecString
 	!endif

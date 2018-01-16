@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   RunLocally.nsh
+;   This file enables support for copying the package to a local directory and executing from there.
+; 
+
 Var RunLocally
 ${SegmentFile}
 ${SegmentInit}

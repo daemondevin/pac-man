@@ -1,3 +1,17 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   FilesCleanup.nsh
+;   This file allows support for cleaning up files that are configured in the Launcher.ini file.
+; 
+
+!ifdef FileCleanup
 ${SegmentFile}
 ${SegmentPrePrimary}
 	StrCpy $R0 1
@@ -32,3 +46,4 @@ ${SegmentUnload}
 		IntOp $R0 $R0 + 1
 	${Loop}
 !macroend
+!endif

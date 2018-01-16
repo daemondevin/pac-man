@@ -1,20 +1,15 @@
-/* The PortableApps.com Launcher now does everything in it in "segments".
- * This means code can be grouped together by what it does rather than by when it runs.
- *
- * To facilitate this, there are a number of "hooks" you can latch onto.
- * The Primary and Secondary variants are for primary and secondary instances of the application.
- *   .onInit                     - things which must go in .onInit
- *   Init                        - load data into variables, do startup stuff
- *   Pre(Primary|Secondary)?     - Set up portability
- *   PreExec(Primary|Secondary)? - Just before it gets executed
- *   PostExec(Primary|Secondary)? - Just after it gets executed
- *   Post(Primary|Secondary)?    - Move settings and whatnot back
- *   Unload                      - Unload plug-ins, clean up the launcher itself
- *
- * When a new segment is created, be sure to add it below in RunSegmentAction(Reverse).
- */
+;=#
+;
+; PORTABLEAPPS COMPILER
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+;
+; Segments.nsh
+; 	This file is responsible for handling the execution of each segment file.
+; 
 
-; Create segment file definitions {{{1
 !macro _CreateSegmentDef _TYPE
 	!ifdef Segment${_TYPE}
 		!undef Segment${_TYPE}
@@ -42,7 +37,6 @@
 !macroend
 !define SegmentFile "!insertmacro SegmentFile"
 
-; Run an action {{{1
 !macro RunSegment Segment
 	!ifdef _DisableHook_${Segment}_${__FUNCTION__}
 		!echo "Segment ${Segment}, hook ${__FUNCTION__} has been disabled by Custom.nsh."
@@ -63,7 +57,7 @@
 !macroend
 !define RunSegment "!insertmacro RunSegment"
 
-/* Run an action (not being used) {{{1
+/* Run an action (not being used)
  * action = (.on)?Init|Unload|(Pre(Exec)?|Post)(Primary|Secondary)?
  * ${RunSegmentAction}        action
  * ${RunSegmentActionReverse} action <-- use this for Post as it does them in the reverse order (so that it's nested)
@@ -96,10 +90,10 @@
 !macroend
 !define RunSegmentActionReverse "!insertmacro RunSegment"
 /* End this bit */
-; Include the segments {{{1
+; Include the segments
 !include Segments\*.nsh
 
-; Customisation file {{{1
+; Customisation file
 !macro DisableHook Segment Hook
 	!define _DisableHook_${Segment}_${Hook}
 !macroend

@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   DirectoriesMove.nsh
+;   This file provides support for moving folders that are configured in the Launcher.ini file.
+; 
+
 !define Directory::BackupLocal `!insertmacro Directory::BackupLocal`
 !macro Directory::BackupLocal _LOCALDIR _SUBDIR
 	RMDir /r `${_LOCALDIR}\${_SUBDIR}.BackupBy${APPNAME}`

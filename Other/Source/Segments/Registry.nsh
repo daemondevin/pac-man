@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   Registry.nsh
+;   This file allows registry support in the applicable registry segments.
+; 
+
 ${SegmentFile}
 ${SegmentPre}
 	ReadINIStr $0 `${LAUNCHER}` Activate Registry

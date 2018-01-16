@@ -1,6 +1,19 @@
-; Internal PortableApps.com Launcher languages for message boxes etc.
-; The language is set in Segments/Language.nsh (but all the addition of
-; languages is done in this file).
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   Languages.nsh
+;   This file handles the internal languages for message boxes, etc.
+; 
+; NOTE
+;   The language is set in the Language.nsh segment.
+;   However, the addition of languages is done using this file.
+; 
 
 !tempfile LangAutoDetectFile
 !macro IncludeLang _LANG

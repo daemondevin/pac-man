@@ -1,3 +1,20 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   Language.nsh
+;   This file allows support for language handling and manipulates language variables.
+; 
+
+!ifndef _XML_LIB_
+	!include XML.nsh
+!endif
+
 ${SegmentFile}
 ${Segment.onInit}
 	!ifmacrodef Lang

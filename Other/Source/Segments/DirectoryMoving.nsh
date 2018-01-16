@@ -1,4 +1,18 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   DirectoryMoving.nsh
+;   This file reads/writes the last folder structure from the previous launch and sets the applicable variables.
+; 
+
 Var LastDirectory
+Var CurrentDirectory
 ${SegmentFile}
 ${SegmentInit}
 	${GetRoot} $EXEDIR $0
@@ -15,6 +29,7 @@ ${SegmentInit}
 		ClearErrors
 		${ReadLauncherConfig} $0 Launch DirectoryMoveOK
 		${If} $0 == no
+			StrCpy $CurrentDirectory "$EXEDIR"
 			MessageBox MB_ICONSTOP "$(LauncherDirectoryMoveNotAllowed)"
 			Call Unload
 			Quit

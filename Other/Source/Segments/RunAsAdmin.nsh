@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   RunAsAdmin.nsh
+;   This file enables support for executing the launcher with administrative rights. 
+; 
+
 !macro CaseUACCodeAlert CODE FORCEMESSAGE TRYMESSAGE
 	!if "${CODE}" == ""
 		${Default}
@@ -23,6 +36,7 @@
 		${EndIf}
 	${EndIf}
 !macroend
+
 ${SegmentFile}
 ${Segment.onInit}
 	!ifmacrodef CustomOverride

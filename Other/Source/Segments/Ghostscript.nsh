@@ -1,12 +1,19 @@
-${SegmentFile}
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   Ghostscript.nsh
+;   This file allows support for using Ghostscript.
+; 
 
-Var GSMode
-Var GSDirectory
-Var GSRegExists
-Var GSExecutable
-
+!ifdef GHOSTSCRIPT
 Function _Ghostscript_ValidateInstall
-	${If} $Bit = 64
+	${If} ${BitDepth} 64
 		${If} ${FileExists} $GSDirectory\bin\gswin64c.exe
 			StrCpy $GSExecutable $GSDirectory\bin\gswin64c.exe
 			;${DebugMsg} "Found valid 64-bit Ghostscript install at $GSDirectory."
@@ -41,6 +48,7 @@ FunctionEnd
 !macroend
 !define IsValidGhostscriptInstall `"" Ghostscript_ValidateInstall ""`
 
+${SegmentFile}
 ${SegmentInit}
 	; If [Activate]:Ghostscript=find|require, search for Ghostscript in the
 	; following locations (in order):
@@ -93,10 +101,10 @@ ${SegmentInit}
 		${InvalidValueError} [Activate]:Ghostscript $GSMode
 	${EndIf}
 !macroend
-
 ${SegmentPost}
 	${If} $GSRegExists != 0  ; Didn't exist before
 	${AndIf} ${RegistryKeyExists} "HKCU\Software\GPL Ghostscript"
 		${registry::DeleteKey} "HKCU\Software\GPL Ghostscript" $R9
 	${EndIf}
 !macroend
+!endif

@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   RegistryCleanup.nsh
+;   This file allows support for cleaning up registry entries that are configured in the Launcher.ini file.
+; 
+
 ${SegmentFile}
 ${SegmentPostPrimary}
 	!ifmacrodef RegCleanup

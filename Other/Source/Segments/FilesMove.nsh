@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   FilesMove.nsh
+;   This file provides support for moving files that are configured in the Launcher.ini file.
+; 
+
 !define BAK BackupBy${APPNAME}
 !define File::BackupLocal "!insertmacro File::BackupLocal"
 !macro File::BackupLocal _LOCALFILE
@@ -35,6 +48,7 @@
 	StrCpy $4 $1
 	StrCpy $1 $1\$2
 !macroend
+
 ${SegmentFile}
 ${SegmentPrePrimary}
 	!ifmacrodef PreFilesMove

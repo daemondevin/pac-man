@@ -1,9 +1,23 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   RefreshShellIcons.nsh
+;   This file enables support for handling the icon cache of Windows Explorer to refresh them before and after launch.
+; 
+
 !ifndef SHCNE_ASSOCCHANGED
 	!define SHCNE_ASSOCCHANGED 0x08000000
 !endif
 !ifndef SHCNF_IDLIST
 	!define SHCNF_IDLIST 0
 !endif
+
 ${SegmentFile}
 ${SegmentPreExec}
 	!ifmacrodef PreShellIcons

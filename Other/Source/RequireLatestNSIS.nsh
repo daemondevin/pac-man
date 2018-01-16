@@ -1,18 +1,23 @@
-; Require at least Unicode NSIS 2.46
-!ifndef NSIS_UNICODE
-	!error "You must compile the PortableApps.com Launcher with Unicode NSIS."
-!endif
+;=#
+;
+; PORTABLEAPPS COMPILER
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+;
+; RequireLatestNSIS.nsh
+; 	This file will make sure the latest build of NSIS is being used.
+; 
 
-!if ${NSIS_VERSION} == v2.45
-	!error "The PortableApps.com Launcher requires Unicode NSIS 2.46 or later."
-!else
-	!verbose push
-	!verbose 4
-	!echo "(If you get a compile error with !searchparse, please upgrade to Unicode NSIS 2.46 or later and try again.)"
-	!verbose pop
+!searchparse /noerrors "${NSIS_VERSION}" v _RLNSIS_TEMP b _RLNSIS_TEMP
+!searchparse /noerrors "${_RLNSIS_TEMP}" "" _RLNSIS_TEMP - _RLNSIS_TEMP
+!searchparse /noerrors "${_RLNSIS_TEMP}" "" _RLNSIS_TEMP . _RLNSIS_TEMP
+!if "${_RLNSIS_TEMP}" < 3
+	!searchparse /noerrors "${NSIS_VERSION}" v _RLNSIS_TEMP b _RLNSIS_TEMP
+	!searchparse /noerrors "${_RLNSIS_TEMP}" "" _RLNSIS_TEMP - _RLNSIS_TEMP
+	!error "ERROR: You only have NSIS ${_RLNSIS_TEMP}! \
+			NSIS 3.0 or later is required. \
+			Please upgrade your NSIS package to version 3.0 or later."
 !endif
-!searchparse ${NSIS_VERSION} "v" V
-!if ${V} < 2.46
-	!error "You only have Unicode NSIS ${V}, but Unicode NSIS 2.46 or later is required for proper Windows 7 support. Please upgrade to Unicode NSIS 2.46 or later and try again."
-!endif
-!undef V
+!undef _RLNSIS_TEMP

@@ -1,3 +1,16 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   DriveLetter.nsh
+;   This file sets variables according to the current drive letter and the drive letter from the previous launch.
+; 
+
 ${SegmentFile}
 ${SegmentInit}
 	!ifmacrodef Drive

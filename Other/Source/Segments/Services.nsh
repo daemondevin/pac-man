@@ -1,42 +1,47 @@
-;=# 
-; Services.nsh 1.0 (2017-11-20)
-; Written by demon.devin
-;
-; NOTES:
-; This file was created to replace the official services segment for the PortableApps.com Launcher
-; This segment will enable support for handling Windows Services without the need for a plugin.
-; For more information about how to make use of this segment, please visit:
-; http://softables.tk/docs/advanced/services
-;
-; Copyright 2017 Devin 'demon.devin' Gaul
-;
-; USAGE:
-; To make use of this segment, add the section [Service1] (numerical ordering) to the Launcher.ini file. 
-; Each entry supports six keys which are as follows: 
-;
-; Name		-	The local/portable service name.
-; Path		-	The path to the portable service executable. Supports environment variables.
-; Type		-	Specify whether you are dealing with a service, a kernel driver or a file system driver, etc.
-; 				Choose from: own, share, interact, kernel, filesys, rec
-; Start		-	Specify when the service is supposed to start.
-; 				Choose from: boot, system, auto, demand, disabled, delayed-auto
-; Depend	-	List any dependencies here separated by / (forward slash).
-; IfExists	-	If the service already exists, you can either skip it or replace it with the portable version of the service.
-; 				Choose from: skip, replace
-;
-; EXAMPLE:
-;
-; [Service1]
-; Name=ServiceName
-; Path=%PAL:DataDir%\drivers\ElbyCDIO.sys
-; Type=kernel
-; Start=system
-; Depend=
-; IfExists=replace
-;
+;=#
 ; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   Services.nsh
+;   This file enables support for handling Windows Services without the need for a plugin.
+; 
+; USAGE
+;	To make use of this segment, add the section [Service1] (numerical ordering) to the Launcher.ini file. 
+;	Each entry supports six keys which are as follows: 
+;
+;	Name		-	The local/portable service name.
+;	Path		-	The path to the portable service executable. Supports environment variables.
+;	Type		-	Specify whether you are dealing with a service, a kernel driver or a file system driver, etc.
+;					Choose from: own, share, interact, kernel, filesys, rec
+;	Start		-	Specify when the service is supposed to start.
+;					Choose from: boot, system, auto, demand, disabled, delayed-auto
+;	Depend		-	List any dependencies here separated by / (forward slash).
+;	IfExists	-	If the service already exists, you can either skip it or replace it with the portable version of the service.
+;					Choose from: skip, replace
+;
+; EXAMPLE
+;	[Service1]
+;	Name=ServiceName
+;	Path=%PAL:DataDir%\Service_driver.sys
+;	Type=kernel
+;	Start=system
+;	Depend=
+;	IfExists=replace
+; 
+!ifdef SERVICES
 !ifndef LOGICLIB
 	!include LogicLib.nsh
+!endif
+!ifndef STR_CASE_NSH_INCLUDED
+	!include StrCase.nsh
+!endif
+!ifndef ISFILE_NSH_INCLUDED
+	!include IsFile.nsh
 !endif
 ; 
 ; The following macros make use of the SC command line.
@@ -223,12 +228,12 @@
 	StrCmp "${_FSR}" /DISABLEFSR 0 +3
 	ExecDos::Exec /TOSTACK /DISABLEFSR `"$R9" /c "sc QUERY "${_SVC}" | FIND /C "RUNNING""`
 	Goto +2
-	ExecDos::Exec /TOSTACK `"${C}" /c "sc QUERY "${_SVC}" | FIND /C "RUNNING""`
+	ExecDos::Exec /TOSTACK `"$R9" /c "sc QUERY "${_SVC}" | FIND /C "RUNNING""`
 	Pop ${_ERR1} ; 1 = success
 	Pop ${_ERR2} ; 1 = running
 	StrCmpS ${_ERR1} 1 0 +4
 	StrCmpS ${_ERR2} 1 0 +3
-	${WriteRuntimeData} PortableApps.comLauncher ${_SVC}_Status running
+	${WriteRuntimeData} ${PAL} ${_SVC}_Status running
 !macroend
 ; 
 ; The following macros make use of the ServiceLib.nsh header include file.
@@ -405,6 +410,7 @@ ${SegmentPre}
 				ReadRegStr $0 HKLM "SYSTEM\CurrentControlSet\services\$0" Start
 				${WriteRuntimeData} "$0_Service" LocalState $0
 				ReadINIStr $3 "${LAUNCHER}" "Service$R0" "IfExists"
+				${StrCase} $3 $3 "L"
 				${If} $3 == replace
 					${DebugMsg} "Preparing portable service of $0; removing local instance."
 					${Service::Stop} "$0" /DISABLEFSR $8 $9
@@ -425,32 +431,37 @@ ${SegmentPrePrimary}
 			${ReadLauncherConfig} $0 Service$R0 Name
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 			${ReadLauncherConfig} $1 Service$R0 IfExists
+			${StrCase} $1 $1 "L"
 			${If} $1 == replace
 				${DebugMsg} "Creating a portable instance of the $0 service."
 				${ReadLauncherConfig} $2 Service$R0 Path
 				${ParseLocations} $2
-				${ReadLauncherConfig} $3 Service$R0 Type
-				${ReadLauncherConfig} $4 Service$R0 Start
-				${ReadLauncherConfig} $5 Service$R0 Depend
-				${If} $5 != ""
-					${Service::Create} "$0" "$2" "$3" "$4" "$5" /DISABLEFSR $8 $9
+				${If} ${IsFile} "$2"
+					${ReadLauncherConfig} $3 Service$R0 Type
+					${ReadLauncherConfig} $4 Service$R0 Start
+					${ReadLauncherConfig} $5 Service$R0 Depend
+					${If} $5 != ""
+						${Service::Create} "$0" "$2" "$3" "$4" "$5" /DISABLEFSR $8 $9
+					${Else}
+						${Service::Create} "$0" "$2" "$3" "$4" "" /DISABLEFSR $8 $9
+					${EndIf}
+					${Service::Start} "$0" /DISABLEFSR $8 $9
+					ReadEnvStr $R9 COMSPEC
+					${If} Bit == 64
+						ExecDos::Exec /TOSTACK /DISABLEFSR `"$R9" /c "sc QUERY "$0" | FIND /C "RUNNING""`
+					${Else}
+						ExecDos::Exec /TOSTACK `"$R9" /c "sc QUERY "$0" | FIND /C "RUNNING""`
+					${EndIf}
+					Pop $R7 ;=== 1 = success
+					Pop $R8 ;=== 1 = running
+					${If} $R7 == 1
+					${OrIf} $R8 == 1
+						${DebugMsg} "The portable instance of the $0 service has been started."
+					${Else}
+						${DebugMsg} "The portable instance of the $0 service failed to start."
+					${EndIf}
 				${Else}
-					${Service::Create} "$0" "$2" "$3" "$4" "" /DISABLEFSR $8 $9
-				${EndIf}
-				${Service::Start} "$0" /DISABLEFSR $8 $9
-				ReadEnvStr $R9 COMSPEC
-				${If} Bit == 64
-					ExecDos::Exec /TOSTACK /DISABLEFSR `"$R9" /c "sc QUERY "$0" | FIND /C "RUNNING""`
-				${Else}
-					ExecDos::Exec /TOSTACK `"$R9" /c "sc QUERY "$0" | FIND /C "RUNNING""`
-				${EndIf}
-				Pop $R7 ;=== 1 = success
-				Pop $R8 ;=== 1 = running
-				${If} $R7 == 1
-				${OrIf} $R8 == 1
-					${DebugMsg} "The portable instance of the $0 service has been started."
-				${Else}
-					${DebugMsg} "The portable instance of the $0 service failed to start."
+					MessageBox MB_OK|MB_ICONEXCLAMATION `NOTE:${NEWLINE}The path to the service executable named "$0" doesn't exist.${NEWLINE}Please verify the path in the configuration file is correct and try again.${NEWLINE} ${NEWLINE}Continuing with the current launch without the $0 service.`
 				${EndIf}
 			${ElseIf} $1 == skip
 				${DebugMsg} "Local service of $0 already exists; not creating a portable instance."
@@ -468,6 +479,7 @@ ${SegmentPostPrimary}
 			${ReadLauncherConfig} $0 Service$R0 Name
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 			${ReadLauncherConfig} $1 Service$R0 IfExists
+			${StrCase} $1 $1 "L"
 			${If} $1 == replace
 				${DebugMsg} "Removing portable service of $0 to prepare for reinstallation of the local instance."
 				${ReadRuntimeData} $3 "$0_Service" LocalService
@@ -493,6 +505,7 @@ ${SegmentUnload}
 			${ReadLauncherConfig} $0 Service$R0 Name
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 			${ReadLauncherConfig} $1 Service$R0 IfExists
+			${StrCase} $1 $1 "L"
 			${If} $1 == replace
 				${DebugMsg} "Reinstalling the local instance of the $0 service."
 				${ReadRuntimeData} $2 "$0_Service" LocalService
@@ -521,3 +534,4 @@ ${SegmentUnload}
 		${Loop}
 	!endif
 !macroend
+!endif

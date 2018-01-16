@@ -1,13 +1,26 @@
-;=== WriteRegDWORD HKLM "Software\My Company\My Software" "DWORD Value" 0xDEADBEEF
-;=== below works properly from XP through 8.1. ( 0x00000001 works better than 1 or 0 )
-;=== WriteRegDWORD HKCU `${KEY}` `${INT}` 0x00000001
-################################################################################
-# WRITE DWORD USING DECIMAL ! (NOT HEXIDECIMAL)
-;=== NOTE: to write correctly for DWORD (dword:00000409)
-	;=== must use decimal for writing.
-	;=== I.E. Read from file is dword:00000409
-	;=== but when writing.. must use decimal which is 1033.
-	;=== make sure NOT to use hexadecimal which looks like this: 409
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   RegistryValueWrite.nsh
+;   This file reads the Launcher.ini and handles the registry writing just before executing the launcher.
+; 
+; ATTENTION
+;   When using WriteRegDWORD, it is better to use something like 0x00000409 than it is to use 409. 
+;     i.e. WriteRegDWORD HKCU "SOFTWARE\Company\Program\Settings" `Language` 0x00000409
+;
+;   However, when using [RegistryValueWrite] in the CompilerWrapper.ini file use the decimal system instead.
+;     i.e. HKCU\SOFTWARE\Company\Program\Settings\Language=REG_DWORD:1033
+;
+;   When reading a DWORD entry, it always returns the hexadecimal value which looks like this: 0x409
+;   Be sure to only use the decimal system to write a DWORD value to the registry which looks like this: 1033
+; 
+
 ${SegmentFile}
 ${SegmentPrePrimary}
 	!ifmacrodef PreRegWrite

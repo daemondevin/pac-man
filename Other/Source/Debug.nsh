@@ -1,4 +1,50 @@
-; Macro: check if in debug mode for the current section {{{1
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   Debug.nsh
+;   This file handles the features for debugging the wrapper executable during runtime. 
+; 
+; USAGE
+;   If you want debugging support, create the file Debug.nsh in the package's
+;   App\AppInfo\Launcher directory. It should then have something like the following:
+;
+;   !define DEBUG_ALL
+;     • To enable debugging of everything.
+;       » This leaves out the "about to execute segment" and "finished executing segment" messages.
+;
+;   !define DEBUG_SEGWRAP
+;     • To enable messages announcing when a segment is about to start/finish.
+;
+;   !define DEBUG_OUTPUT [file|messagebox]
+;     • By default debugging will output it's data to a file called debug.log in the Data\Settings folder. 
+;       It will also show a message box which pauses execution and allows you to terminate execution.
+;       » If you want it to only log to a file, set this to 'file'.
+;         · For example: !define DEBUG_OUTPUT file
+;       » If you want to only show the message boxes, set this to 'messagebox'.
+;         · For example: !define DEBUG_OUTPUT messagebox
+;
+;   !define DEBUG_GLOBAL
+;     • Debug outside all segments.
+;
+;   !define DEBUG_SEGMENT_[SegmentName]
+;     • Debug a given segment or segments
+;       » To debug the PrePrimary segment use 'PrePrimary'
+;         · For example: !define DEBUG_SEGMENT_PrePrimary
+;       » To debug the PostExecPrimary segment use 'PostExecPrimary'
+;         · For example: !define DEBUG_SEGMENT_PostExecPrimary
+; 
+; ATTENTION
+;   Remember to remove the debug file when you're ready to release a package. 
+;   You do not want the debugging features enabled for production use.
+; 
+
+; Macro: check if in debug mode for the current section
 !macro !getdebug
 	!ifdef DEBUG
 		!undef DEBUG
@@ -17,12 +63,12 @@
 !macroend
 !define !getdebug "!insertmacro !getdebug"
 
-; Macro: print a debug message {{{1
+; Macro: print a debug message
 !macro DebugMsg _MSG
 	${!getdebug}
 	!ifdef DEBUG
 
-		; Logging to file {{{2
+		; Logging to file
 		!ifndef DEBUG_OUTPUT
 			!define _DebugMsg_OK
 		!else if ${DEBUG_OUTPUT} == file
@@ -49,9 +95,9 @@
 			FileClose $_DebugMsg_File
 			!undef _DebugMsg_Seg
 			!undef _DebugMsg_OK
-		!endif ;}}}
+		!endif
 
-		; Logging to display: message box {{{2
+		; Logging to display: message box
 		!ifndef DEBUG_OUTPUT
 			!define _DebugMsg_OK
 		!else if ${DEBUG_OUTPUT} == messagebox
@@ -67,21 +113,9 @@
 				Abort
 			!undef _DebugMsg_Seg
 			!undef _DebugMsg_OK
-		!endif ;}}}
+		!endif
 	!endif
 !macroend
-!define DebugMsg "!insertmacro DebugMsg" ; }}}
+!define DebugMsg "!insertmacro DebugMsg"
 
-; If you want to debug this, create Debug.nsh in the package's
-; App\AppInfo\Launcher directory. It should then have lines like these:
-; · Debug everything
-;     !define DEBUG_ALL
-;   · This leaves out the "about to execute segment" and "finished executing
-;     segment" messages unless you put this line in:
-;       !define DEBUG_SEGWRAP
-; · Debug just certain portions
-;   · Debug outside any segments
-;       !define DEBUG_GLOBAL
-;   · Debug a given segment or segments
-;       !define DEBUG_SEGMENT_[SegmentName]
 !include /NONFATAL "${PACKAGE}\App\AppInfo\Launcher\Debug.nsh"

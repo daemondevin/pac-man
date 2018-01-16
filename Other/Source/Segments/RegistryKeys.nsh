@@ -1,9 +1,23 @@
+;=#
+; 
+; PORTABLEAPPS COMPILER 
+; Developed by daemon.devin (daemon.devin@gmail.com)
+;
+; For support, visit the GitHub project:
+; https://github.com/daemondevin/pac-man
+; 
+; SEGMENT
+;   RegistryKeys.nsh
+;   This file handles the importing/restoring of registry keys that are declared in the Launcher.ini file.
+; 
+
 !ifndef PAF
 	!define PAF HKCU\Software\PortableApps.com
 !endif
 !ifndef PAFKEYS
 	!define PAFKEYS ${PAF}\Keys
 !endif
+
 ${SegmentFile}
 ${SegmentPrePrimary}
 	!ifmacrodef PreReg
