@@ -1,12 +1,18 @@
-# PortableApps Compiler
+# PortableApps Compiler & Management
 ----------
 
-This is an alternative and better solution for creating portable applications in the [PortableApps.com Format](https://portableapps.com/manuals/PortableApps.comLauncher/ref/paf/index.html#portableapps-com-format-specification). **PortableApps Compiler** is a much more advanced, feature-rich **PAF** compiler which gives the developer more capabilities when making the more complex software portable. This is being designed with the _power user_ in mind and should only be used if you're familiar with the practice and understand the features being used by this project.
+Welcome! This project started out as a modified variant of the official [PortableApps.com Launcher](https://portableapps.com/portableapps.comlauncher). The creator of the original version left the project over 5 years ago and since then, all development and updates ceased completely and _PAL_ became stagnant. PortableApps Compiler & Management (or _Pac-Man_ for short), is an alternative solution to creating portable applications that still adhere to the [PortableApps.com Format](https://portableapps.com/manuals/PortableApps.comLauncher/ref/paf/index.html#portableapps-com-format-specification) specification. 
 
-## TODO
-----------
+From the uninitiated software programmer wanting a reliable method for porting their programs portability, to the most loyal and dedicated _PAF Developer_ who would love to finally see full-featured and reliable utility for developing _PAFs_—**Pac-Man** is a much better solution when it comes to creating a portable launcher for the more complex Windows applications. Even if a program seems to thread itself deep within the Windows registry and/or file-system, this utility will most likely have you covered.
+ 
+While the techniques being implemented by this project are highly advanced, this can be used by beginners who are just starting out with portable programming, getting familiar with the practices of the official [PortableApps.com Launcher](https://portableapps.com/portableapps.comlauncher) will greatly improve your ability to understand the features being implemented in the project. Understanding the intricacies behind the advanced capabilities currently being used by this project.
 
-The following is a list of things you can look forward to seeing in this project. This list is a work in progress so come back later to see if these features have been added.
+With this branch you will find the coding practices of Chris Morgan, FukenGruven, Azure Zanculmarktum, and myself (daemon.devin). You will also see minor influence from contributors like LegendaryHawk, DoomStorm, and other fellow developers as well. So you can expect to see great things to come out of this experimental build.
+
+## Under Construction  
+---------- 
+
+The following is a list of things currently being worked on for Pac-Man so you can look forward too in this project. This list is a work in progress so come back later to see if these features have been added.
 
 - [ ] __AiO GUI__
 
@@ -20,6 +26,12 @@ Working on combining both the PortableApps.com Launcher with the PortableApps.co
 
 Other things could follow depending on our availability, interest.. and of course the interest and support from others.
 
+## Branches
+----------
+
+There are two branches in which you may find in this project. The **Master Branch** (_a.k.a._ Stable Edition) and the [**Dev Branch**](https://github.com/daemondevin/pac-man/tree/dev) (_a.k.a._ Development Edition). In the case for the stable variant (which you're currentlu browsing), you can rest assured you're building launchers with a (_near_)bug-free utility, but the latter case is meant for the cutting-edge of development. Don't expect the Dev. Branch to work-out-of-the-box as it is constantly under going revisions for testing new ideas and theoratical code. There **will** be bugs hidden throughout the experimental version.
+
+
 ## Features
 ----------
 
@@ -31,9 +43,11 @@ The following is a list of features that is currently available with PortableApp
 - Registering DLL files.
 - Registry redirection support.
 - File-system redirection support.
-- Automatic code-signing.
+- Automatic [code-signing](#code-signing) with the [CompilerSigner](#compilersigner.exe)
 - Font support for apps that make use of fonts.
-- More feature soon to come!
+- **Hidden Functionality**  
+  - To skip the welcome page and bypass that first message, you can simply add `SkipWelcomePage=true` to the section under `[LauncherCompiler]` in the `settings.ini` file inside the `Data` folder. 
+  - More hidden extras soon to come!
 
 ----------
 
@@ -191,23 +205,6 @@ CertTimestamp=VeriSign
 
 * __Creator:__ Specify here the original developer of the PAF if you're updating someone else's work.
 
-* __CertSigning:__ If set to true, the `Launcher.exe` will automatically be signed using dual signature hashing algorithm standards (_SHA256_ and _SHA1_). I decided to use dual signing because Windows 8 supports SHA256 Code Signing Certificates (SHA-2 hashing algorithm); whereas, Windows 7 may only support SHA-1 Code Signing Certificates (SHA-1 hashing algorithm). It should be noted that Windows 10 has stopped accepting SHA-1 certificates and certificate chains for Authenticode-signed binaries (unless a timestamp marked the binary as being signed before 1/1/2016). You can visit this [Microsoft Security Advisory article][MSAdvisory] on the availability of SHA-2 code signing support for Windows 7 and Windows Server 2008 R2 for more information about this topic.
->__*ATTENTION:*__ As it is written right now, the `PortableApps.comLauncherGenerator.exe` expects the certificate file to be the developer's name (same as the `[Team]Developer` key's value) and located in `..\Other\Source\Contrib\certificates`. 
-> 
-> _NOTE_: If your certificate requires you to use a password, refer to lines 741 and 742 and input your password on column 62.
-> Be sure it is similar to something like this: `/p "PASSWORD"` where PASSWORD is your password.
-* __CertExtension:__ If the key `CertSigning` is set to true then this should be set to the certificate's file extension without the period (e.g. "_pfx_" not "_.pfx_").
-* __CertTimestamp:__ Here you can choose which time-stamping service you would like to use. Refer to the table below for a small list of available services and their available hashing algorithms. I would recommend using a service which uses both signature hashes. Be aware that this key is case-sensitive. If this key is omitted, the compiler will default to using _Comodo_.
-
-|       __CertTimestamp__=*`Value`*     	|     __Timestamp Service__    	| __Algorithms__ 	|
-|:------------------------	|:----------------------------	|:--------------------	|
-| `Comodo`     	| Comodo Group, Inc.           	| _SHA-1_ & _SHA-2_    	|
-| `Verisign`   	| Verisign, Inc.               	| _SHA-1_ & _SHA-2_    	|
-| `GlobalSign` 	| GMO GlobalSign, Inc.         	| _SHA-1_ & _SHA-2_    	|
-| `DigiCert`   	| DigiCert, Inc.               	| _SHA-1_ & _SHA-2_    	|
-| `Starfield`  	| Starfield Technologies, LLC. 	| _SHA-1_ & _SHA-2_    	|
-| `SwissSign`  	| SwissSign AG                 	| _SHA-2_              	|
-
 I've added several new keys to the `[Dependencies]` section. These newly added keys act like on/off switches to allow support for certain plugins and/or macros/functions (a short description of what each key means or does can be found further below):
 > Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
 ```INI
@@ -298,6 +295,46 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 * __IncludeWordRep:__ Include both `WordRepS` and `WordRep` functions. See the `Core.nsh` segment on line 608 for reference.
 
 * __GetBetween:__ Include the `GetBetween.nsh` file.
+
+## Code-Signing
+----------
+I have created a small, commandline utility (`CompilerSigner.exe`, source included) to help with code signing using dual signature hashing algorithm standards (_SHA-2_ and _SHA-1_). If you set `[Team]CertSigning` to equal true along with the other need information, than no further assistance is required on your part as this tool will handle the signing for you but [refer further below](#compilersigner.exe) for how to use this tool on the command line for other things you may wish to sign. I decided to use both because Windows 8 supports SHA256 certificates (SHA-2 hashing algorithm); whereas, Windows 7 may only support SHA1 certificates (SHA-1 hashing algorithm). It should be noted that Windows 10 has stopped accepting SHA-1 certificates and certificate chains for Authenticode-signed binaries (unless a timestamp marked the binary as being signed before 1/1/2016). You can visit this [Microsoft Security Advisory article][MSAdvisory] on the availability of SHA-2 code signing support for Windows 7 and Windows Server 2008 R2 for more information about this topic. If you've got a certificate you wish to sign your launchers with than read the following for information on how to get started. 
+
+* __CertSigning:__ If set to true, the `Launcher.exe` will automatically be signed
+>__*ATTENTION:*__ As it is written right now, the `PortableApps.comLauncherGenerator.exe` expects the certificate file to be the developer's name (same as the `[Team]Developer` key's value) and located in `..\Other\Source\Contrib\certificates`. 
+> 
+> _NOTE_: If your certificate requires you to use a password, refer to lines 741 and 742 and input your password on column 62.
+> Be sure it is similar to something like this: `/p "PASSWORD"` where PASSWORD is your password.
+* __CertExtension:__ If the key `CertSigning` is set to true then this should be set to the certificate's file extension without the period (e.g. "_pfx_" not "_.pfx_").
+* __CertTimestamp:__ Here you can choose which time-stamping service you would like to use. Refer to the table below for a small list of available services and their available hashing algorithms. I would recommend using a service which uses both signature hashes. Be aware that this key is case-sensitive. If this key is omitted, the compiler will default to using _Comodo_.
+
+|       __CertTimestamp__=*`Value`*     	|     __Timestamp Service__    	| __Algorithms__ 	|
+|:------------------------	|:----------------------------	|:--------------------	|
+| `Comodo`     	| Comodo Group, Inc.           	| _SHA-1_ & _SHA-2_    	|
+| `Verisign`   	| Verisign, Inc.               	| _SHA-1_ & _SHA-2_    	|
+| `GlobalSign` 	| GMO GlobalSign, Inc.         	| _SHA-1_ & _SHA-2_    	|
+| `DigiCert`   	| DigiCert, Inc.               	| _SHA-1_ & _SHA-2_    	|
+| `Starfield`  	| Starfield Technologies, LLC. 	| _SHA-1_ & _SHA-2_    	|
+| `Entrust`  	| Entrust DataCard Corp.	 	| _SHA-1_ & _SHA-2_    	|
+| `SwissSign`  	| SwissSign AG                 	| _SHA-2_              	|
+
+
+### CompilerSigner.exe
+If you'd like to use `CompilerSigner.exe` outside the compiling wizard, you can use the following commandline parameters to do so.
+
+```
+CompilerSigner.exe --switch=value
+
+	 --PFX= | Path to the certificate.
+	--PASS= | If your certificate requires a password.
+	 --TSA= | This can be any of the above Time-Stamping Authorities listed in the table above.
+	--HASH= | Either SHA1 or SHA2 - NOTE: when using dual signing, be sure to sign using SHA1 first.
+	 --EXE= | Path to the binary you wish to sign.
+	--MODE= | When set to offline, this optional parameter will tell it to not add support for time-stamping.
+
+For example:
+	CompilerSigner.exe --PFX=MyCert.p12 --PASS=PASSWORD --TSA=Entrust --HASH=SHA2 --EXE=MyProgram.exe --MODE=
+```
 
 ## Documentation
 ----------
