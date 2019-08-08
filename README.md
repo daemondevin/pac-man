@@ -372,7 +372,7 @@ __ToDo:__ Handle without the use of `custom.nsh`. (Got a couple ideas already. C
 ## Contributors
 ----------
 
-This project has been started by [demon.devin][author] and hopefully maintained on a regular basis. However, if you would like to be a part of this then please do not hesitate on getting involved! I'm always open to new ideas and a willingness for the betterment of all things code. =)
+This project has been started by [daemon.devin][author] and hopefully maintained on a regular basis. However, if you would like to be a part of this then please do not hesitate on getting involved! I'm always open to new ideas and a willingness for the betterment of all things code. =)
 
 Thanks to [DoomStorm][TekSpert] for all the suggestions and heavily testing for bugs.
 
