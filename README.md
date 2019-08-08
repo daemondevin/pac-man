@@ -96,6 +96,7 @@ The following is a list of features that is currently available with PortableApp
 - File-system redirection support.
 - Automatic code-signing.
 - Font support for apps that make use of fonts.
+- DualMode&mdash;For a x86_64 hybrid wrapper. (Launching 32/64 bit programs with one launcher)
 - More feature soon to come!
 
 ----------
