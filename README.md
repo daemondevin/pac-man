@@ -29,7 +29,7 @@ Other things could follow depending on our availability, interest.. and of cours
 ## Branches
 ----------
 
-There are two branches in which you may find in this project. The **Master Branch** (_a.k.a._ Stable Edition) and the [**Dev Branch**](https://github.com/daemondevin/pac-man/tree/dev) (_a.k.a._ Development Edition). In the case for the stable variant (which you're currentlu browsing), you can rest assured you're building launchers with a (_near_)bug-free utility, but the latter case is meant for the cutting-edge of development. Don't expect the Dev. Branch to work-out-of-the-box as it is constantly under going revisions for testing new ideas and theoratical code. There **will** be bugs hidden throughout the experimental version.
+There are two branches in which you may find in this project. The **Master Branch** (_a.k.a._ Stable Edition) and the [**Dev Branch**](https://github.com/daemondevin/pac-man/tree/dev) (_a.k.a._ Development Edition). In the case for the stable variant (which you're currently browsing), you can rest assured you're building launchers with a (_near_)bug-free utility, but the latter case is meant for the cutting-edge of development. Don't expect the Dev. Branch to work-out-of-the-box as it is constantly under going revisions for testing new ideas and theoratical code. There **will** be bugs hidden throughout the experimental version.
 
 
 ## Features
@@ -370,9 +370,9 @@ A special thanks to FukenGruven. His codebase was the skeleton which was used to
 [MSAdvisory]: https://support.microsoft.com/en-us/kb/3033929 "MS Security Advisory: SHA2 support for Win7/Windows Server '08 R2: March 10, 2015"
 [JavaPortable]: http://portableapps.com/apps/utilities/java_portable "Java Portable"
 [GhostscriptPortable]: https://portableapps.com/apps/utilities/ghostscript_portable "Ghostscript Portable"
-[DocsRegDLL]: http://softables.tk/docs/advanced/regdll-and-regsrv32 "RegDLL & RegSrv32.exe—DLL Handling"
-[DocsServices]: http://softables.tk/docs/advanced/services "A Look into Windows Services"
-[DocsHome]: http://softables.tk/docs "The PAF Docs on Softables.tk/"
-[author]: http://softables.tk/ "Softables.tk/"
+[DocsRegDLL]: https://portableappz.x10.mx/docs/advanced/regdll-and-regsrv32 "RegDLL & RegSrv32.exe—DLL Handling"
+[DocsServices]: https://portableappz.x10.mx/docs/advanced/services "A Look into Windows Services"
+[DocsHome]: https://portableappz.x10.mx/docs "The PAF Docs on PortableAppz.x10.mx"
+[author]: https://portableappz.x10.mx/ "PortableApps.x10.mx"
 [TekSpert]: http://tekspert.se/ "Webmaster of TekSpert.se/"
 [DiscordWorkbench]: https://discord.gg/ExKbgXg "A PAFing Community (Discord Chat Platform)"
