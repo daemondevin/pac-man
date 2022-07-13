@@ -212,11 +212,11 @@ Added the section `[Team]` for use with code signing and application specificati
 
 ```INI
 [Team]
-Developer=demon.devin
+Developer=daemon.devin
 Contributors=DoomStorm
 Creator=FukenGruven
 CertSigning=true
-CertAlgorithm=_SHA512_
+CertAlgorithm=SHA512
 CertExtension=p12
 CertTimestamp=VeriSign
 ```
@@ -405,9 +405,9 @@ A special thanks to FukenGruven. His codebase was the skeleton which was used to
 [msadvisory]: https://support.microsoft.com/en-us/kb/3033929 "MS Security Advisory: SHA2 support for Win7/Windows Server '08 R2: March 10, 2015"
 [javaportable]: http://portableapps.com/apps/utilities/java_portable "Java Portable"
 [ghostscriptportable]: https://portableapps.com/apps/utilities/ghostscript_portable "Ghostscript Portable"
-[docsregdll]: http://softables.tk/docs/advanced/regdll-and-regsrv32 "RegDLL & RegSrv32.exe—DLL Handling"
-[docsservices]: http://softables.tk/docs/advanced/services "A Look into Windows Services"
-[docshome]: http://softables.tk/docs "The PAF Docs on Softables.tk/"
-[author]: http://softables.tk/ "Softables.tk/"
+[docsregdll]: http://portableappz.x10.mx/docs/advanced/regdll-and-regsrv32 "RegDLL & RegSrv32.exe—DLL Handling"
+[docsservices]: http://portableappz.x10.mx/docs/advanced/services "A Look into Windows Services"
+[docshome]: http://portableappz.x10.mx/docs "The PAF Docs on Softables.tk/"
+[author]: http://portableappz.x10.mx/ "Softables.tk/"
 [tekspert]: http://tekspert.se/ "Webmaster of TekSpert.se/"
 [discordworkbench]: https://discord.gg/ExKbgXg "A PAFing Community (Discord Chat Platform)"
