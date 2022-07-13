@@ -14,7 +14,7 @@
 ; 			/DPACKAGE="D:\PortableApps\7-ZipPortable" ^
 ; 			/DNamePortable="7-Zip Portable" ^
 ; 			/DAppID="7-ZipPortable" ^
-; 			"D:\PortableApps\PortableAppsCompiler\Other\Source\PortableApps.comLauncher.nsi"
+; 			"D:\PortableApps\PortableAppsCompiler\Other\Source\PortableAppsCompiler.nsi"
 ; 
 
 !define APPINFOINI		`${PACKAGE}\App\AppInfo\appinfo.ini`

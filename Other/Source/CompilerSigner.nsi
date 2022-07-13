@@ -33,6 +33,7 @@ ManifestDPIAware true
 
 Caption "PorableApps ${APP}"
 OutFile ${APP}.exe
+Icon ..\..\App\AppInfo\${APP}.ico
 
 ;= SWITCHES
 ;= ################
@@ -55,8 +56,7 @@ SetDatablockOptimize On
 Var PFX
 Var TSA
 Var HASH
-Var TSA_SHA1
-Var TSA_SHA2
+Var TSA_URL
 Var BINARY
 
 ;= MACROS
@@ -116,22 +116,25 @@ Section Main
 		StrCpy $PFX `"$1" /p "$2"`
 	${EndIf}
 
-	${If}   $3 == "Comodo"
-	${OrIf} $3 == "Verisign"
+	${If}   $3 == "Sectigo"
 	${OrIf} $3 == "GlobalSign"
-	${OrIf} $3 == "DigiCert"
+	${OrIf} $3 == "ACCV"
 	${OrIf} $3 == "Starfield"
 	${OrIf} $3 == "Entrust"
 	${OrIf} $3 == "SwissSign"
+	${OrIf} $3 == "Symantec"
+	${OrIf} $3 == "IDnomic"
+	${OrIf} $3 == "IZENPE"
+	${OrIf} $3 == "CERTUM"
+	${OrIf} $3 == "CatCert"
+	${OrIf} $3 == "Apple"
 		StrCpy $TSA $3
 	${Else}
 		${InvalidSwitchValue} "--TSA"   "\
-										${TAB}Comodo${NEWLINE}\
+										${TAB}Sectigo${NEWLINE}\
 										${TAB}Verisign${NEWLINE}\
 										${TAB}GlobalSign${NEWLINE}\
-										${TAB}DigiCert${NEWLINE}\
 										${TAB}Entrust${NEWLINE}\
-										${TAB}Starfield${NEWLINE}\
 										${TAB}SwissSign"
 	${EndIf}
 
@@ -141,21 +144,21 @@ Section Main
 	${Else}
 		${InvalidSwitchValue} "--HASH" "${TAB}SHA1${NEWLINE}${TAB}SHA2"
 	${EndIf}
-	
+
 	${If} ${IsFile} "$5"
 		StrCpy $BINARY $5
 	${Else}
 		${InvalidSwitchValue} "--EXE" "${TAB}7-ZipPortable.exe${NEWLINE}\
 										${TAB}DiscordPortable.exe"
 	${EndIf}
-	
+
 	${DebugDialog} "Initializing Variables With Parameters" "CERT: $$PFX == $PFX ${NEWLINE}\
 															 PASS: $2 ${NEWLINE} \
 															  TSA: $$TSA == $3 ${NEWLINE}\
 															 HASH: $$HASH == $4 ${NEWLINE}\
 															 FILE: $$BINARY == $5 ${NEWLINE}\
 															 MODE: $6"
-	
+
 
 	Dialer::GetConnectedState
 	Pop $9
@@ -168,82 +171,72 @@ Section Main
     ${EndIf}
 
 	${Select} $TSA
-	
-		${Case} Comodo
-				
-			StrCpy $TSA_SHA1	"http://timestamp.comodoca.com"
-			StrCpy $TSA_SHA2	"http://timestamp.comodoca.com/?td=sha256"
-		
-		${Case} Verisign
-		
-			StrCpy $TSA_SHA1	"http://timestamp.verisign.com/scripts/timstamp.dll"
-			StrCpy $TSA_SHA2	"http://sha256timestamp.ws.symantec.com/sha256/timestamp"
-            
+
+		${Case} Sectigo
+
+			StrCpy $TSA_URL	"http://timestamp.sectigo.com/"
+
 		${Case} GlobalSign
-		
-			StrCpy $TSA_SHA1	"http://timestamp.globalsign.com/scripts/timstamp.dll"
-			StrCpy $TSA_SHA2	"http://timestamp.globalsign.com/?signature=sha2"
-            
-		${Case} DigiCert
-		
-			StrCpy $TSA_SHA1	"http://timestamp.digicert.com"
-			StrCpy $TSA_SHA2	"http://timestamp.digicert.com"
-            
+
+			StrCpy $TSA_URL	"http://aatl-timestamp.globalsign.com/tsa/aohfewat2389535fnasgnlg5m23"
+
+		${Case} ACCV
+
+			StrCpy $TSA_URL	"http://tss.accv.es:8318/tsa"
+
+		${Case} Symantec
+
+			StrCpy $TSA_URL	"http://sha256timestamp.ws.symantec.com/sha256/timestamp"
+
 		${Case} Entrust
-		
-			StrCpy $TSA_SHA1	"http://timestamp.entrust.net/TSS/RFC3161sha1TS"
-			StrCpy $TSA_SHA2	"http://timestamp.entrust.net/TSS/RFC3161sha2TS"
-                        
-		${Case} Starfield
-		
-			StrCpy $TSA_SHA1	"http://tsa.starfieldtech.com"
-			StrCpy $TSA_SHA2	"http://tsa.starfieldtech.com"
-            
+
+			StrCpy $TSA_URL	"http://timestamp.entrust.net/TSS/RFC3161sha2TS"
+
+		${Case} IDnomic
+
+			StrCpy $TSA_URL	"http://kstamp.keynectis.com/KSign/"
+
 		${Case} SwissSign
 
-			StrCpy $TSA_SHA1	"http://tsa.swisssign.net"
-			StrCpy $TSA_SHA2	"http://tsa.swisssign.net"
-            
-		${Default} 
-		
-			; Use Comodo as default TSA if no TSA was specified
-			StrCpy $TSA_SHA1	"http://timestamp.comodoca.com"
-			StrCpy $TSA_SHA2	"http://timestamp.comodoca.com/?td=sha256"
-            
+			StrCpy $TSA_URL	"http://tsa.swisssign.net/"
+
+		${Case} IZENPE
+
+			StrCpy $TSA_URL	"http://tsa.izenpe.com/"
+
+		${Case} CERTUM
+
+			StrCpy $TSA_URL	"http://time.certum.pl/"
+
+		${Case} CatCert
+
+			StrCpy $TSA_URL	"http://psis.catcert.cat/psis/catcert/tsp"
+
+		${Case} Apple
+
+			StrCpy $TSA_URL	"http://timestamp.apple.com/ts01"
+
+		${Default}
+
+			; Use Sectigo as default TSA if no TSA was specified
+			StrCpy $TSA_URL	"http://timestamp.sectigo.com/"
+
 	${EndSelect}
 
 	${DebugDialog} "Time-Stamping Authority" \
 					"Using: $TSA${NEWLINE}SHA1: $TSA_SHA1${NEWLINE}SHA2: $TSA_SHA2"
-	
+
 	${If} ${IsFile} "${SIGNTOOL}"
-	
+
 		${DebugDialog} "PRE CODE-SIGNING" "signtool.exe location: ${SIGNTOOL}"
-	
+
 		; We can finally sign the binary now!
-		${Select} $HASH
-		
-			${Case} "SHA1"
-				ExecDos::Exec /TOSTACK `"${SIGNTOOL}" sign \
-					/f $PFX \
-					/t "$TSA_SHA1" \
-					/v "$BINARY"` $R0 $R1
-					
-				${DebugDialog} "SHA1 CALL" "CMDLINE:${NEWLINE}\
-								${SIGNTOOL} sign /f $PFX /t $TSA_SHA1 /v $BINARY"
-					
-			${Case} "SHA2"
-				ExecDos::Exec /TOSTACK `"${SIGNTOOL}" sign \
-					/f $PFX \
-					/fd sha256 \
-					/tr "$TSA_SHA2" \
-					/td sha256 /as \
-					/v "$BINARY"` $R0 $R1
-					
-				${DebugDialog} "SHA2 CALL" "CMDLINE:${NEWLINE}\
-								${SIGNTOOL} sign /f $PFX /fd sha256 /tr $TSA_SHA2 /td sha256 /as /v $BINARY"
-					
-		${EndSelect}
-		
+        ExecDos::Exec /TOSTACK `"${SIGNTOOL}" sign \
+            /f $PFX \
+            /fd $HASH \
+            /t "$TSA_URL" \
+            /v "$BINARY"` $R0 $R1
+
 		${DebugDialog} "POST CODE-SIGNING" "$$R0 == $R0${NEWLINE}$$R1 == $R1"
 		
 	${Else}
@@ -265,29 +258,18 @@ Section Main
 					$BINARY will still be signed but without a time-stamp"
 	
 		${DebugDialog} "PRE CODE-SIGNING" "Signtool.exe location: ${SIGNTOOL}"
-	
-		${Select} $HASH
-		
-			${Case} "SHA1"
 
-				ExecDos::Exec /TOSTACK `"${SIGNTOOL}" sign /f $PFX /v "$BINARY"` $R0 $R1
-				${DebugDialog} "SHA-1 CALL" "CMDLINE:${NEWLINE}\
-								${SIGNTOOL} sign /f $PFX /v $BINARY"
-								
-			${Case} "SHA2"
-			
-				ExecDos::Exec /TOSTACK `"${SIGNTOOL}" sign /f $PFX /fd sha256 /td sha256 /as /v "$BINARY"` $R0 $R1
-				${DebugDialog} "SHA-2 CALL" "CMDLINE:${NEWLINE}\
-								${SIGNTOOL} sign /f $PFX /fd sha256 /td sha256 /as /v $BINARY"
-			
-		${EndSelect}
-		
+        ExecDos::Exec /TOSTACK `"${SIGNTOOL}" sign \
+            /f $PFX \
+            /fd $HASH \
+            /t "$TSA_URL" \
+            /v "$BINARY"` $R0 $R1
+
 		${DebugDialog} "POST CODE-SIGNING" "$$R0 == $R0${NEWLINE}$$R1 == $R1"
 	
 	__SIGN_COMPLETE:
 		${DebugDialog} "COMPLETE" "END OF EXECUTION"
 		
-		; Sign ourselves using both SHA-1 and SHA-2 too
-		!finalize `"${SIGNTOOL}" sign /f "Contrib\certificates\daemon.devin.p12" /p "" /v "%1"`
-		!finalize `"${SIGNTOOL}" sign /f "Contrib\certificates\daemon.devin.p12" /p "" /fd sha256 /td sha256 /as /v "%1"`
+		; Sign ourselves
+		!finalize `"${SIGNTOOL}" sign /f "Contrib\certificates\daemon.devin.pfx" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
 SectionEnd

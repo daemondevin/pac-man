@@ -803,7 +803,7 @@ Section Main
 						/DNamePortable="$Name" \
 						/DAppID="$AppID" \
 						/DVersion="${PACVER}"$2 \
-						"$EXEDIR\Other\Source\PortableApps.comLauncher.nsi"` "" ""
+						"$EXEDIR\Other\Source\PortableAppsCompiler.nsi"` "" ""
 		Pop $R1
 		${If} $R1 <> 0
 			StrCpy $ERROROCCURED true
@@ -843,6 +843,5 @@ Function .onGUIEnd
 	RealProgress::Unload
 FunctionEnd
 
-; Sign ourselves using both SHA-1 and SHA-2 too
-!finalize `"${SIGNTOOL}" sign /f "Contrib\certificates\daemon.devin.p12" /p "" /v "%1"`
-!finalize `"${SIGNTOOL}" sign /f "Contrib\certificates\daemon.devin.p12" /p "" /fd sha256 /td sha256 /as /v "%1"`
+; Sign ourselves using both SHA-1 and SHA-2 too.
+!finalize `"${SIGNTOOL}" sign /f "Contrib\certificates\daemon.devin.pfx" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`

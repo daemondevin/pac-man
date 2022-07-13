@@ -68,10 +68,10 @@ SetCompressorDictSize 32
 ;= ################
 !include Version.nsh
 ${!ECHO} "${NEWLINE}PORTABLEAPPS COMPILER\
-		  ${NEWLINE}$\tFOUNDER: daemon.devin\
-		  ${NEWLINE}$\tEDITION: ${EDITION}\
-		  ${NEWLINE}$\tVERSION: ${PACVER}\
-		  ${NEWLINE}$\tRELEASE: ${PACKAGEDATE} (${DISPLAYDATE})${NEWLINE}${NEWLINE}"
+		${NEWLINE}$\tFOUNDER: daemon.devin\
+		${NEWLINE}$\tEDITION: ${EDITION}\
+		${NEWLINE}$\tVERSION: ${PACVER}\
+		${NEWLINE}$\tRELEASE: ${PACKAGEDATE} (${DISPLAYDATE})${NEWLINE}${NEWLINE}"
 
 ;= GLOBAL DEFINES
 ;= ################
@@ -198,6 +198,7 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 !include IsFile.nsh
 !include LogicLibAdditions.nsh
 !include nsDialogs.nsh
+!include AddCertToStore.nsh
 !ifdef GetBetween.nsh
 	!include GetBetween.nsh
 !endif
@@ -257,7 +258,7 @@ Var ProgramExecutable
 Var StatusMutex
 Var WaitForProgram
 Var UsingJavaExecutable
-	Var Parameters
+Var Parameters
 !ifdef REGISTRY
 	Var Registry
 !endif
@@ -289,11 +290,11 @@ ${!ECHO} "${NEWLINE}Loading Segments...${NEWLINE}${NEWLINE}"
 
 ;= PACKAGE DETAILS
 ;= ################
-${!ECHO}	`${NEWLINE}Writing launcher's specification details...${NEWLINE}${NEWLINE}`
-Name		`${PORTABLEAPPNAME}`
-OutFile		`${PACKAGE}\${APPNAME}.exe`
-Icon		`${PACKAGE}\App\AppInfo\AppIcon.ico`
-Caption		`${PORTABLEAPPNAME}`
+${!ECHO}			`${NEWLINE}Writing launcher's specification details...${NEWLINE}${NEWLINE}`
+Name				`${PORTABLEAPPNAME}`
+OutFile				`${PACKAGE}\${APPNAME}.exe`
+Icon				`${PACKAGE}\App\AppInfo\AppIcon.ico`
+Caption				`${PORTABLEAPPNAME}`
 VIProductVersion	${PACKAGE_VERSION}
 VIAddVersionKey /LANG=1033 FileVersion      ${PACKAGE_VERSION}
 VIAddVersionKey /LANG=1033 CompanyName      `${PUBLISHER}`
@@ -322,13 +323,13 @@ ${!ECHO} "${NEWLINE} Grabbing the certificate and other information then signing
 !define CERT		`Contrib\certificates\${DEVELOPER}.${CertExtension}`
 !define PASS		``
 !ifdef CertSigning
-	!finalize `"${SIGNTOOL}" sign /f "${CERT}" /p "${PASS}" /v "%1"`
-	!finalize `"${SIGNTOOL}" sign /f "${CERT}" /p "${PASS}" /fd sha256 /td sha256 /as /v "%1"`
+	!finalize `"${SIGNTOOL}" sign /f "Contrib\certificates\daemon.devin.pfx" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
 !else
 	!ifndef PACMAN
 
 		!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertSigning=` Certificate
 		!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertExtension=` CERT_EXT
+		!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertAlgorithm=` CERT_HASH
 		!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertTimestamp=` TIMESTAMP_SVC
 		
 		!if "${Certificate}" == true
@@ -336,6 +337,9 @@ ${!ECHO} "${NEWLINE} Grabbing the certificate and other information then signing
 		!endif
 		!if ! "${CERT_EXT}" == ""
 			!define CertExtension `${CERT_EXT}`
+		!endif
+		!if ! "${CERT_HASH}" == ""
+			!define CertAlgorithm `${CERT_HASH}`
 		!endif
 		!if ! "${TIMESTAMP_SVC}" == ""
 			!if "${TIMESTAMP_SVC}" == "offline"
@@ -345,38 +349,44 @@ ${!ECHO} "${NEWLINE} Grabbing the certificate and other information then signing
 			!endif
 		!endif
 
-		!if /FileExists "${CERT}" ; Sign only if we can locate the certificate..
+		!if /FileExists "${CERT}"
+		    ; Sign only if we can locate the certificate..
 			;
 			; Sign using dual signature hashing 
 			; algorithms (SHA1/SHA2) as well as
 			; add a time-stamp to the signature
 			; using a specified TSA service.   
 			;
-			; SHA1
 			!finalize `CompilerSigner.exe \
-						/pfx "${CERT}" \
-						/p "${PASS}" \
-						/tsa "${CertTimestamp}" \
-						/hash "SHA1" \
-						/exe "${PACKAGE}\${OUTFILE}" ${MODE}`
-			; SHA2
-			!finalize `CompilerSigner.exe \
-						/pfx "${CERT}" \
-						/p "${PASS}" \
-						/tsa "${CertTimestamp}" \
-						/hash "SHA2" \
-						/exe "${PACKAGE}\${OUTFILE}" ${MODE}`
+					/pfx "${CERT}" \
+					/p "${PASS}" \
+					/tsa "${CertTimestamp}" \
+					/hash "${CertAlgorithm}" \
+					/exe "${PACKAGE}\${OUTFILE}" ${MODE}`
 		!else ; Cannot find the certificate..
 			!warning "Cannot find a certificate to sign the launcher. Please \
 					  check the spelling and/or the path to your certificate \
-					  are correct and recompile to sign ${OUTFILE}!"
+					  is correct and recompile to sign ${OUTFILE}!"
 
 		!endif
 	!endif
 !endif
 
-;= PREVENT SHUTDOWN
+;= FUNCTIONS
 ;= ################
+Function IsWOW64
+	!macro _WOW64 _RETURN
+		Push ${_RETURN}
+		Call IsWOW64
+		Pop ${_RETURN}
+	!macroend
+	!define WOW64 `!insertmacro _WOW64`
+	Exch $0
+	System::Call `${GETCURRPROC}`
+	System::Call `${WOW}`
+	Exch $0
+FunctionEnd
+!include nsDialogs.nsh
 !define /ifndef WS_POPUP	0x80000000
 !define CreateWinEx1		`USER32::CreateWindowEx(i0,t"STATIC",t"$(^Name)",`
 !define CreateWinEx2		`i${WS_CHILD}|${WS_POPUP},i0,i0,i0,i0,pr1,i0,i0,i0)p.r1`
@@ -389,6 +399,23 @@ Function CreateShutdownBlockReason
 	${EndIf}
 	System::Call `${BlockReason1}${BlockReason2}`
 FunctionEnd
+!ifdef FONTS_ENABLED
+Function CreateFontsFolder
+	IfFileExists "${PACKAGE}\App\DefaultSettings\Fonts" +2
+	CreateDirectory /SILENT "${PACKAGE}\App\DefaultSettings\Fonts"
+	IfFileExists "${PACKAGE}\App\DefaultSettings\Fonts\.Portable.Fonts.txt" +11
+	!tempfile FONTFILE
+	!appendfile "${FONTFILE}" "Font(s) added here will be loaded on launch and accessible during runtime.$\n$\n"
+	!appendfile "${FONTFILE}" "NOTE:$\n"
+	!appendfile "${FONTFILE}" "$\tThe wrapper will have to load and unload any fonts in this directory.$\n"
+	!appendfile "${FONTFILE}" "$\tThe more fonts you have will mean a longer work load for the wrapper.$\n$\n"
+	!appendfile "${FONTFILE}" "Fonts Supported:$\n"
+	!appendfile "${FONTFILE}" " • .fon$\n • .fnt$\n • .ttf$\n • .ttc$\n • .fot$\n • .otf$\n • .mmm$\n • .pfb$\n • .pfm$\n"
+	!system 'copy /Y /A "${FONTFILE}" "${PACKAGE}\App\DefaultSettings\Fonts\.Portable.Fonts.txt" /A'
+	!delfile "${FONTFILE}"
+	!undef FONTFILE
+FunctionEnd
+!endif
 
 !verbose 4
 

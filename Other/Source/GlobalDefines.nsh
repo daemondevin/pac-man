@@ -11,21 +11,15 @@
 ; 	It's also created as well as deleted for each new creation process.
 ; 
 
-!define PORTABLEAPPNAME	`Take Command Portable`
-!define FULLNAME		`Take Command`
-!define APPNAME			`TCMDPortable`
-!define PACKAGE_VERSION	`20.11.40.0`
-!define APP				`TCMD`
+!define PORTABLEAPPNAME	`O&O DiskInfo Portable`
+!define FULLNAME		`O&O DiskInfo`
+!define APPNAME			`O&ODiskInfoPortable`
+!define PACKAGE_VERSION	`1.1.1340.217`
+!define APP				`O&ODiskInfo`
 !define APPDIR			`$EXEDIR\App\${APP}`
 !define DEVELOPER		`daemon.devin`
 !define CertSigning
-!define CertExtension	`p12`
+!define CertExtension	`cer`
 !define CertTimestamp	`Comodo`
-!define PUBLISHER		`JP Software Inc.`
-!define OUTFILE			`TCMDPortable.exe`
-!define RegSleep		`50`
-!define REPLACE
-!define ConFunc
-!define UAC
-!define REGISTRY
-!define REGISTERDLL
+!define PUBLISHER		`O&O Software GmbH & daemon.devin`
+!define OUTFILE			`O&ODiskInfoPortable.exe`
