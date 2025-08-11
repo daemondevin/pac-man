@@ -373,13 +373,9 @@ For example:
 
 ---
 
-I've begin a small website dedicated to documenting anything I've deemed invaluable in my findings while I've devoted my time to PAFing. You should know that the content you find there is (or will be over time) a collection of help files and guides mostly focused on the making of PAFs. In some circles it's considered the most complete guide to making PAFs with PAL. So I encourage any novice PAFers to give it a visit; you can read up on a wide range of related topics from Registry best-practices to making your own self-signed certificates to sign your PAFs with.
+Check out the Wiki section for various related articles related to creating PortableApps. The Wiki serves who need a quick reminder on certain functions and macros for use within the `custom.nsh` file. As an added bonus, all (not yet but most) of the source code I've used here is outlined and better explained/documented there as well. For instance, a short guide on registering DLLs and all the macros I used to create the `RegisterDLL.nsh` segment can be found in the Wiki. You can also find an exhaustive tutorial on dealing with Windows Services; plus it explains what each macro is and does within the `Services.nsh` segment and how to use them in action.
 
-I've started this because the documentation which is supplied with PAL by PortableApps.com doesn't have, in my humble opinion, any solid information on the power and complexities it's framework has. So I've taken it upon myself to start working on jotting down this unofficial, but my official, guide to making a PAF with PAL. As time has gone by the website has taken on new meaning which now helps developers to better understand the inner workings of the PAL I'm working on here. Not only that but it also goes into great detail in explaining how certain applications and their components are used on a system; which will help you better understand what you're using in this project and why.
-
-Because I am only just one man who has to live outside of my computer, the documentation project (like this project) will take sometime to finish (if ever) so please forgive me on it's incompleteness. This will also serve as a reference/cheat-sheet for those (I know I'll need it, which is partly why I've started it) who need a quick reminder on certain functions and macros for use within the `custom.nsh` file. As an added bonus, all (not yet but most) of the source code I've used here is outlined and better explained/documented there as well. For instance, visit this [page][docsregdll] for a short guide on registering DLLs and all the macros I used to create the `RegisterDLL.nsh` segment. You can visit this [page][docsservices] for an exhaustive tutorial on dealing with Windows Services; plus it explains what each macro is and does within the `Services.nsh` segment and how to use them in action.
-
-#### **Visit the Docs:** [The PAF Docs][docshome]
+#### **Visit the Wiki:** [Pac-Man Wiki][wikihome]
 
 ## Contributors
 
@@ -405,9 +401,7 @@ A special thanks to FukenGruven. His codebase was the skeleton which was used to
 [msadvisory]: https://support.microsoft.com/en-us/kb/3033929 "MS Security Advisory: SHA2 support for Win7/Windows Server '08 R2: March 10, 2015"
 [javaportable]: http://portableapps.com/apps/utilities/java_portable "Java Portable"
 [ghostscriptportable]: https://portableapps.com/apps/utilities/ghostscript_portable "Ghostscript Portable"
-[docsregdll]: http://portableappz.x10.mx/docs/advanced/regdll-and-regsrv32 "RegDLL & RegSrv32.exe—DLL Handling"
-[docsservices]: http://portableappz.x10.mx/docs/advanced/services "A Look into Windows Services"
-[docshome]: http://portableappz.x10.mx/docs "The PAF Docs on Softables.tk/"
-[author]: http://portableappz.x10.mx/ "Softables.tk/"
+[wikihome]: https://github.com/daemondevin/pac-man/wiki "Pac-Man Wiki"
+[author]: http://portableappz.x10.mx/ "daemon.devin"
 [tekspert]: http://tekspert.se/ "Webmaster of TekSpert.se/"
 [discordworkbench]: https://discord.gg/ExKbgXg "A PAFing Community (Discord Chat Platform)"
