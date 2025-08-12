@@ -16,13 +16,14 @@ With this branch you will find the coding practices of Chris Morgan, FukenGruven
 
 The following is a list of things currently being worked on for Pac-Man so you can look forward too in this project. This list is a work in progress so come back later to see if these features have been added.
 
-- [ ] **AiO GUI**
+- [x] **Add Wiki**
+      I've finally added the Wiki for referance. Refer to the Wiki for help with general PortableApp development and/or need more understanding of what's underneath Pac-Man's hood.
 
-Working on a nice all-in-one GUI that will enable the developer to quickly create the necessary configuration files for creating and generating a PA.c compliant portable application. After creation, than ask to compile.
+- [ ] **AiO GUI**
+      Working on a nice all-in-one GUI that will enable the developer to quickly create the necessary configuration files for creating and generating a PA.c compliant portable application. After creation, than ask to compile.
 
 - [ ] **AiO Compiler**
-
-Working on combining both the PortableApps.com Launcher with the PortableApps.com Installer. Basically, have a single GUI (including the config creator) which can be used to create and generate a portable application package from compiling the portable launcher to creating the PAF installer.
+      Working on combining both the PortableApps.com Launcher with the PortableApps.com Installer. Basically, have a single GUI (including the config creator) which can be used to create and generate a portable application package from compiling the portable launcher to creating the PAF installer.
 
 - [ ] **Etc. Etc. And So On**
 
