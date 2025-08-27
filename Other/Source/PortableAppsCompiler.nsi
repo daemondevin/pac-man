@@ -503,6 +503,9 @@ FunctionEnd
 Function Pre
 	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
+		!ifdef RUNTIME
+			${RunSegment} RuntimeDependencies
+		!endif
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
@@ -557,6 +560,9 @@ Function PrePrimary
 		${RunSegment} RegistryValueWrite
 	!endif
 	${If} ${PrimaryInstance}
+		!ifdef RUNTIME
+			${RunSegment} RuntimeDependencies
+		!endif
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
@@ -703,6 +709,9 @@ Function PostPrimary
 		!ifdef DIRECTX
 			${RunSegment} DirectX
 		!endif
+		!ifdef RUNTIME
+			${RunSegment} RuntimeDependencies
+		!endif
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
@@ -755,6 +764,9 @@ Function Unload
 	${If} ${PrimaryInstance}
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
+		!endif
+		!ifdef RUNTIME
+			${RunSegment} RuntimeDependencies
 		!endif
 		!ifdef SERVICES
 			${RunSegment} Services
@@ -834,3 +846,4 @@ SectionEnd
 Function .onInstFailed        
 	Call Unload
 FunctionEnd
+
