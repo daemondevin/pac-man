@@ -512,6 +512,9 @@ Function Pre
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
 		!endif
+		!ifdef ASSOCIATIONS
+			${RunSegment} FileAssociations
+		!endif
 	${EndIf}
 	!ifdef REGISTRY
 		${RunSegment} Registry
@@ -571,6 +574,9 @@ Function PrePrimary
 		!endif
 		!ifdef FONTS_ENABLE
 			${RunSegment} Fonts
+		!endif
+		!ifdef ASSOCIATIONS
+			${RunSegment} FileAssociations
 		!endif
 	${EndIf}
 	${ENABLE_REDIRECTION}
@@ -718,6 +724,9 @@ Function PostPrimary
 		!ifdef TaskCleanup
 			${RunSegment} TasksCleanUp
 		!endif
+		!ifdef ASSOCIATIONS
+			${RunSegment} FileAssociations
+		!endif
 	${EndIf}
 	!ifdef REGISTRY
 		${RunSegment} RegistryValueBackupDelete
@@ -773,6 +782,9 @@ Function Unload
 		!endif
 		!ifdef FONTS_ENABLE
 			${RunSegment} Fonts
+		!endif
+		!ifdef ASSOCIATIONS
+			${RunSegment} FileAssociations
 		!endif
 		!ifdef FileCleanup
 			${RunSegment} FilesCleanup
@@ -846,4 +858,5 @@ SectionEnd
 Function .onInstFailed        
 	Call Unload
 FunctionEnd
+
 
