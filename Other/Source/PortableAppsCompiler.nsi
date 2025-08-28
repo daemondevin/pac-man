@@ -230,7 +230,11 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 		!define GET_ROOT
 	!endif
 !endif
-
+!ifdef RUNTIMEDEPENDENCIES
+	!ifndef TrimString
+		!define TrimString
+	!endif
+!endif
 ;= PAC MACROS
 ;= ################
 !include GlobalMacros.nsh
@@ -481,9 +485,6 @@ Function Init
 	!ifdef JAVA
 		${RunSegment} Java
 	!endif
-	!ifdef DOTNET
-		${RunSegment} DotNet
-	!endif
 	!ifdef GHOSTSCRIPT
 		${RunSegment} Ghostscript
 	!endif
@@ -495,19 +496,22 @@ Function Init
 	${If} ${PrimaryInstance}
 		${RunSegment} Settings
 	${EndIf}
-	!ifdef FONTS_ENABLED
-		Call CreateFontsFolder
-	!endif
 	${ENABLE_REDIRECTION}
 FunctionEnd
 Function Pre
 	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
+		!ifdef FIREWALL
+			${RunSegment} Firewall
+		!endif
 		!ifdef RUNTIME
 			${RunSegment} RuntimeDependencies
 		!endif
 		!ifdef SERVICES
 			${RunSegment} Services
+		!endif
+		!ifdef DRIVERS
+			${RunSegment} Drivers
 		!endif
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
@@ -515,9 +519,15 @@ Function Pre
 		!ifdef ASSOCIATIONS
 			${RunSegment} FileAssociations
 		!endif
+		!ifdef TASKSCHEDULER
+			${RunSegment} TaskScheduler
+		!endif
 	${EndIf}
 	!ifdef REGISTRY
 		${RunSegment} Registry
+	!endif
+	!ifdef FONTS_ENABLED
+		${RunSegment} Fonts
 	!endif
 	${RunSegment} Custom
 	${RunSegment} RunLocally
@@ -552,6 +562,9 @@ Function PrePrimary
 		${RunSegment} RegistryValueBackupDelete
 	!endif
 	${If} ${PrimaryInstance}
+		!ifdef FIREWALL
+			${RunSegment} Firewall
+		!endif
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
 		!endif
@@ -569,8 +582,11 @@ Function PrePrimary
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
-		!ifdef TaskCleanup
-			${RunSegment} TasksCleanUp
+		!ifdef DRIVERS
+			${RunSegment} Drivers
+		!endif
+		!ifdef TASKSCHEDULER
+			${RunSegment} TaskScheduler
 		!endif
 		!ifdef FONTS_ENABLE
 			${RunSegment} Fonts
@@ -709,6 +725,9 @@ FunctionEnd
 Function PostPrimary        
 	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
+		!ifdef FIREWALL
+			${RunSegment} Firewall
+		!endif
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
 		!endif
@@ -721,11 +740,17 @@ Function PostPrimary
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
-		!ifdef TaskCleanup
-			${RunSegment} TasksCleanUp
+		!ifdef DRIVERS
+			${RunSegment} Drivers
+		!endif
+		!ifdef TASKSCHEDULER
+			${RunSegment} TaskScheduler
 		!endif
 		!ifdef ASSOCIATIONS
 			${RunSegment} FileAssociations
+		!endif
+		!ifdef FONTS_ENABLED
+			${RunSegment} Fonts
 		!endif
 	${EndIf}
 	!ifdef REGISTRY
@@ -780,6 +805,9 @@ Function Unload
 		!ifdef SERVICES
 			${RunSegment} Services
 		!endif
+		!ifdef DRIVERS
+			${RunSegment} Drivers
+		!endif
 		!ifdef FONTS_ENABLE
 			${RunSegment} Fonts
 		!endif
@@ -791,6 +819,12 @@ Function Unload
 		!endif
 		!ifdef DirectoryCleanup
 			${RunSegment} DirectoriesCleanup
+		!endif
+		!ifdef TASKSCHEDULER
+			${RunSegment} TaskScheduler
+		!endif
+		!ifdef FIREWALL
+			${RunSegment} Firewall
 		!endif
 	${EndIf}
 	${RunSegment} Core
@@ -858,5 +892,6 @@ SectionEnd
 Function .onInstFailed        
 	Call Unload
 FunctionEnd
+
 
 
