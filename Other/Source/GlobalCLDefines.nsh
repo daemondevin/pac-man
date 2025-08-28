@@ -36,11 +36,15 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `RegRedirection=` DISABLEFSR
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Redirection=` SYSTEMWIDE_DISABLEREDIR
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `ForceRedirection=` FORCE_SYSTEMWIDE_DISABLEREDIR
-!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Tasks=` TaskCleanUp
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Tasks=` TASKSCHEDULER
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `RuntimeDependencies=` RUNTIME
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Drivers=` DRIVERS
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `FileAssociations=` ASSOCIATIONS
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Firewall=` FIREWALL
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `RegCopyKeys=` RegCopy
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `FileCleanup=` FileCleanup
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `DirectoryCleanup=` DirectoryCleanup
-!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `FontsFolder=` FONTS_ENABLE
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Fonts=` FONTS_ENABLE
 
 !searchparse /ignorecase /noerrors /file "${APPINFOINI}" `AppID=` APPNAME
 !searchparse /ignorecase /noerrors /file "${APPINFOINI}" `Name=` PORTABLEAPPNAME
@@ -96,16 +100,32 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef REGISTRY
 	!endif
 !endif
-!ifdef dotNET_Version
-	!if ! ${dotNET_Version} == ""
-		!define DOTNET
-		!include DotNetVer.nsh
-	!else
-		!error "The key 'UsesDotNetVersion' in AppInfo.ini is set but has no value! If this PAF does not require the .NET Framework please omit this key entirely."
-	!endif
+!if "${RUNTIME}" == true
+	!define /REDEF RUNTIME
 !else
-	!ifdef dotNET_Version
-		!undef dotNET_Version
+	!ifdef RUNTIME
+		!undef RUNTIME
+	!endif
+!endif
+!if "${DRIVERS}" == true
+	!define /REDEF DRIVERS
+!else
+	!ifdef DRIVERS
+		!undef DRIVERS
+	!endif
+!endif
+!if "${FIREWALL}" == true
+	!define /REDEF FIREWALL
+!else
+	!ifdef FIREWALL
+		!undef FIREWALL
+	!endif
+!endif
+!if "${ASSOCIATIONS}" == true
+	!define /REDEF ASSOCIATIONS
+!else
+	!ifdef ASSOCIATIONS
+		!undef ASSOCIATIONS
 	!endif
 !endif
 !if "${JAVA}" == "find"
@@ -199,6 +219,20 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!ifdef REGISTERDLL
 		!undef REGISTERDLL
+	!endif
+!endif
+!if ${FONTS_ENABLE} == true
+	!define /REDEF FONTS_ENABLE 			
+!else
+	!ifdef FONTS_ENABLE
+		!undef FONTS_ENABLE
+	!endif
+!endif
+!if ${TASKSCHEDULER} == true
+	!define /REDEF TASKSCHEDULER 			
+!else
+	!ifdef TASKSCHEDULER
+		!undef TASKSCHEDULER
 	!endif
 !endif
 !if ! ${SleepValue} == ""
@@ -332,15 +366,6 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!error "The key 'ExecAsUser' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
-!if ! ${INF_Install} == ""
-	!if ${INF_Install} == true
-		!define /REDEF INF_Install 		;= Enable for INF installation support.
-	!else if ${INF_Install} == false
-		!undef INF_Install
-	!endif
-!else
-	!error "The key 'InstallINF' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
-!endif
 !if ! ${SYSTEMWIDE_DISABLEREDIR} == ""
 	!if ${SYSTEMWIDE_DISABLEREDIR} == true
 		!define /REDEF SYSTEMWIDE_DISABLEREDIR
@@ -358,15 +383,6 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 	!endif
 !else
 	!error "The key 'ForceDisableRedirection' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
-!endif
-!if ! ${FONTS_ENABLE} == ""
-	!if ${FONTS_ENABLE} == true
-		!define /REDEF FONTS_ENABLE 	;= Enable font support in ..\Data\Fonts
-	!else if ${FONTS_ENABLE} == false
-		!undef FONTS_ENABLE 
-	!endif
-!else
-	!error "The key 'FontsFolder' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
 !if ! ${JSON} == ""
 	!if ${JSON} == true
@@ -443,15 +459,6 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!error "The key 'DirectoryCleanup' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
-!if ! ${TaskCleanup} == ""
-	!if ${TaskCleanup} == true
-		!define /REDEF TaskCleanup 		;= Enable TaskCleanup segment
-	!else if ${TaskCleanup} == false
-		!undef TaskCleanup 				;= Disable TaskCleanup segment
-	!endif
-!else
-	!error "The key 'TaskCleanup' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
-!endif
 !if ! ${DIRECTX} == ""
 	!if ${DIRECTX} == true
 		!define /REDEF DIRECTX	 		;= Enable TaskCleanup segment
@@ -461,3 +468,4 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!error "The key 'DirectX' in AppInfo.ini needs a true/false value!${NewLine}${NewLine}If support for this isn't needed, omit this key entirely!"
 !endif
+
