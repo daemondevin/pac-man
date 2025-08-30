@@ -67,9 +67,6 @@
 !ifdef STR_LOC_NSH_INCLUDED
 	!include StrLoc.nsh
 !endif
-!ifndef FILEEXISTS_NSH_INCLUDED
-	!include FileExists.nsh
-!endif
 
 ; SCHTASKS command path
 !define SCHTASKS `$SYSDIR\schtasks.exe`
