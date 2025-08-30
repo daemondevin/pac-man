@@ -1,4 +1,4 @@
-﻿;=#
+;=#
 ; 
 ; PORTABLEAPPS COMPILER 
 ; Developed by daemon.devin (daemon.devin@gmail.com)
@@ -745,7 +745,7 @@ Section Main
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Tasks"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "TaskCleanUp" "" ""
+			${WriteGlobalDefines} "TASKSCHEDULER" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Java"
@@ -766,7 +766,7 @@ Section Main
 			${WriteGlobalDefines} "GHOSTSCRIPT" "" ""
 		${EndIf}
 		ClearErrors
-		${ReadLauncherConfig} $0 "Activate" "FontsFolder"
+		${ReadLauncherConfig} $0 "Activate" "Fonts"
 		${IfNot} ${Errors}
 			${WriteGlobalDefines} "FONTS_ENABLE" "" ""
 		${EndIf}
@@ -779,6 +779,31 @@ Section Main
 		${ReadLauncherConfig} $0 "Activate" "DirectoryCleanup"
 		${IfNot} ${Errors}
 			${WriteGlobalDefines} "DirectoryCleanup" "" ""
+		${EndIf}
+        ClearErrors
+		${ReadLauncherConfig} $0 "Activate" "FileAssociations"
+		${IfNot} ${Errors}
+			${WriteGlobalDefines} "ASSOCIATIONS" "" ""
+		${EndIf}
+        ClearErrors
+		${ReadLauncherConfig} $0 "Activate" "RuntimeDependencies"
+		${IfNot} ${Errors}
+			${WriteGlobalDefines} "RUNTIME" "" ""
+		${EndIf}
+        ClearErrors
+		${ReadLauncherConfig} $0 "Activate" "Drivers"
+		${IfNot} ${Errors}
+			${WriteGlobalDefines} "DRIVERS" "" ""
+		${EndIf}
+        ClearErrors
+		${ReadLauncherConfig} $0 "Activate" "Firewall"
+		${IfNot} ${Errors}
+			${WriteGlobalDefines} "FIREWALL" "" ""
+		${EndIf}
+        ClearErrors
+		${ReadLauncherConfig} $0 "Activate" "SymlinksJunctions"
+		${IfNot} ${Errors}
+			${WriteGlobalDefines} "SYMLINKSJUNCTIONS" "" ""
 		${EndIf}
 		
 		FileClose $GFLAGS
