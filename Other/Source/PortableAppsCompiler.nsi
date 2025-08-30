@@ -403,23 +403,6 @@ Function CreateShutdownBlockReason
 	${EndIf}
 	System::Call `${BlockReason1}${BlockReason2}`
 FunctionEnd
-!ifdef FONTS_ENABLED
-Function CreateFontsFolder
-	IfFileExists "${PACKAGE}\App\DefaultSettings\Fonts" +2
-	CreateDirectory /SILENT "${PACKAGE}\App\DefaultSettings\Fonts"
-	IfFileExists "${PACKAGE}\App\DefaultSettings\Fonts\.Portable.Fonts.txt" +11
-	!tempfile FONTFILE
-	!appendfile "${FONTFILE}" "Font(s) added here will be loaded on launch and accessible during runtime.$\n$\n"
-	!appendfile "${FONTFILE}" "NOTE:$\n"
-	!appendfile "${FONTFILE}" "$\tThe wrapper will have to load and unload any fonts in this directory.$\n"
-	!appendfile "${FONTFILE}" "$\tThe more fonts you have will mean a longer work load for the wrapper.$\n$\n"
-	!appendfile "${FONTFILE}" "Fonts Supported:$\n"
-	!appendfile "${FONTFILE}" " • .fon$\n • .fnt$\n • .ttf$\n • .ttc$\n • .fot$\n • .otf$\n • .mmm$\n • .pfb$\n • .pfm$\n"
-	!system 'copy /Y /A "${FONTFILE}" "${PACKAGE}\App\DefaultSettings\Fonts\.Portable.Fonts.txt" /A'
-	!delfile "${FONTFILE}"
-	!undef FONTFILE
-FunctionEnd
-!endif
 
 !verbose 4
 
@@ -522,6 +505,9 @@ Function Pre
 		!ifdef TASKSCHEDULER
 			${RunSegment} TaskScheduler
 		!endif
+		!ifdef SYMLINKSJUNCTIONS
+			${RunSegment} SymlinksJunctions
+		!endif
 	${EndIf}
 	!ifdef REGISTRY
 		${RunSegment} Registry
@@ -565,6 +551,15 @@ Function PrePrimary
 		!ifdef FIREWALL
 			${RunSegment} Firewall
 		!endif
+		!ifdef RUNTIME
+			${RunSegment} RuntimeDependencies
+		!endif
+		!ifdef DRIVERS
+			${RunSegment} Drivers
+		!endif
+		!ifdef SERVICES
+			${RunSegment} Services
+		!endif
 		!ifdef REGISTERDLL
 			${RunSegment} RegisterDLL
 		!endif
@@ -576,15 +571,6 @@ Function PrePrimary
 		${RunSegment} RegistryValueWrite
 	!endif
 	${If} ${PrimaryInstance}
-		!ifdef RUNTIME
-			${RunSegment} RuntimeDependencies
-		!endif
-		!ifdef SERVICES
-			${RunSegment} Services
-		!endif
-		!ifdef DRIVERS
-			${RunSegment} Drivers
-		!endif
 		!ifdef TASKSCHEDULER
 			${RunSegment} TaskScheduler
 		!endif
@@ -593,6 +579,9 @@ Function PrePrimary
 		!endif
 		!ifdef ASSOCIATIONS
 			${RunSegment} FileAssociations
+		!endif
+		!ifdef SYMLINKSJUNCTIONS
+			${RunSegment} SymlinksJunctions
 		!endif
 	${EndIf}
 	${ENABLE_REDIRECTION}
@@ -768,6 +757,9 @@ Function PostPrimary
 		!ifdef FileCleanup
 			${RunSegment} FilesCleanup
 		!endif
+		!ifdef SYMLINKSJUNCTIONS
+			${RunSegment} SymlinksJunctions
+		!endif
 	${EndIf}
 	!ifdef DirectoryCleanup
 		${RunSegment} DirectoriesCleanup
@@ -825,6 +817,9 @@ Function Unload
 		!endif
 		!ifdef FIREWALL
 			${RunSegment} Firewall
+		!endif
+		!ifdef SYMLINKSJUNCTIONS
+			${RunSegment} SymlinksJunctions
 		!endif
 	${EndIf}
 	${RunSegment} Core
@@ -892,6 +887,5 @@ SectionEnd
 Function .onInstFailed        
 	Call Unload
 FunctionEnd
-
 
 
