@@ -590,9 +590,9 @@
 			
 			${Firewall::RuleExists} "$1" $2 $3
 			${If} $2 == "true"
-				FileWrite $0 "✓ $1 -> Active$\r$\n"
+				FileWrite $0 "$1 -> Active$\r$\n"
 			${Else}
-				FileWrite $0 "✗ $1 -> Not found$\r$\n"
+				FileWrite $0 "$1 -> Not found$\r$\n"
 			${EndIf}
 			
 			IntOp $R0 $R0 + 1
