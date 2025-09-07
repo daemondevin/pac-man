@@ -5,37 +5,36 @@
  * validation and error handling.
  * 
  * Macro Usage:
- *   ${CreateJunction} "$JunctionPath" "$TargetPath" $0 $1
+ *   ${CreateJunction} "$Junction" "$Target" $0 $1
  *   $0 holds true/false
  *   $1 holds error message if failed, empty if success
  *
  * Function Usage:
- *   Push $JunctionPath
- *   Push $TargetPath
+ *   Push $Junction
+ *   Push $Target
  *   Call CreateJunction
  *   Pop $R0 ; Result ("true"/"false")
  *   Pop $R1 ; Error message if failed, "" if success
  */
- 
 ; --- Defines
-!ifndef CREATEJUNCTION_NSH_INCLUDED
-!define CREATEJUNCTION_NSH_INCLUDED
+!ifndef CREATE_JUNCTION_NSH_INCLUDED
+!define CREATE_JUNCTION_NSH_INCLUDED
 ; --- Includes
 !ifndef LOGICLIB
 	!include LogicLib.nsh
 !endif
 !define CreateJunction "!insertmacro _CreateJunction"
-!macro _CreateJunction _JunctionPath _TargetPath _RESULT _ERROR
-    Push `${_JunctionPath}`
-    Push `${_TargetPath}`
+!macro _CreateJunction _JUNCTION _TARGET _RESULT _ERROR
+    Push `${_JUNCTION}`
+    Push `${_TARGET}`
     Call CreateJunction
     Pop `${_RESULT}`
     Pop `${_ERROR}`
 !macroend
 Function CreateJunction
-    Exch $1 ; TargetDir
+    Exch $1 ; Target
     Exch
-    Exch $0 ; JunctionPath
+    Exch $0 ; Junction
     Push $2
     Push $3
     Push $4
@@ -106,13 +105,13 @@ Function CreateJunction
         StrCpy $R1 "Failed to set reparse point (Error $3)"
         System::Call 'kernel32::CloseHandle(p $4)'
         RMDir "$0"
-        Goto free_buf
+        Goto _FREE_BUFFER
     ${EndIf}
 
     StrCpy $R0 "true"
     System::Call 'kernel32::CloseHandle(p $4)'
 
-free_buf:
+_FREE_BUFFER:
     System::Free $5
 
 _JUNCTION_DONE:
@@ -128,5 +127,4 @@ _JUNCTION_DONE:
     Exch
     Exch $R0
 FunctionEnd
-
-!endif ; CREATEJUNCTION_NSH_INCLUDED
+!endif ; CREATE_JUNCTION_NSH_INCLUDED
