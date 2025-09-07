@@ -32,6 +32,96 @@
 !ifndef LOGICLIB
 	!include LogicLib.nsh
 !endif
+!ifndef GetRelativePath
+; Get relative path between two absolute paths
+!define GetRelativePath `!insertmacro _GetRelativePath`
+!macro _GetRelativePath _FROM _TO _RESULT
+	Push $0
+	Push $1
+	Push $2
+	Push $3
+	Push $4
+	Push $5
+	Push $R8
+	Push $R9
+	
+	; Split paths into components
+	${WordReplace} "${_FROM}" "\" "$\n" "+" $0
+	${WordReplace} "${_TO}" "\" "$\n" "+" $1
+	
+	; Find common root
+	StrCpy $2 1 ; Component index
+	StrCpy $3 "" ; Common components
+	${Do}
+		${WordFind} "$0" "$\n" "+$2" $4
+		${If} ${Errors}
+			${ExitDo}
+		${EndIf}
+		${WordFind} "$1" "$\n" "+$2" $5
+		${If} ${Errors}
+			${ExitDo}
+		${EndIf}
+		
+		${If} $4 == $5
+			${If} $3 == ""
+				StrCpy $3 "$4"
+			${Else}
+				StrCpy $3 "$3\$4"
+			${EndIf}
+			IntOp $2 $2 + 1
+		${Else}
+			${ExitDo}
+		${EndIf}
+	${Loop}
+	
+	; Calculate relative path
+	StrCpy $R8 ""
+	StrCpy $R9 $2
+	
+	; Count remaining components in FROM path (how many .. needed)
+	${Do}
+		${WordFind} "$0" "$\n" "+$R9" $4
+		${If} ${Errors}
+			${ExitDo}
+		${EndIf}
+		${If} $R8 == ""
+			StrCpy $R8 ".."
+		${Else}
+			StrCpy $R8 "$R8\.."
+		${EndIf}
+		IntOp $R9 $R9 + 1
+	${Loop}
+	
+	; Add remaining components from TO path
+	${Do}
+		${WordFind} "$1" "$\n" "+$2" $4
+		${If} ${Errors}
+			${ExitDo}
+		${EndIf}
+		${If} $R8 == ""
+			StrCpy $R8 "$4"
+		${Else}
+			StrCpy $R8 "$R8\$4"
+		${EndIf}
+		IntOp $2 $2 + 1
+	${Loop}
+	
+	${If} $R8 == ""
+		StrCpy ${_RESULT} "."
+	${Else}
+		StrCpy ${_RESULT} "$R8"
+	${EndIf}
+	
+	Pop $R9
+	Pop $R8
+	Pop $5
+	Pop $4
+	Pop $3
+	Pop $2
+	Pop $1
+	Pop $0
+!macroend
+!endif
 !define CreateSymlink "!insertmacro _CreateSymlink"
 !macro _CreateSymlink _LINK _TARGET _TYPE _RELATIVE _RESULT _ERROR
     Push `${_LINK}`
