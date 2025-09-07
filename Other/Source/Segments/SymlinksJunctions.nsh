@@ -12,35 +12,72 @@
 ;   with backup, restoration, and conflict resolution.
 ; 
 ; USAGE
-;	Add sections [SymLink1], [Junction1], [HardLink1] etc. to Launcher.ini
+;   Method 1:
+;	    Add the section [LinkDispatcher1], [LinkDispatcher2] to try Symbolic links first, 
+;       if symlinks fail then fallback on using Junctions. The Dispatcher will use the  
+;       appropriate links based on file/directory automatically.
+;   
+;   Method 2: 
+;       Add the sections [SymLink1], [Junction1], [HardLink1] etc. to Launcher.ini to 
+;       decide for yourself what links you want to use.
 ;
-;	SymLink Keys (Symbolic Links):
-;	LinkPath		-	Path where the symbolic link will be created
-;	TargetPath		-	Path that the link points to (supports %PAL:* variables)
-;	Type			-	file, directory (auto-detect if not specified)
-;	IfExists		-	skip, backup, replace, update
-;	Required		-	true/false (show error if creation fails)
-;	Relative		-	true/false (create relative vs absolute link)
-;	Temporary		-	true/false (remove on app exit vs persist)
+;   NOTE: You can use both LinkDispatcher and SymLink, Junction, HardLink simultaneously. 
 ;
-;	Junction Keys (Directory Junctions - NTFS only):
-;	JunctionPath	-	Path where the junction will be created
-;	TargetPath		-	Directory that the junction points to
-;	IfExists		-	skip, backup, replace
-;	Required		-	true/false (show error if creation fails)
-;	Temporary		-	true/false (remove on app exit vs persist)
+;	[LinkDispatcher] Keys (Use Symlinks if possible, else Junction fallback):
+;	    LinkPath		-	Path where the link will be created
+;	    TargetPath		-	Path that the link points to (supports %PAL:* variables)
+;	    Mode			-	symlink/junction/hardlink/auto (defaults to auto)
+;	    IfExists		-	skip, backup, replace
+;	    Required		-	true/false (show error if creation fails)
+;	    Relative		-	true/false (create relative vs absolute link)
+;	    Temporary		-	true/false (remove on app exit vs persist)
 ;
-;	HardLink Keys (Hard Links - same volume only):
-;	LinkPath		-	Path where the hard link will be created
-;	TargetPath		-	File that the hard link points to (must be file)
-;	IfExists		-	skip, backup, replace
-;	Required		-	true/false (show error if creation fails)
-;	Temporary		-	true/false (remove on app exit vs persist)
+;	[SymLink] Keys (Symbolic Links):
+;	    LinkPath		-	Path where the symbolic link will be created
+;	    TargetPath		-	Path that the link points to (supports %PAL:* variables)
+;	    Type			-	file, directory (auto-detect if not specified)
+;	    IfExists		-	skip, backup, replace, update
+;	    Required		-	true/false (show error if creation fails)
+;	    Relative		-	true/false (create relative vs absolute link)
+;	    Temporary		-	true/false (remove on app exit vs persist)
 ;
-; EXAMPLES
+;	[Junction] Keys (Directory Junctions - NTFS only):
+;	    JunctionPath	-	Path where the junction will be created
+;	    TargetPath		-	Directory that the junction points to
+;	    IfExists		-	skip, backup, replace
+;	    Required		-	true/false (show error if creation fails)
+;	    Temporary		-	true/false (remove on app exit vs persist)
+;
+;	[HardLink] Keys (Hard Links - same volume only):
+;	    LinkPath		-	Path where the hard link will be created
+;	    TargetPath		-	File that the hard link points to (must be file)
+;	    IfExists		-	skip, backup, replace
+;	    Required		-	true/false (show error if creation fails)
+;	    Temporary		-	true/false (remove on app exit vs persist)
+;
+; METHOD 1 EXAMPLES
+;	[LinkDispatcher1]
+;	LinkPath=%PAL:DataDir%\MyAppData
+;	TargetPath=%USERPROFILE%\Documents\MyAppData
+;	Mode=auto
+;	IfExists=backup
+;	Required=true
+;	Relative=false
+;	Temporary=true
+
+;	[LinkDispatcher2]
+;	LinkPath=%PAL:DataDir%\Settings.xml
+;	TargetPath=%ALLUSERSAPPDATA%\MyAppData\Settings.xml
+;	Mode=auto
+;	IfExists=backup
+;	Required=true
+;	Relative=false
+;	Temporary=true
+;
+; METHOD 2 EXAMPLES
 ;	[SymLink1]
-;	LinkPath=%USERPROFILE%\Documents\MyAppData
-;	TargetPath=%PAL:DataDir%\Documents
+;	LinkPath=%PAL:DataDir%\Documents
+;	TargetPath=%USERPROFILE%\Documents\MyAppData
 ;	Type=directory
 ;	IfExists=backup
 ;	Required=true
@@ -48,15 +85,15 @@
 ;	Temporary=true
 ;
 ;	[Junction1]
-;	JunctionPath=C:\ProgramData\MyApp
-;	TargetPath=%PAL:DataDir%
+;	JunctionPath=%PAL:DataDir%\MyApp
+;	TargetPath=C:\ProgramData\MyApp
 ;	IfExists=replace
 ;	Required=false
 ;	Temporary=true
 ;
 ;	[HardLink1]
-;	LinkPath=%APPDATA%\MyApp\config.ini
-;	TargetPath=%PAL:DataDir%\config.ini
+;	LinkPath=%PAL:DataDir%\config.ini
+;	TargetPath=%APPDATA%\MyApp\config.ini
 ;	IfExists=backup
 ;	Required=true
 ;	Temporary=true
@@ -66,8 +103,17 @@
 !ifndef LOGICLIB
 	!include LogicLib.nsh
 !endif
-!ifndef WORDREPLACE_NSH_INCLUDED
-	!include WordReplace.nsh
+!ifndef STR_LOC_NSH_INCLUDED
+    !include StrLoc.nsh
+!endif
+!ifndef CREATEHARDLINK_NSH_INCLUDED
+    !include CreateHardlink.nsh
+!endif
+!ifndef CREATESYMLINK_NSH_INCLUDED
+    !include CreateSymlink.nsh
+!endif
+!ifndef CREATEJUNCTION_NSH_INCLUDED
+    !include CreateJunction.nsh
 !endif
 
 ; Windows link management tools
@@ -85,358 +131,586 @@
 !define IO_REPARSE_TAG_SYMLINK 0xA000000C
 !define IO_REPARSE_TAG_MOUNT_POINT 0xA0000003
 
+Function _GetWindowsVersion
+    ; Returns version as "Major.Minor.Build"
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+    System::Alloc 284 ; OSVERSIONINFOEXW
+    Pop $0
+    System::Call 'kernel32::RtlGetVersion(p r0) i .r1'
+    System::Call '*$0(i .r2, i .r3, i .r4)' ; dwMajorVersion, dwMinorVersion, dwBuildNumber
+    System::Free $0
+    StrCpy $R0 "$2.$3.$4"
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
+FunctionEnd
+
+; Usage:
+;   Push <Link>
+;   Push <Target>
+;   Push <Mode: "symlink"|"junction"|"hardlink"|"auto">
+;   Push <Relative: "true"|"false">
+;   Call CreateLinkAuto
+;   Pop $R0 ; Result ("true"/"false")
+;   Pop $R1 ; Error message if failed, "" if ok
+!define CreateLinkDispatcher "!insertmacro _CreateLinkDispatcher"
+!macro _CreateLinkDispatcher _LINK _TARGET _MODE _RELATIVE _RESULT _ERROR
+    Push `${_LINK}`
+    Push `${_TARGET}`
+    Push `${_MODE}`         ; symlink/junction/hardlink/auto
+    Push `${_RELATIVE}`     ; true/false
+    Call CreateJunction
+    Pop `${_RESULT}`        ; true/false
+    Pop `${_ERROR}`         ; Error message, blank if success
+!macroend
+Function CreateLinkDispatcher
+    Exch $3 ; Relative
+    Exch
+    Exch $2 ; Mode
+    Exch
+    Exch 2
+    Exch $1 ; Target
+    Exch
+    Exch 3
+    Exch $0 ; Link
+    Push $4
+
+    StrCpy $R0 "false"
+    StrCpy $R1 ""
+
+    ; Default to auto if blank
+    ${If} "$2" == ""
+        StrCpy $2 "auto"
+    ${EndIf}
+
+    ; ----------------------
+    ; Hardlink
+    ${If} "$2" == "hardlink"
+        Push "$0"
+        Push "$1"
+        Call CreateHardlink
+        Pop $R0
+        Pop $R1
+        Goto _DISPATCH_DONE
+    ${EndIf}
+
+    ; ----------------------
+    ; Junction
+    ${If} "$2" == "junction"
+        Push "$0"
+        Push "$1"
+        Call CreateJunction
+        Pop $R0
+        Pop $R1
+        Goto _DISPATCH_DONE
+    ${EndIf}
+
+    ; ----------------------
+    ; Symlink
+    ${If} "$2" == "symlink"
+        Push "$0"
+        Push "$1"
+        Push "auto"
+        Push "$3"
+        Call CreateSymlink
+        Pop $R0
+        Pop $R1
+        Goto _DISPATCH_DONE
+    ${EndIf}
+
+    ; ----------------------
+    ; AUTO mode: try symlink, fallback to junction
+    Call _GetWindowsVersion
+    Pop $4 ; version string "Major.Minor.Build"
+
+    ; Parse major.minor
+    ${StrLoc} $5 $4 "." "<"
+    ${If} $5 == ""
+        StrCpy $6 "0"
+        StrCpy $7 "0"
+    ${Else}
+        StrCpy $6 $4 $5
+        IntOp $5 $5 + 1
+        StrCpy $7 $4 "" $5
+        ${StrLoc} $8 $7 "." "<"
+        ${If} $8 != ""
+            StrCpy $7 $7 $8
+        ${EndIf}
+    ${EndIf}
+
+    IntCmpU $6 10 _TRY_SYMLINK _FALLBACK _FALLBACK
+    IntCmpU $6 6 _CHECK_MINOR _FALLBACK _FALLBACK
+
+_CHECK_MINOR:
+    ; Windows 6.x (Vista/7/8/8.1) ? symlink usually admin-only
+    StrCpy $2 "junction"
+    Goto _FALLBACK
+
+_TRY_SYMLINK:
+    Push "$0"
+    Push "$1"
+    Push "auto"
+    Push "$3"
+    Call CreateSymlink
+    Pop $R0
+    Pop $R1
+    ${If} $R0 == "true"
+        Goto _DISPATCH_DONE
+    ${EndIf}
+
+_FALLBACK:
+    Push "$0"
+    Push "$1"
+    Call CreateJunction
+    Pop $R0
+    Pop $R1
+
+_DISPATCH_DONE:
+    Pop $4
+    Exch $R1
+    Exch
+    Exch $R0
+FunctionEnd
+
+!define ExtractTarget `!insertmacro _ExtractTarget`
+!macro _ExtractTarget _OUTPUT _RESULT
+    Push $0
+    Push $1
+    Push $2
+
+    ; Default empty result
+    StrCpy ${_RESULT} ""
+
+    ${StrLoc} $0 "${_OUTPUT}" "[" ">"
+    ${If} $0 != ""
+        StrCpy $1 "${_OUTPUT}" "" $0
+        IntOp $0 $0 + 1
+        StrCpy $2 $1 "" $0
+        ${StrLoc} $0 "$2" "]" ">"
+        ${If} $0 != ""
+            StrCpy ${_RESULT} $2 $0
+        ${EndIf}
+    ${EndIf}
+
+    Pop $2
+    Pop $1
+    Pop $0
+!macroend
+
 ; Check if path is a symbolic link, junction, or hard link
 !define Link::GetType `!insertmacro _Link::GetType`
 !macro _Link::GetType _PATH _RESULT _TARGET _LINKTYPE
-	Push $0
-	Push $1
-	Push $2
-	Push $3
-	Push $R8
-	Push $R9
-	
-	StrCpy ${_RESULT} "false"
-	StrCpy ${_TARGET} ""
-	StrCpy ${_LINKTYPE} "none"
-	
-	${ParseLocations} "${_PATH}" $R8
-	
-	; Check if path exists
-	${IfNot} ${FileExists} "$R8"
-		${DebugMsg} "Path does not exist: $R8"
-		Goto _LINK_TYPE_END
-	${EndIf}
-	
-	; Get file attributes
-	System::Call 'Kernel32::GetFileAttributes(t "$R8") i .r0'
-	${If} $0 == -1
-		${DebugMsg} "Cannot get attributes for: $R8"
-		Goto _LINK_TYPE_END
-	${EndIf}
-	
-	; Check if it's a reparse point (symlink or junction)
-	IntOp $1 $0 & ${FILE_ATTRIBUTE_REPARSE_POINT}
-	${If} $1 != 0
-		StrCpy ${_RESULT} "true"
-		
-		; Use DIR command to get link information
-		ExecDos::Exec /TOSTACK `"$SYSDIR\cmd.exe" /c "dir /-c "$R8" | findstr /C:"<"`
-		Pop $2
-		Pop $3
-		
-		${If} $2 == 0
-			; Parse the output to determine link type and target
-			${StrLoc} $0 "$3" "<SYMLINKD>" ">"
-			${If} $0 != ""
-				StrCpy ${_LINKTYPE} "symbolic_directory"
-				; Extract target from output
-				${StrLoc} $1 "$3" "[" ">"
-				${If} $1 != ""
-					StrCpy $2 $3 "" $1
-					IntOp $1 $1 + 1
-					StrCpy $2 $2 "" $1
-					${StrLoc} $1 "$2" "]" ">"
-					${If} $1 != ""
-						StrCpy ${_TARGET} $2 $1
-					${EndIf}
-				${EndIf}
-				Goto _LINK_TYPE_END
-			${EndIf}
-			
-			${StrLoc} $0 "$3" "<SYMLINK>" ">"
-			${If} $0 != ""
-				StrCpy ${_LINKTYPE} "symbolic_file"
-				; Extract target from output
-				${StrLoc} $1 "$3" "[" ">"
-				${If} $1 != ""
-					StrCpy $2 $3 "" $1
-					IntOp $1 $1 + 1
-					StrCpy $2 $2 "" $1
-					${StrLoc} $1 "$2" "]" ">"
-					${If} $1 != ""
-						StrCpy ${_TARGET} $2 $1
-					${EndIf}
-				${EndIf}
-				Goto _LINK_TYPE_END
-			${EndIf}
-			
-			${StrLoc} $0 "$3" "<JUNCTION>" ">"
-			${If} $0 != ""
-				StrCpy ${_LINKTYPE} "junction"
-				; Extract target from output
-				${StrLoc} $1 "$3" "[" ">"
-				${If} $1 != ""
-					StrCpy $2 $3 "" $1
-					IntOp $1 $1 + 1
-					StrCpy $2 $2 "" $1
-					${StrLoc} $1 "$2" "]" ">"
-					${If} $1 != ""
-						StrCpy ${_TARGET} $2 $1
-					${EndIf}
-				${EndIf}
-				Goto _LINK_TYPE_END
-			${EndIf}
-		${EndIf}
-	${Else}
-		; Check if it might be a hard link by checking link count
-		System::Call 'Kernel32::CreateFile(t "$R8", i 0, i 3, i 0, i 3, i 0, i 0) i .r0'
-		${If} $0 != -1
-			System::Call 'Kernel32::GetFileInformationByHandle(i r0, &i64 r1) i .r2'
-			${If} $2 != 0
-				; Extract number of links from file information structure
-				System::Call '*$1(i, i, i, i, i, i, i, i .r3, i, i, i)'
-				${If} $3 > 1
-					StrCpy ${_RESULT} "true"
-					StrCpy ${_LINKTYPE} "hardlink"
-					${DebugMsg} "Hard link detected: $R8 (Links: $3)"
-				${EndIf}
-			${EndIf}
-			System::Call 'Kernel32::CloseHandle(i r0)'
-		${EndIf}
-	${EndIf}
-	
-	_LINK_TYPE_END:
-	${If} ${_RESULT} == "true"
-		${DebugMsg} "Link detected: $R8 -> ${_TARGET} (Type: ${_LINKTYPE})"
-	${EndIf}
-	
-	Pop $R9
-	Pop $R8
-	Pop $3
-	Pop $2
-	Pop $1
-	Pop $0
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+    Push $R8
+    Push $R9
+
+    StrCpy ${_RESULT} "false"
+    StrCpy ${_TARGET} ""
+    StrCpy ${_LINKTYPE} "none"
+
+    StrCpy $R8 ${_PATH}
+    ${ParseLocations} $R8
+
+    ; Check if path exists
+    ${IfNot} ${FileExists} "$R8"
+        ${DebugMsg} "Path does not exist: $R8"
+    ${Else}
+        ; Get file attributes
+        System::Call 'Kernel32::GetFileAttributes(t "$R8") i .r0'
+        ${If} $0 == -1
+            ${DebugMsg} "Cannot get attributes for: $R8"
+        ${Else}
+            ; Check if it's a reparse point (symlink/junction)
+            IntOp $1 $0 & ${FILE_ATTRIBUTE_REPARSE_POINT}
+            ${If} $1 != 0
+                StrCpy ${_RESULT} "true"
+
+                ; Use DIR to get link info
+                ExecDos::Exec /TOSTACK `"$SYSDIR\cmd.exe" /c "dir /-c "$R8" | findstr /C:"<"`
+                Pop $2
+                Pop $3
+
+                ${If} $2 == 0
+                    ; Symbolic directory
+                    ${StrLoc} $0 "$3" "<SYMLINKD>" ">"
+                    ${If} $0 != ""
+                        StrCpy ${_LINKTYPE} "symbolic_directory"
+                        ${ExtractTarget} "$3" ${_TARGET}
+
+                    ${Else}
+                        ; Symbolic file
+                        ${StrLoc} $0 "$3" "<SYMLINK>" ">"
+                        ${If} $0 != ""
+                            StrCpy ${_LINKTYPE} "symbolic_file"
+                            ${ExtractTarget} "$3" ${_TARGET}
+
+                        ${Else}
+                            ; Junction
+                            ${StrLoc} $0 "$3" "<JUNCTION>" ">"
+                            ${If} $0 != ""
+                                StrCpy ${_LINKTYPE} "junction"
+                                ${ExtractTarget} "$3" ${_TARGET}
+                            ${EndIf}
+                        ${EndIf}
+                    ${EndIf}
+                ${EndIf}
+            ${Else}
+                ; Possible hard link: check link count
+                System::Call 'Kernel32::CreateFile(t "$R8", i 0, i 3, i 0, i 3, i 0, i 0) i .r0'
+                ${If} $0 != -1
+                    System::Call 'Kernel32::GetFileInformationByHandle(i r0, &i64 r1) i .r2'
+                    ${If} $2 != 0
+                        ; Extract number of links
+                        System::Call '*$1(i, i, i, i, i, i, i, i .r3, i, i, i)'
+                        ${If} $3 > 1
+                            StrCpy ${_RESULT} "true"
+                            StrCpy ${_LINKTYPE} "hardlink"
+                            ${DebugMsg} "Hard link detected: $R8 (Links: $3)"
+                        ${EndIf}
+                    ${EndIf}
+                    System::Call 'Kernel32::CloseHandle(i r0)'
+                ${EndIf}
+            ${EndIf}
+        ${EndIf}
+    ${EndIf}
+
+    ${If} ${_RESULT} == "true"
+        ${DebugMsg} "Link detected: $R8 -> ${_TARGET} (Type: ${_LINKTYPE})"
+    ${EndIf}
+
+    Pop $R9
+    Pop $R8
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
 !macroend
 
 ; Create symbolic link
 !define SymLink::Create `!insertmacro _SymLink::Create`
-!macro _SymLink::Create _LINKPATH _TARGETPATH _TYPE _RELATIVE _RESULT _ERROR
-	Push $0
-	Push $1
-	Push $2
-	Push $3
-	Push $R8
-	Push $R9
-	
-	StrCpy ${_RESULT} "false"
-	StrCpy ${_ERROR} ""
-	
-	${ParseLocations} "${_LINKPATH}" $R8
-	${ParseLocations} "${_TARGETPATH}" $R9
-	
-	; Validate target exists
-	${IfNot} ${FileExists} "$R9"
-		StrCpy ${_ERROR} "Target path does not exist: $R9"
-		${DebugMsg} "Target not found: $R9"
-		Goto _SYMLINK_CREATE_END
-	${EndIf}
-	
-	; Auto-detect type if not specified
-	${If} "${_TYPE}" == ""
-	${OrIf} "${_TYPE}" == "auto"
-		${If} ${FileExists} "$R9\*.*"
-			StrCpy $0 "/D"
-		${Else}
-			StrCpy $0 ""
-		${EndIf}
-	${ElseIf} "${_TYPE}" == "directory"
-		StrCpy $0 "/D"
-	${Else}
-		StrCpy $0 ""
-	${EndIf}
-	
-	; Handle relative vs absolute paths
-	${If} "${_RELATIVE}" == "true"
-		; Calculate relative path
-		${GetRelativePath} "$R8" "$R9" $1
-		StrCpy $R9 "$1"
-	${EndIf}
-	
-	${DebugMsg} "Creating symbolic link: $R8 -> $R9"
-	
-	; Create the symbolic link
-	ExecDos::Exec /TOSTACK `"$SYSDIR\cmd.exe" /c "mklink $0 "$R8" "$R9""`
-	Pop $1 ; Return code
-	Pop $2 ; Output
-	
-	${Switch} $1
-		${Case} "0"
-			StrCpy ${_RESULT} "true"
-			${DebugMsg} "Symbolic link created successfully: $R8"
-			${Break}
-		${Case} "1"
-			; Parse output for specific error
-			${StrLoc} $3 "$2" "already exists" "<"
-			${If} $3 != ""
-				StrCpy ${_ERROR} "Link path already exists"
-			${Else}
-				${StrLoc} $3 "$2" "privilege" "<"
-				${If} $3 != ""
-					StrCpy ${_ERROR} "Insufficient privileges to create symbolic link"
-				${Else}
-					StrCpy ${_ERROR} "Failed to create symbolic link"
-				${EndIf}
-			${EndIf}
-			${DebugMsg} "Failed to create symbolic link: ${_ERROR}"
-			${Break}
-		${Default}
-			StrCpy ${_ERROR} "Symbolic link creation failed (Error $1)"
-			${DebugMsg} "Symbolic link creation failed: Error $1"
-			${Break}
-	${EndSwitch}
-	
-	_SYMLINK_CREATE_END:
-	Pop $R9
-	Pop $R8
-	Pop $3
-	Pop $2
-	Pop $1
-	Pop $0
+!macro _SymLink::Create _LINK _TARGET _TYPE _RELATIVE _RESULT _ERROR
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+    Push $R8
+    Push $R9
+
+    StrCpy ${_RESULT} "false"
+    StrCpy ${_ERROR} ""
+
+    StrCpy $R8 ${_LINK}
+    StrCpy $R9 ${_TARGET}
+
+    ${ParseLocations} $R8
+    ${ParseLocations} $R9
+
+    ${If} ${FileExists} "$R9"
+        ; decide link type
+        ${If} "${_TYPE}" == ""
+        ${OrIf} "${_TYPE}" == "auto"
+            ${If} ${FileExists} "$R9\*.*"
+                StrCpy $0 1   ; directory flag
+            ${Else}
+                StrCpy $0 0   ; file flag
+            ${EndIf}
+        ${ElseIf} "${_TYPE}" == "directory"
+            StrCpy $0 1
+        ${Else}
+            StrCpy $0 0
+        ${EndIf}
+
+        ; relative path handling
+        ${If} "${_RELATIVE}" == "true"
+            ${GetRelativePath} "$R8" "$R9" $1
+            StrCpy $R9 "$1"
+        ${EndIf}
+
+        ${DebugMsg} "Creating symbolic link: $R8 -> $R9"
+
+        ; Call CreateSymbolicLinkW
+        System::Call 'kernel32::CreateSymbolicLinkW(w "$R8", w "$R9", i $0) i .r2'
+
+        ${If} $2 <> 0
+            StrCpy ${_RESULT} "true"
+            ${DebugMsg} "Symbolic link created successfully: $R8"
+        ${Else}
+            ; GetLastError for debugging
+            System::Call 'kernel32::GetLastError() i .r3'
+            ${If} $3 = 183
+                StrCpy ${_ERROR} "Link path already exists"
+            ${ElseIf} $3 = 1314
+                StrCpy ${_ERROR} "Insufficient privileges to create symbolic link"
+            ${Else}
+                StrCpy ${_ERROR} "Failed to create symbolic link (Error $3)"
+            ${EndIf}
+            ${DebugMsg} "Failed to create symbolic link: ${_ERROR}"
+        ${EndIf}
+
+    ${Else}
+        StrCpy ${_ERROR} "Target path does not exist: $R9"
+        ${DebugMsg} "Target not found: $R9"
+    ${EndIf}
+
+    Pop $R9
+    Pop $R8
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
 !macroend
 
 ; Create junction
 !define Junction::Create `!insertmacro _Junction::Create`
-!macro _Junction::Create _JUNCTIONPATH _TARGETPATH _RESULT _ERROR
-	Push $0
-	Push $1
-	Push $2
-	Push $3
-	Push $R8
-	Push $R9
-	
-	StrCpy ${_RESULT} "false"
-	StrCpy ${_ERROR} ""
-	
-	${ParseLocations} "${_JUNCTIONPATH}" $R8
-	${ParseLocations} "${_TARGETPATH}" $R9
-	
-	; Validate target directory exists
-	${IfNot} ${FileExists} "$R9\*.*"
-		StrCpy ${_ERROR} "Target directory does not exist: $R9"
-		${DebugMsg} "Target directory not found: $R9"
-		Goto _JUNCTION_CREATE_END
-	${EndIf}
-	
-	${DebugMsg} "Creating junction: $R8 -> $R9"
-	
-	; Create the junction using mklink /J
-	ExecDos::Exec /TOSTACK `"$SYSDIR\cmd.exe" /c "mklink /J "$R8" "$R9""`
-	Pop $1 ; Return code
-	Pop $2 ; Output
-	
-	${Switch} $1
-		${Case} "0"
-			StrCpy ${_RESULT} "true"
-			${DebugMsg} "Junction created successfully: $R8"
-			${Break}
-		${Case} "1"
-			; Parse output for specific error
-			${StrLoc} $3 "$2" "already exists" "<"
-			${If} $3 != ""
-				StrCpy ${_ERROR} "Junction path already exists"
-			${Else}
-				${StrLoc} $3 "$2" "privilege" "<"
-				${If} $3 != ""
-					StrCpy ${_ERROR} "Insufficient privileges to create junction"
-				${Else}
-					StrCpy ${_ERROR} "Failed to create junction"
-				${EndIf}
-			${EndIf}
-			${DebugMsg} "Failed to create junction: ${_ERROR}"
-			${Break}
-		${Default}
-			StrCpy ${_ERROR} "Junction creation failed (Error $1)"
-			${DebugMsg} "Junction creation failed: Error $1"
-			${Break}
-	${EndSwitch}
-	
-	_JUNCTION_CREATE_END:
-	Pop $R9
-	Pop $R8
-	Pop $3
-	Pop $2
-	Pop $1
-	Pop $0
+!macro _Junction::Create _JUNCTION _TARGET _RESULT _ERROR
+    ; Registers used:
+    ; $0..$3 temp, $4 handle, $5 buffer ptr, $6..$9 temps
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+    Push $4
+    Push $5
+    Push $6
+    Push $7
+    Push $8
+    Push $9
+    Push $R8
+    Push $R9
+
+    StrCpy ${_RESULT} "false"
+    StrCpy ${_ERROR} ""
+
+    StrCpy $R8 ${_JUNCTION}
+    StrCpy $R9 ${_TARGET}
+
+    ${ParseLocations} $R8
+    ${ParseLocations} $R9
+
+    ; --- Validate target directory exists ---
+    ${IfNot} ${FileExists} "$R9\*.*"
+        StrCpy ${_ERROR} "Target directory does not exist: $R9"
+        ${DebugMsg} "Target directory not found: $R9"
+        Goto _JUNC_DONE
+    ${EndIf}
+
+    ; Ensure junction path does not already exist as a file
+    ${If} ${FileExists} "$R8"
+        StrCpy ${_ERROR} "Junction path already exists: $R8"
+        ${DebugMsg} "Junction path already exists: $R8"
+        Goto _JUNC_DONE
+    ${EndIf}
+
+    ; --- Build SubstituteName and PrintName ---
+    ; SubstituteName MUST be an NT-style absolute path prefixed with \??\
+    ; e.g. \??\C:\some\dir
+    StrCpy $0 "$R9"
+    ; normalize: ensure trailing backslash is absent (not required, but tidy)
+    ${If} "$0" != ""
+        ; (optional) strip trailing backslash except root
+        ${IfThen} "$0" != "$0\" ${|} ${|} ; no-op placeholder
+    ${EndIf}
+
+    StrCpy $1 "\\??\\$0"        ; $1 = SubstituteName (NT path)
+    StrCpy $2 "$R9"             ; $2 = PrintName (display path)
+
+    StrLen $6 "$1"           ; $6 = SubstituteName length (chars)
+    StrLen $7 "$2"           ; $7 = PrintName length (chars)
+
+    ; Byte lengths (UNICODE: 2 bytes/char)
+    IntOp $8 $6 * 2             ; $8 = SubstituteNameLength (bytes)
+    IntOp $9 $7 * 2             ; $9 = PrintNameLength (bytes)
+
+    ; Offsets within PathBuffer (bytes)
+    StrCpy $3 0                 ; SubstituteNameOffset = 0
+    ; PrintNameOffset = SubstituteNameLength + sizeof(WCHAR) for its terminating null
+    IntOp $3 $8 + 2             ; $3 = PrintNameOffset
+
+    ; ReparseDataLength = 8 (4 WORD fields) + SubLen + 2 + PrintLen + 2
+    ;  = 8 + $8 + 2 + $9 + 2
+    IntOp $0 $8 + 2
+    IntOp $0 $0 + $9
+    IntOp $0 $0 + 2
+    IntOp $0 $0 + 8             ; $0 = ReparseDataLength
+
+    ; Total buffer size = 8 (tag+len+reserved) + ReparseDataLength
+    IntOp $5 $0 + 8             ; reuse $5 temporarily for total size
+
+    ${DebugMsg} "Creating junction: $R8 -> $R9 (RDL=$0, Total=$5)"
+
+    ; --- Create the empty directory that will become the junction ---
+    System::Call 'kernel32::CreateDirectoryW(w "$R8", p 0) i .r4'
+    ${If} $4 = 0
+        System::Call 'kernel32::GetLastError() i .r4'
+        ${If} $4 = 183
+            StrCpy ${_ERROR} "Junction path already exists"
+        ${Else}
+            StrCpy ${_ERROR} "Failed to create directory for junction (Error $4)"
+        ${EndIf}
+        ${DebugMsg} "${_ERROR}"
+        Goto _JUNC_DONE
+    ${EndIf}
+
+    ; --- Open the directory as a reparse point ---
+    ; GENERIC_WRITE (0x40000000)
+    ; FILE_SHARE_NONE (0)
+    ; OPEN_EXISTING (3)
+    ; FILE_FLAG_OPEN_REPARSE_POINT (0x00200000) | FILE_FLAG_BACKUP_SEMANTICS (0x02000000) = 0x02200000
+    System::Call 'kernel32::CreateFileW(w "$R8", i 0x40000000, i 0, p 0, i 3, i 0x02200000, p 0) p .r4'
+    ${If} $4 = 0
+        System::Call 'kernel32::GetLastError() i .r1'
+        StrCpy ${_ERROR} "Failed to open reparse handle on junction dir (Error $1)"
+        ${DebugMsg} "${_ERROR}"
+        ; Clean up the created directory
+        RMDir "$R8"
+        Goto _JUNC_DONE
+    ${EndIf}
+
+    ; --- Allocate and fill REPARSE_DATA_BUFFER (Mount Point) ---
+    ; Layout:
+    ;  DWORD  ReparseTag = 0xA0000003 (IO_REPARSE_TAG_MOUNT_POINT)
+    ;  WORD   ReparseDataLength = $0
+    ;  WORD   Reserved = 0
+    ;  WORD   SubstituteNameOffset = 0
+    ;  WORD   SubstituteNameLength = $8
+    ;  WORD   PrintNameOffset = $3
+    ;  WORD   PrintNameLength = $9
+    ;  WCHAR  PathBuffer[] = SubstituteName\0 PrintName\0
+
+    System::Alloc $5
+    Pop $5
+
+    ; Zero memory (optional but tidy)
+    System::Call 'msvcrt::memset(p $5, i 0, i $5)'
+
+    ; Write fixed fields (we rely on System plug-in packing WORDs as 16-bit when using "s")
+    ; Note: The "*$ptr(...)" writer with "i" and "s" packs values in native sizes (i=32-bit, s=16-bit).
+    System::Call '*$5(i 0xA0000003, s $0, s 0, s 0, s $8, s $3, s $9)'
+
+    ; Write strings at PathBuffer immediately after the six WORDs (which start after the 8-byte header).
+    ; Because SubstituteNameOffset = 0, it starts at PathBuffer[0].
+    ; The "*$ptr(..., &w "…", &w "…")" appends the two null-terminated wide strings sequentially.
+    System::Call '*$5(i, s, s, s, s, s, s, &w "$1", &w "$2")'
+
+    ; --- DeviceIoControl: FSCTL_SET_REPARSE_POINT (0x000900A4) ---
+    ; Input buffer length = 8 + ReparseDataLength
+    System::Call 'kernel32::DeviceIoControl(p $4, i 0x000900A4, p $5, i $5, p 0, i 0, *i .r1, p 0) i .r2'
+    ${If} $2 = 0
+        System::Call 'kernel32::GetLastError() i .r3'
+        StrCpy ${_ERROR} "Failed to set reparse point (Error $3)"
+        ${DebugMsg} "${_ERROR}"
+        ; Cleanup: close handle, remove the directory we created
+        System::Call 'kernel32::CloseHandle(p $4)'
+        RMDir "$R8"
+        Goto _FREE_BUFFER
+    ${EndIf}
+
+    ; Success
+    StrCpy ${_RESULT} "true"
+    ${DebugMsg} "Junction created successfully: $R8"
+    System::Call 'kernel32::CloseHandle(p $4)'
+
+_FREE_BUFFER:
+    System::Free $5
+
+_JUNC_DONE:
+    Pop $R9
+    Pop $R8
+    Pop $9
+    Pop $8
+    Pop $7
+    Pop $6
+    Pop $5
+    Pop $4
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
 !macroend
 
 ; Create hard link
 !define HardLink::Create `!insertmacro _HardLink::Create`
-!macro _HardLink::Create _LINKPATH _TARGETPATH _RESULT _ERROR
-	Push $0
-	Push $1
-	Push $2
-	Push $3
-	Push $R8
-	Push $R9
-	
-	StrCpy ${_RESULT} "false"
-	StrCpy ${_ERROR} ""
-	
-	${ParseLocations} "${_LINKPATH}" $R8
-	${ParseLocations} "${_TARGETPATH}" $R9
-	
-	; Validate target file exists and is a file (not directory)
-	${IfNot} ${FileExists} "$R9"
-		StrCpy ${_ERROR} "Target file does not exist: $R9"
-		${DebugMsg} "Target file not found: $R9"
-		Goto _HARDLINK_CREATE_END
-	${EndIf}
-	
-	${If} ${FileExists} "$R9\*.*"
-		StrCpy ${_ERROR} "Target is a directory, not a file: $R9"
-		${DebugMsg} "Target is directory, cannot create hard link: $R9"
-		Goto _HARDLINK_CREATE_END
-	${EndIf}
-	
-	; Check that both paths are on the same volume
-	StrCpy $0 $R8 3 ; Get drive letter
-	StrCpy $1 $R9 3
-	${If} $0 != $1
-		StrCpy ${_ERROR} "Hard links require both paths on the same volume"
-		${DebugMsg} "Volume mismatch for hard link: $0 vs $1"
-		Goto _HARDLINK_CREATE_END
-	${EndIf}
-	
-	${DebugMsg} "Creating hard link: $R8 -> $R9"
-	
-	; Create the hard link using mklink /H
-	ExecDos::Exec /TOSTACK `"$SYSDIR\cmd.exe" /c "mklink /H "$R8" "$R9""`
-	Pop $1 ; Return code
-	Pop $2 ; Output
-	
-	${Switch} $1
-		${Case} "0"
-			StrCpy ${_RESULT} "true"
-			${DebugMsg} "Hard link created successfully: $R8"
-			${Break}
-		${Case} "1"
-			; Parse output for specific error
-			${StrLoc} $3 "$2" "already exists" "<"
-			${If} $3 != ""
-				StrCpy ${_ERROR} "Link path already exists"
-			${Else}
-				StrCpy ${_ERROR} "Failed to create hard link"
-			${EndIf}
-			${DebugMsg} "Failed to create hard link: ${_ERROR}"
-			${Break}
-		${Default}
-			StrCpy ${_ERROR} "Hard link creation failed (Error $1)"
-			${DebugMsg} "Hard link creation failed: Error $1"
-			${Break}
-	${EndSwitch}
-	
-	_HARDLINK_CREATE_END:
-	Pop $R9
-	Pop $R8
-	Pop $3
-	Pop $2
-	Pop $1
-	Pop $0
+!macro _HardLink::Create _LINK _TARGET _RESULT _ERROR
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+    Push $R8
+    Push $R9
+
+    StrCpy ${_RESULT} "false"
+    StrCpy ${_ERROR} ""
+
+    StrCpy $R8 ${_LINK}
+    StrCpy $R9 ${_TARGET}
+
+    ${ParseLocations} $R8
+    ${ParseLocations} $R9
+
+    ; Validate target file exists
+    ${IfNot} ${FileExists} "$R9"
+        StrCpy ${_ERROR} "Target file does not exist: $R9"
+        ${DebugMsg} "Target file not found: $R9"
+    ${ElseIf} ${FileExists} "$R9\*.*"
+        ; Target is a directory
+        StrCpy ${_ERROR} "Target is a directory, not a file: $R9"
+        ${DebugMsg} "Target is directory, cannot create hard link: $R9"
+    ${Else}
+        ; Check that both paths are on the same volume
+        StrCpy $0 $R8 3 ; Drive of link
+        StrCpy $1 $R9 3 ; Drive of target
+        ${If} $0 != $1
+            StrCpy ${_ERROR} "Hard links require both paths on the same volume"
+            ${DebugMsg} "Volume mismatch for hard link: $0 vs $1"
+        ${Else}
+            ${DebugMsg} "Creating hard link: $R8 -> $R9"
+
+            ; Create the hard link using mklink /H
+            ExecDos::Exec /TOSTACK `"$SYSDIR\cmd.exe" /c "mklink /H "$R8" "$R9""`
+            Pop $1 ; Return code
+            Pop $2 ; Output
+
+            ${Switch} $1
+                ${Case} "0"
+                    StrCpy ${_RESULT} "true"
+                    ${DebugMsg} "Hard link created successfully: $R8"
+                    ${Break}
+                ${Case} "1"
+                    ; Parse output for specific error
+                    ${StrLoc} $3 "$2" "already exists" "<"
+                    ${If} $3 != ""
+                        StrCpy ${_ERROR} "Link path already exists"
+                    ${Else}
+                        StrCpy ${_ERROR} "Failed to create hard link"
+                    ${EndIf}
+                    ${DebugMsg} "Failed to create hard link: ${_ERROR}"
+                    ${Break}
+                ${Default}
+                    StrCpy ${_ERROR} "Hard link creation failed (Error $1)"
+                    ${DebugMsg} "Hard link creation failed: Error $1"
+                    ${Break}
+            ${EndSwitch}
+        ${EndIf}
+    ${EndIf}
+
+    Pop $R9
+    Pop $R8
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
 !macroend
 
 ; Remove link (symlink, junction, or hard link)
 !define Link::Remove `!insertmacro _Link::Remove`
-!macro _Link::Remove _LINKPATH _LINKTYPE _RESULT _ERROR
+!macro _Link::Remove _LINK _LINKTYPE _RESULT _ERROR
 	Push $0
 	Push $1
 	Push $2
@@ -444,8 +718,10 @@
 	
 	StrCpy ${_RESULT} "false"
 	StrCpy ${_ERROR} ""
+	        
+    StrCpy $R8 ${_LINK}
 	
-	${ParseLocations} "${_LINKPATH}" $R8
+	${ParseLocations} $R8
 	
 	${DebugMsg} "Removing link: $R8 (Type: ${_LINKTYPE})"
 	
@@ -492,43 +768,43 @@
 
 ; Backup existing link
 !define Link::Backup `!insertmacro _Link::Backup`
-!macro _Link::Backup _LINKPATH _SECTION _KEY
+!macro _Link::Backup _LINK _SECTION _KEY
 	Push $0
 	Push $1
 	Push $2
 	Push $3
 	Push $4
 	
-	${Link::GetType} "${_LINKPATH}" $0 $1 $2
+	${Link::GetType} "${_LINK}" $0 $1 $2
 	${If} $0 == "true"
 		${WriteRuntimeData} ${_SECTION} "${_KEY}_Target" "$1"
 		${WriteRuntimeData} ${_SECTION} "${_KEY}_Type" "$2"
 		${WriteRuntimeData} ${_SECTION} "${_KEY}_Existed" "true"
-		${DebugMsg} "Backed up link: ${_LINKPATH} -> $1 (Type: $2)"
-	${ElseIf} ${FileExists} "${_LINKPATH}"
+		${DebugMsg} "Backed up link: ${_LINK} -> $1 (Type: $2)"
+	${ElseIf} ${FileExists} "${_LINK}"
 		; It's a regular file/directory, not a link
-		${If} ${FileExists} "${_LINKPATH}\*.*"
+		${If} ${FileExists} "${_LINK}\*.*"
 			StrCpy $2 "directory"
 		${Else}
 			StrCpy $2 "file"
 		${EndIf}
 		
 		; For regular files/directories, we need to move them to backup
-		StrCpy $3 "${_LINKPATH}.portable_backup"
-		${ParseLocations} "$3" $4
+		StrCpy $3 "${_LINK}.portable_backup"
+		ExpandEnvStrings $4 "$3"
 		
-		Rename "${_LINKPATH}" "$4"
+		Rename "${_LINK}" "$4"
 		${If} ${Errors}
-			${DebugMsg} "Failed to backup existing path: ${_LINKPATH}"
+			${DebugMsg} "Failed to backup existing path: ${_LINK}"
 		${Else}
 			${WriteRuntimeData} ${_SECTION} "${_KEY}_BackupPath" "$4"
 			${WriteRuntimeData} ${_SECTION} "${_KEY}_Type" "$2"
 			${WriteRuntimeData} ${_SECTION} "${_KEY}_Existed" "regular"
-			${DebugMsg} "Backed up regular $2: ${_LINKPATH} -> $4"
+			${DebugMsg} "Backed up regular $2: ${_LINK} -> $4"
 		${EndIf}
 	${Else}
 		${WriteRuntimeData} ${_SECTION} "${_KEY}_Existed" "false"
-		${DebugMsg} "Path did not exist: ${_LINKPATH}"
+		${DebugMsg} "Path did not exist: ${_LINK}"
 	${EndIf}
 	
 	Pop $4
@@ -540,85 +816,83 @@
 
 ; Restore backed up link or file
 !define Link::Restore `!insertmacro _Link::Restore`
-!macro _Link::Restore _LINKPATH _SECTION _KEY _RESULT
-	Push $0
-	Push $1
-	Push $2
-	Push $3
-	Push $4
-	
-	StrCpy ${_RESULT} "false"
-	
-	${ReadRuntimeData} $0 ${_SECTION} "${_KEY}_Existed"
-	${If} ${Errors}
-		${DebugMsg} "No backup found for: ${_LINKPATH}"
-		Goto _LINK_RESTORE_END
-	${EndIf}
-	
-	${Switch} $0
-		${Case} "true"
-			; Restore original link
-			${ReadRuntimeData} $1 ${_SECTION} "${_KEY}_Target"
-			${ReadRuntimeData} $2 ${_SECTION} "${_KEY}_Type"
-			
-			${Switch} $2
-				${Case} "symbolic_directory"
-					${SymLink::Create} "${_LINKPATH}" "$1" "directory" "false" $3 $4
-					${Break}
-				${Case} "symbolic_file"
-					${SymLink::Create} "${_LINKPATH}" "$1" "file" "false" $3 $4
-					${Break}
-				${Case} "junction"
-					${Junction::Create} "${_LINKPATH}" "$1" $3 $4
-					${Break}
-				${Case} "hardlink"
-					${HardLink::Create} "${_LINKPATH}" "$1" $3 $4
-					${Break}
-				${Default}
-					${DebugMsg} "Unknown link type for restoration: $2"
-					${Break}
-			${EndSwitch}
-			
-			${If} $3 == "true"
-				StrCpy ${_RESULT} "true"
-				${DebugMsg} "Link restored successfully: ${_LINKPATH}"
-			${Else}
-				${DebugMsg} "Failed to restore link ${_LINKPATH}: $4"
-			${EndIf}
-			${Break}
-			
-		${Case} "regular"
-			; Restore regular file/directory from backup
-			${ReadRuntimeData} $1 ${_SECTION} "${_KEY}_BackupPath"
-			${ReadRuntimeData} $2 ${_SECTION} "${_KEY}_Type"
-			
-			${If} ${FileExists} "$1"
-				Rename "$1" "${_LINKPATH}"
-				${If} ${Errors}
-					${DebugMsg} "Failed to restore regular $2: ${_LINKPATH}"
-				${Else}
-					StrCpy ${_RESULT} "true"
-					${DebugMsg} "Restored regular $2: ${_LINKPATH}"
-				${EndIf}
-			${Else}
-				${DebugMsg} "Backup file not found: $1"
-			${EndIf}
-			${Break}
-			
-		${Case} "false"
-		${CaseElse}
-			; Path didn't exist originally, removal is success
-			StrCpy ${_RESULT} "true"
-			${DebugMsg} "Path did not exist originally: ${_LINKPATH}"
-			${Break}
-	${EndSwitch}
-	
-	_LINK_RESTORE_END:
-	Pop $4
-	Pop $3
-	Pop $2
-	Pop $1
-	Pop $0
+!macro _Link::Restore _LINK _SECTION _KEY _RESULT
+    Push $0
+    Push $1
+    Push $2
+    Push $3
+    Push $4
+
+    StrCpy ${_RESULT} "false"
+
+    ${ReadRuntimeData} $0 ${_SECTION} "${_KEY}_Existed"
+    ${IfNot} ${Errors}
+        ${Switch} $0
+            ${Case} "true"
+                ; Restore original link
+                ${ReadRuntimeData} $1 ${_SECTION} "${_KEY}_Target"
+                ${ReadRuntimeData} $2 ${_SECTION} "${_KEY}_Type"
+
+                ${Switch} $2
+                    ${Case} "symbolic_directory"
+                        ${SymLink::Create} "${_LINK}" "$1" "directory" "false" $3 $4
+                        ${Break}
+                    ${Case} "symbolic_file"
+                        ${SymLink::Create} "${_LINK}" "$1" "file" "false" $3 $4
+                        ${Break}
+                    ${Case} "junction"
+                        ${Junction::Create} "${_LINK}" "$1" $3 $4
+                        ${Break}
+                    ${Case} "hardlink"
+                        ${HardLink::Create} "${_LINK}" "$1" $3 $4
+                        ${Break}
+                    ${Default}
+                        ${DebugMsg} "Unknown link type for restoration: $2"
+                        ${Break}
+                ${EndSwitch}
+
+                ${If} $3 == "true"
+                    StrCpy ${_RESULT} "true"
+                    ${DebugMsg} "Link restored successfully: ${_LINK}"
+                ${Else}
+                    ${DebugMsg} "Failed to restore link ${_LINK}: $4"
+                ${EndIf}
+                ${Break}
+
+            ${Case} "regular"
+                ; Restore regular file/directory from backup
+                ${ReadRuntimeData} $1 ${_SECTION} "${_KEY}_BackupPath"
+                ${ReadRuntimeData} $2 ${_SECTION} "${_KEY}_Type"
+
+                ${If} ${FileExists} "$1"
+                    Rename "$1" "${_LINK}"
+                    ${If} ${Errors}
+                        ${DebugMsg} "Failed to restore regular $2: ${_LINK}"
+                    ${Else}
+                        StrCpy ${_RESULT} "true"
+                        ${DebugMsg} "Restored regular $2: ${_LINK}"
+                    ${EndIf}
+                ${Else}
+                    ${DebugMsg} "Backup file not found: $1"
+                ${EndIf}
+                ${Break}
+
+            ${Case} "false"
+            ${CaseElse}
+                ; Path didn't exist originally, removal is success
+                StrCpy ${_RESULT} "true"
+                ${DebugMsg} "Path did not exist originally: ${_LINK}"
+                ${Break}
+        ${EndSwitch}
+    ${Else}
+        ${DebugMsg} "No backup found for: ${_LINK}"
+    ${EndIf}
+
+    Pop $4
+    Pop $3
+    Pop $2
+    Pop $1
+    Pop $0
 !macroend
 
 ; Check if user can create symbolic links
@@ -769,7 +1043,28 @@
 		FileWrite $0 "Symbolic Links and Junctions Report$\r$\n"
 		FileWrite $0 "Generated: $DATE $TIME$\r$\n"
 		FileWrite $0 "===================================$\r$\n$\r$\n"
-		
+        
+		; Dispatch links
+		FileWrite $0 "Dispatcher Links:$\r$\n"
+		FileWrite $0 "---------------$\r$\n"
+		StrCpy $R0 1
+		${Do}
+			ClearErrors
+			${ReadLauncherConfig} $1 LinkDispatcher$R0 LinkPath
+			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+			
+			${ReadLauncherConfig} $2 LinkDispatcher$R0 TargetPath
+			
+			${Link::GetType} "$1" $3 $4 $5
+			${If} $3 == "true"
+				FileWrite $0 "$1 -> $4 (Type: $5)$\r$\n"
+			${Else}
+				FileWrite $0 "$1 -> Not found$\r$\n"
+			${EndIf}
+			
+			IntOp $R0 $R0 + 1
+		${Loop}
+        
 		; Symbolic links
 		FileWrite $0 "Symbolic Links:$\r$\n"
 		FileWrite $0 "---------------$\r$\n"
@@ -777,8 +1072,6 @@
 		${Do}
 			ClearErrors
 			${ReadLauncherConfig} $1 SymLink$R0 LinkPath
-			${IfThen} ${Errors}
-
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 			
 			${ReadLauncherConfig} $2 SymLink$R0 TargetPath
@@ -856,9 +1149,12 @@
 	Push $1
 	Push $2
 	Push $3
+    
+    StrCpy $0 ${_PATH1}
+    StrCpy $1 ${_PATH2}
 	
-	${ParseLocations} "${_PATH1}" $0
-	${ParseLocations} "${_PATH2}" $1
+	${ParseLocations} $0
+	${ParseLocations} $1
 	
 	; Get volume information for both paths
 	System::Call 'Kernel32::GetVolumePathName(t "$0", t .r2, i ${NSIS_MAX_STRLEN}) i .r3'
@@ -896,7 +1192,9 @@
 	Push $3
 	Push $R8
 	
-	${ParseLocations} "${_PATH}" $R8
+    StrCpy $R8 ${_PATH}
+    
+	${ParseLocations} $R8
 	
 	; Get volume information
 	System::Call 'Kernel32::GetVolumePathName(t "$R8", t .r0, i ${NSIS_MAX_STRLEN}) i .r1'
@@ -929,16 +1227,19 @@
 
 ; Validate link configuration
 !define Link::ValidateConfig `!insertmacro _Link::ValidateConfig`
-!macro _Link::ValidateConfig _LINKPATH _TARGETPATH _LINKTYPE _RESULT _ERROR
+!macro _Link::ValidateConfig _LINK _TARGET _LINKTYPE _RESULT _ERROR
 	Push $0
 	Push $1
 	Push $2
 	
 	StrCpy ${_RESULT} "true"
 	StrCpy ${_ERROR} ""
+    
+    StrCpy $0 ${_LINK}
+    StrCpy $1 ${_TARGET}
 	
-	${ParseLocations} "${_LINKPATH}" $0
-	${ParseLocations} "${_TARGETPATH}" $1
+	${ParseLocations} $0
+	${ParseLocations} $1
 	
 	; Validate paths are not the same
 	${If} $0 == $1
@@ -1004,7 +1305,7 @@
 
 ; Check for circular link references
 !define Link::CheckCircular `!insertmacro _Link::CheckCircular`
-!macro _Link::CheckCircular _LINKPATH _TARGETPATH _RESULT
+!macro _Link::CheckCircular _LINK _TARGET _RESULT
 	Push $0
 	Push $1
 	Push $2
@@ -1014,9 +1315,12 @@
 	Push $R9
 	
 	StrCpy ${_RESULT} "false"
+    
+    StrCpy $R8 ${_LINK}
+    StrCpy $R9 ${_TARGET}
 	
-	${ParseLocations} "${_LINKPATH}" $R8
-	${ParseLocations} "${_TARGETPATH}" $R9
+	${ParseLocations} $R8
+	${ParseLocations} $R9
 	
 	; Simple check: see if target path starts with link path
 	StrLen $0 "$R8"
@@ -1068,16 +1372,37 @@
 
 ; Get link statistics
 !define Link::GetStatistics `!insertmacro _Link::GetStatistics`
-!macro _Link::GetStatistics _SYMLINKS _JUNCTIONS _HARDLINKS _FAILED
+!macro _Link::GetStatistics _DISPATCHLINKS _SYMLINKS _JUNCTIONS _HARDLINKS _FAILED
 	Push $0
 	Push $1
 	Push $R0
 	
+    StrCpy ${_DISPATCHLINKS} "0"
 	StrCpy ${_SYMLINKS} "0"
 	StrCpy ${_JUNCTIONS} "0"
 	StrCpy ${_HARDLINKS} "0"
 	StrCpy ${_FAILED} "0"
-	
+		
+	; Count links
+	StrCpy $R0 1
+	${Do}
+		ClearErrors
+		${ReadLauncherConfig} $0 LinkDispatcher$R0 LinkPath
+		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+		
+		${ReadRuntimeData} $1 LinkState "$0_Created"
+		${IfNot} ${Errors}
+			IntOp ${_DISPATCHLINKS} ${_DISPATCHLINKS} + 1
+		${Else}
+			${ReadRuntimeData} $1 LinkState "$0_Failed"
+			${IfNot} ${Errors}
+				IntOp ${_FAILED} ${_FAILED} + 1
+			${EndIf}
+		${EndIf}
+		
+		IntOp $R0 $R0 + 1
+	${Loop}
+    
 	; Count symbolic links
 	StrCpy $R0 1
 	${Do}
@@ -1085,11 +1410,11 @@
 		${ReadLauncherConfig} $0 SymLink$R0 LinkPath
 		${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 		
-		${ReadRuntimeData} $1 LinkState "$0_Created"
+		${ReadRuntimeData} $1 SymLinkState "$0_Created"
 		${IfNot} ${Errors}
 			IntOp ${_SYMLINKS} ${_SYMLINKS} + 1
 		${Else}
-			${ReadRuntimeData} $1 LinkState "$0_Failed"
+			${ReadRuntimeData} $1 SymLinkState "$0_Failed"
 			${IfNot} ${Errors}
 				IntOp ${_FAILED} ${_FAILED} + 1
 			${EndIf}
@@ -1157,19 +1482,19 @@ ${SegmentPre}
 		${Link::CanCreateSymLinks} $R9
 		${If} $R9 == "false"
 			${DebugMsg} "Warning: User cannot create symbolic links (insufficient privileges)"
-			MessageBox MB_OK|MB_ICONEXCLAMATION "Warning: Symbolic link creation requires 'Create symbolic links' privilege or administrator rights.$\n$\nSome features may not work correctly."
+			MessageBox MB_OK|MB_ICONEXCLAMATION "Warning: Symbolic link creation requires administrator rights.$\n$\nSome features may not work correctly."
 		${EndIf}
-		
-		; Process symbolic links
+        
+        ; Using Dispatcher
 		StrCpy $R0 1
 		${Do}
 			ClearErrors
-			${ReadLauncherConfig} $0 SymLink$R0 LinkPath
+			${ReadLauncherConfig} $0 LinkDispatcher$R0 LinkPath
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 			
-			${ReadLauncherConfig} $1 SymLink$R0 TargetPath
-			${ReadLauncherConfig} $2 SymLink$R0 IfExists
-			${ReadLauncherConfig} $3 SymLink$R0 Type
+			${ReadLauncherConfig} $1 LinkDispatcher$R0 TargetPath
+			${ReadLauncherConfig} $2 LinkDispatcher$R0 IfExists
+			${ReadLauncherConfig} $3 LinkDispatcher$R0 Mode
 			
 			; Set defaults
 			${If} $2 == ""
@@ -1177,15 +1502,16 @@ ${SegmentPre}
 			${EndIf}
 			
 			; Validate target exists
-			${ParseLocations} "$1" $R8
+            StrCpy $R8 $1
+			${ParseLocations} $R8
 			${IfNot} ${FileExists} "$R8"
-				${DebugMsg} "Symbolic link target does not exist: $R8"
+				${DebugMsg} "Link target does not exist: $R8"
 				${WriteRuntimeData} LinkState "$0_Failed" "target_not_found"
 				IntOp $R0 $R0 + 1
 				${Continue}
 			${EndIf}
 			
-			${DebugMsg} "Processing symbolic link: $0 -> $1"
+			${DebugMsg} "Processing link: $0 -> $1"
 			
 			; Check if link path exists
 			${If} ${FileExists} "$0"
@@ -1212,6 +1538,59 @@ ${SegmentPre}
 			IntOp $R0 $R0 + 1
 		${Loop}
 		
+        ; Process symlinks
+		StrCpy $R0 1
+		${Do}
+			ClearErrors
+			${ReadLauncherConfig} $0 SymLink$R0 LinkPath
+			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+			
+			${ReadLauncherConfig} $1 SymLink$R0 TargetPath
+			${ReadLauncherConfig} $2 SymLink$R0 IfExists
+			${ReadLauncherConfig} $3 SymLink$R0 Type
+			
+			; Set defaults
+			${If} $2 == ""
+				StrCpy $2 "replace"
+			${EndIf}
+			
+			; Validate target exists
+            StrCpy $R8 $1
+			${ParseLocations} $R8
+			${IfNot} ${FileExists} "$R8"
+				${DebugMsg} "Symbolic link target does not exist: $R8"
+				${WriteRuntimeData} SymLinkState "$0_Failed" "target_not_found"
+				IntOp $R0 $R0 + 1
+				${Continue}
+			${EndIf}
+			
+			${DebugMsg} "Processing symbolic link: $0 -> $1"
+			
+			; Check if link path exists
+			${If} ${FileExists} "$0"
+				${DebugMsg} "Link path exists: $0"
+				
+				${Switch} $2
+					${Case} "skip"
+						${DebugMsg} "Skipping existing path: $0"
+						${WriteRuntimeData} SymLinkState "$0_Action" "skipped"
+						${Break}
+					${Case} "backup"
+					${Case} "replace"
+					${Case} "update"
+					${CaseElse}
+						${Link::Backup} "$0" "SymLinkBackup" "$0"
+						${WriteRuntimeData} SymLinkState "$0_Action" "backup"
+						${Break}
+				${EndSwitch}
+			${Else}
+				${DebugMsg} "Link path does not exist: $0"
+				${WriteRuntimeData} SymLinkState "$0_Action" "create"
+			${EndIf}
+			
+			IntOp $R0 $R0 + 1
+		${Loop}
+		
 		; Process junctions
 		StrCpy $R0 1
 		${Do}
@@ -1228,7 +1607,8 @@ ${SegmentPre}
 			${EndIf}
 			
 			; Validate target directory exists
-			${ParseLocations} "$1" $R8
+            StrCpy $R8 $1
+			${ParseLocations} $R8
 			${IfNot} ${FileExists} "$R8\*.*"
 				${DebugMsg} "Junction target directory does not exist: $R8"
 				${WriteRuntimeData} JunctionState "$0_Failed" "target_not_found"
@@ -1278,7 +1658,8 @@ ${SegmentPre}
 			${EndIf}
 			
 			; Validate target file exists and is not a directory
-			${ParseLocations} "$1" $R8
+			StrCpy $R8 $1
+			${ParseLocations} $R8
 			${IfNot} ${FileExists} "$R8"
 				${DebugMsg} "Hard link target file does not exist: $R8"
 				${WriteRuntimeData} HardLinkState "$0_Failed" "target_not_found"
@@ -1328,17 +1709,17 @@ ${SegmentPrePrimary}
 	!ifdef SYMLINKSJUNCTIONS_ENABLED
 		${DebugMsg} "Creating symbolic links, junctions, and hard links..."
 		
-		; Create symbolic links
+		; Using Dispatcher to create links
 		StrCpy $R0 1
 		${Do}
 			ClearErrors
-			${ReadLauncherConfig} $0 SymLink$R0 LinkPath
+			${ReadLauncherConfig} $0 LinkDispatcher$R0 LinkPath
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 			
 			; Check if we should process this link
 			${ReadRuntimeData} $1 LinkState "$0_Action"
 			${If} $1 == "skipped"
-				${DebugMsg} "Skipping symbolic link as requested: $0"
+				${DebugMsg} "Skipping link as requested: $0"
 				IntOp $R0 $R0 + 1
 				${Continue}
 			${EndIf}
@@ -1347,19 +1728,19 @@ ${SegmentPrePrimary}
 			${ReadRuntimeData} $2 LinkState "$0_Failed"
 			${IfNot} ${Errors}
 				${DebugMsg} "Skipping symbolic link due to validation failure: $0 ($2)"
-				${ReadLauncherConfig} $3 SymLink$R0 Required
+				${ReadLauncherConfig} $3 LinkDispatcher$R0 Required
 				${If} $3 == "true"
-					MessageBox MB_OK|MB_ICONERROR "Error: Cannot create required symbolic link '$0'$\n$\nReason: $2"
+					MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Cannot create required symbolic link '$0'$\n$\nReason: $2"
 				${EndIf}
 				IntOp $R0 $R0 + 1
 				${Continue}
 			${EndIf}
 			
 			; Get configuration
-			${ReadLauncherConfig} $1 SymLink$R0 TargetPath
-			${ReadLauncherConfig} $2 SymLink$R0 Type
-			${ReadLauncherConfig} $3 SymLink$R0 Relative
-			${ReadLauncherConfig} $4 SymLink$R0 Required
+			${ReadLauncherConfig} $1 LinkDispatcher$R0 TargetPath
+			${ReadLauncherConfig} $2 LinkDispatcher$R0 Mode
+			${ReadLauncherConfig} $3 LinkDispatcher$R0 Relative
+			${ReadLauncherConfig} $4 LinkDispatcher$R0 Required
 			
 			; Set defaults
 			${If} $3 == ""
@@ -1380,10 +1761,10 @@ ${SegmentPrePrimary}
 				${EndIf}
 			${EndIf}
 			
-			${DebugMsg} "Creating symbolic link: $0 -> $1"
+			${DebugMsg} "Creating link: $0 -> $1"
 			
-			; Create the symbolic link
-			${SymLink::Create} "$0" "$1" "$2" "$3" $R8 $R9
+			; Create the link
+            ${CreateLinkDispatcher} "$0" "$1" "$2" "$3" $R8 $R9
 			
 			${If} $R8 == "true"
 				${WriteRuntimeData} LinkState "$0_Created" "true"
@@ -1395,7 +1776,81 @@ ${SegmentPrePrimary}
 				${WriteRuntimeData} LinkState "$0_Failed" "$R9"
 				${DebugMsg} "Failed to create symbolic link $0: $R9"
 				${If} $4 == "true"
-					MessageBox MB_OK|MB_ICONERROR "Error: Failed to create required symbolic link '$0'$\n$\nError: $R9"
+					MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Failed to create required symbolic link '$0'$\n$\nError: $R9"
+				${EndIf}
+			${EndIf}
+			
+			IntOp $R0 $R0 + 1
+		${Loop}
+        		
+		; Create symbolic links
+		StrCpy $R0 1
+		${Do}
+			ClearErrors
+			${ReadLauncherConfig} $0 SymLink$R0 LinkPath
+			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+			
+			; Check if we should process this link
+			${ReadRuntimeData} $1 SymLinkState "$0_Action"
+			${If} $1 == "skipped"
+				${DebugMsg} "Skipping symbolic link as requested: $0"
+				IntOp $R0 $R0 + 1
+				${Continue}
+			${EndIf}
+			
+			; Check for validation failures
+			${ReadRuntimeData} $2 SymLinkState "$0_Failed"
+			${IfNot} ${Errors}
+				${DebugMsg} "Skipping symbolic link due to validation failure: $0 ($2)"
+				${ReadLauncherConfig} $3 SymLink$R0 Required
+				${If} $3 == "true"
+					MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Cannot create required symbolic link '$0'$\n$\nReason: $2"
+				${EndIf}
+				IntOp $R0 $R0 + 1
+				${Continue}
+			${EndIf}
+			
+			; Get configuration
+			${ReadLauncherConfig} $1 SymLink$R0 TargetPath
+			${ReadLauncherConfig} $2 SymLink$R0 Type
+			${ReadLauncherConfig} $3 SymLink$R0 Relative
+			${ReadLauncherConfig} $4 SymLink$R0 Required
+			
+			; Set defaults
+			${If} $3 == ""
+				StrCpy $3 "false"
+			${EndIf}
+			
+			; Remove existing path if we're replacing
+			${ReadRuntimeData} $5 SymLinkState "$0_Action"
+			${If} $5 == "backup"
+				${If} ${FileExists} "$0"
+					${Link::GetType} "$0" $R8 $R9 $R7
+					${If} $R8 == "true"
+						${Link::Remove} "$0" "$R7" $R8 $R9
+					${Else}
+						; Regular file/directory was backed up
+						; It should have been moved during backup
+					${EndIf}
+				${EndIf}
+			${EndIf}
+			
+			${DebugMsg} "Creating symbolic link: $0 -> $1"
+			
+			; Create the symbolic link
+			${SymLink::Create} "$0" "$1" "$2" "$3" $R8 $R9
+			
+			${If} $R8 == "true"
+				${WriteRuntimeData} SymLinkState "$0_Created" "true"
+				${WriteRuntimeData} SymLinkState "$0_LinkPath" "$0"
+				${WriteRuntimeData} SymLinkState "$0_TargetPath" "$1"
+				${WriteRuntimeData} SymLinkState "$0_Type" "symbolic"
+				${DebugMsg} "Symbolic link created successfully: $0"
+			${Else}
+				${WriteRuntimeData} SymLinkState "$0_Failed" "$R9"
+				${DebugMsg} "Failed to create symbolic link $0: $R9"
+				${If} $4 == "true"
+					MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Failed to create required symbolic link '$0'$\n$\nError: $R9"
 				${EndIf}
 			${EndIf}
 			
@@ -1423,7 +1878,7 @@ ${SegmentPrePrimary}
 				${DebugMsg} "Skipping junction due to validation failure: $0 ($2)"
 				${ReadLauncherConfig} $3 Junction$R0 Required
 				${If} $3 == "true"
-					MessageBox MB_OK|MB_ICONERROR "Error: Cannot create required junction '$0'$\n$\nReason: $2"
+					MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Cannot create required junction '$0'$\n$\nReason: $2"
 				${EndIf}
 				IntOp $R0 $R0 + 1
 				${Continue}
@@ -1458,7 +1913,7 @@ ${SegmentPrePrimary}
 				${WriteRuntimeData} JunctionState "$0_Failed" "$R9"
 				${DebugMsg} "Failed to create junction $0: $R9"
 				${If} $2 == "true"
-					MessageBox MB_OK|MB_ICONERROR "Error: Failed to create required junction '$0'$\n$\nError: $R9"
+					MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Failed to create required junction '$0'$\n$\nError: $R9"
 				${EndIf}
 			${EndIf}
 			
@@ -1486,7 +1941,7 @@ ${SegmentPrePrimary}
 				${DebugMsg} "Skipping hard link due to validation failure: $0 ($2)"
 				${ReadLauncherConfig} $3 HardLink$R0 Required
 				${If} $3 == "true"
-					MessageBox MB_OK|MB_ICONERROR "Error: Cannot create required hard link '$0'$\n$\nReason: $2"
+					MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Cannot create required hard link '$0'$\n$\nReason: $2"
 				${EndIf}
 				IntOp $R0 $R0 + 1
 				${Continue}
@@ -1518,7 +1973,7 @@ ${SegmentPrePrimary}
 				${WriteRuntimeData} HardLinkState "$0_Failed" "$R9"
 				${DebugMsg} "Failed to create hard link $0: $R9"
 				${If} $2 == "true"
-					MessageBox MB_OK|MB_ICONERROR "Error: Failed to create required hard link '$0'$\n$\nError: $R9"
+					MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Failed to create required hard link '$0'$\n$\nError: $R9"
 				${EndIf}
 			${EndIf}
 			
@@ -1563,6 +2018,39 @@ ${SegmentPostPrimary}
 			IntOp $R0 $R0 + 1
 		${Loop}
 		
+		; Remove Dispatcher links
+		StrCpy $R0 1
+		${Do}
+			ClearErrors
+			${ReadLauncherConfig} $0 LinkDispatcher$R0 LinkPath
+			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+			
+			; Check if we created this link and if it should be temporary
+			${ReadRuntimeData} $1 LinkState "$0_Created"
+			${ReadLauncherConfig} $2 LinkDispatcher$R0 Temporary
+			${If} $2 == ""
+				StrCpy $2 "true" ; Default to temporary
+			${EndIf}
+			
+			${If} $1 == "true"
+			${AndIf} $2 == "true"
+				; Determine link type for proper removal
+				${Link::GetType} "$0" $R8 $R9 $R7
+				${If} $R8 == "true"
+					${Link::Remove} "$0" "$R7" $R8 $R9
+					${If} $R8 == "true"
+						${DebugMsg} "Link removed successfully: $0"
+					${Else}
+						${DebugMsg} "Failed to remove link $0: $R9"
+					${EndIf}
+				${EndIf}
+			${ElseIf} $1 == "true"
+				${DebugMsg} "Keeping persistent link: $0"
+			${EndIf}
+			
+			IntOp $R0 $R0 + 1
+		${Loop}
+				
 		; Remove symbolic links
 		StrCpy $R0 1
 		${Do}
@@ -1571,7 +2059,7 @@ ${SegmentPostPrimary}
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 			
 			; Check if we created this link and if it should be temporary
-			${ReadRuntimeData} $1 LinkState "$0_Created"
+			${ReadRuntimeData} $1 SymLinkState "$0_Created"
 			${ReadLauncherConfig} $2 SymLink$R0 Temporary
 			${If} $2 == ""
 				StrCpy $2 "true" ; Default to temporary
@@ -1634,6 +2122,27 @@ ${SegmentUnload}
 	!ifdef SYMLINKSJUNCTIONS_ENABLED
 		${DebugMsg} "Restoring original files and directories..."
 		
+		; Restore links
+		StrCpy $R0 1
+		${Do}
+			ClearErrors
+			${ReadLauncherConfig} $0 LinkDispatcher$R0 LinkPath
+			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+			
+			; Check if we need to restore this link
+			${ReadRuntimeData} $1 LinkState "$0_Action"
+			${If} $1 == "backup"
+				${Link::Restore} "$0" "LinkBackup" "$0" $R8
+				${If} $R8 == "true"
+					${DebugMsg} "Link restored: $0"
+				${Else}
+					${DebugMsg} "Failed to restore link: $0"
+				${EndIf}
+			${EndIf}
+			
+			IntOp $R0 $R0 + 1
+		${Loop}
+				
 		; Restore symbolic links
 		StrCpy $R0 1
 		${Do}
@@ -1642,9 +2151,9 @@ ${SegmentUnload}
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 			
 			; Check if we need to restore this link
-			${ReadRuntimeData} $1 LinkState "$0_Action"
+			${ReadRuntimeData} $1 SymLinkState "$0_Action"
 			${If} $1 == "backup"
-				${Link::Restore} "$0" "LinkBackup" "$0" $R8
+				${Link::Restore} "$0" "SymLinkBackup" "$0" $R8
 				${If} $R8 == "true"
 					${DebugMsg} "Symbolic link restored: $0"
 				${Else}
