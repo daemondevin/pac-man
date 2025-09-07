@@ -5,20 +5,20 @@
  * options for different link types and path configurations.
  *
  * Parameters:
- *   LinkPath     - Specifies the new symbolic link name.
- *   TargetPath   - Specifies the path that the new link points to.
+ *   Link         - Specifies the new symbolic link name.
+ *   Target       - Specifies the path that the new link points to.
  *   Type         - Specifies if this symlink is a file or directory. 
  *                  Set to auto to let the function decide.
  *   Relative     - Specifies if using a relative or absolute path
  * 
  * Macro Usage:
- *   ${CreateSymlink} "$LinkPath" "$TargetPath" "$Type" "$Relative" $0 $1
+ *   ${CreateSymlink} "$Link" "$Target" "$Type" "$Relative" $0 $1
  *   $0 holds true/false
  *   $1 holds error message if failed, empty if success
  *
  * Function Usage:
- *   Push $LinkPath
- *   Push $TargetPath
+ *   Push $Link
+ *   Push $Target
  *   Push $Type             ; "file"|"directory"|"auto"
  *   Push $Relative         ; "true"|"false"
  *   Call CreateSymlink
@@ -26,16 +26,16 @@
  *   Pop $R1                ; Error message if failed, "" if success
  */
 ; --- Defines
-!ifndef CREATESYMLINK_NSH_INCLUDED
-!define CREATESYMLINK_NSH_INCLUDED
+!ifndef CREATE_SYMLINK_NSH_INCLUDED
+!define CREATE_SYMLINK_NSH_INCLUDED
 ; --- Includes
 !ifndef LOGICLIB
 	!include LogicLib.nsh
 !endif
 !define CreateSymlink "!insertmacro _CreateSymlink"
-!macro _CreateSymlink _LinkPath _TargetPath _TYPE _RELATIVE _RESULT _ERROR
-    Push `${_LinkPath}`
-    Push `${_TargetPath}`
+!macro _CreateSymlink _LINK _TARGET _TYPE _RELATIVE _RESULT _ERROR
+    Push `${_LINK}`
+    Push `${_TARGET}`
     Push `${_TYPE}`
     Push `${_RELATIVE}`
     Call CreateJunction
@@ -48,10 +48,10 @@ Function CreateSymlink
     Exch $2 ; Type
     Exch
     Exch 2
-    Exch $1 ; TargetPath
+    Exch $1 ; Target
     Exch
     Exch 3
-    Exch $0 ; LinkPath
+    Exch $0 ; Link
     Push $4
     Push $5
     Push $6
@@ -105,4 +105,4 @@ _SYMLINK_DONE:
     Exch
     Exch $R0
 FunctionEnd
-!endif ; CREATESYMLINK_NSH_INCLUDED
+!endif ; CREATE_SYMLINK_NSH_INCLUDED
