@@ -235,6 +235,11 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 		!define TrimString
 	!endif
 !endif
+!ifdef SYMLINKSJUNCTIONS
+    !include CreateSymlink.nsh
+    !include CreateJunction.nsh
+    !include CreateHardLink.nsh
+!endif
 ;= PAC MACROS
 ;= ################
 !include GlobalMacros.nsh
@@ -249,7 +254,7 @@ ${!ECHO} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 
 ;= VARIABLES
 ;= ################
-${!ECHO} "${NEWLINE}Initialising variables and macros...${NEWLINE}${NEWLINE}"
+${!ECHO} "${NEWLINE}Initializing variables and macros...${NEWLINE}${NEWLINE}"
 Var Bit
 Var App
 Var Admin
@@ -390,7 +395,6 @@ Function IsWOW64
 	System::Call `${WOW}`
 	Exch $0
 FunctionEnd
-!include nsDialogs.nsh
 !define /ifndef WS_POPUP	0x80000000
 !define CreateWinEx1		`USER32::CreateWindowEx(i0,t"STATIC",t"$(^Name)",`
 !define CreateWinEx2		`i${WS_CHILD}|${WS_POPUP},i0,i0,i0,i0,pr1,i0,i0,i0)p.r1`
@@ -887,5 +891,3 @@ SectionEnd
 Function .onInstFailed        
 	Call Unload
 FunctionEnd
-
-
