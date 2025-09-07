@@ -936,7 +936,7 @@ _JUNC_DONE:
 	Pop $1
 	Pop $0
 !macroend
-
+!ifndef GetRelativePath
 ; Get relative path between two absolute paths
 !define GetRelativePath `!insertmacro _GetRelativePath`
 !macro _GetRelativePath _FROM _TO _RESULT
@@ -1025,7 +1025,7 @@ _JUNC_DONE:
 	Pop $1
 	Pop $0
 !macroend
-
+!endif
 ; Generate links and junctions report
 !define Link::GenerateReport `!insertmacro _Link::GenerateReport`
 !macro _Link::GenerateReport _FILEPATH
