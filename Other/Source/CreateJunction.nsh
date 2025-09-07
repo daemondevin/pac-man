@@ -63,8 +63,8 @@ Function CreateJunction
     StrCpy $2 "\\??\\$1"
     StrCpy $3 "$1"
 
-    ${StrLen} $4 "$2" ; SubName chars
-    ${StrLen} $5 "$3" ; PrintName chars
+    StrLen $4 "$2" ; SubName chars
+    StrLen $5 "$3" ; PrintName chars
     IntOp $6 $4 * 2   ; SubName bytes
     IntOp $7 $5 * 2   ; PrintName bytes
     IntOp $8 $6 + 2
