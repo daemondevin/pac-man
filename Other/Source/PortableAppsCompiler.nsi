@@ -510,7 +510,7 @@ Function Pre
 			${RunSegment} TaskScheduler
 		!endif
 		!ifdef SYMLINKSJUNCTIONS
-			${RunSegment} SymlinksJunctions
+			${RunSegment} SymbolicJunctions
 		!endif
 	${EndIf}
 	!ifdef REGISTRY
@@ -570,6 +570,12 @@ Function PrePrimary
 		!ifdef DIRECTX
 			${RunSegment} DirectX
 		!endif
+		!ifdef ASSOCIATIONS
+			${RunSegment} FileAssociations
+		!endif
+		!ifdef SYMLINKSJUNCTIONS
+			${RunSegment} SymbolicJunctions
+		!endif
 	${EndIf}
 	!ifdef REGISTRY
 		${RunSegment} RegistryValueWrite
@@ -580,12 +586,6 @@ Function PrePrimary
 		!endif
 		!ifdef FONTS_ENABLE
 			${RunSegment} Fonts
-		!endif
-		!ifdef ASSOCIATIONS
-			${RunSegment} FileAssociations
-		!endif
-		!ifdef SYMLINKSJUNCTIONS
-			${RunSegment} SymlinksJunctions
 		!endif
 	${EndIf}
 	${ENABLE_REDIRECTION}
@@ -762,7 +762,7 @@ Function PostPrimary
 			${RunSegment} FilesCleanup
 		!endif
 		!ifdef SYMLINKSJUNCTIONS
-			${RunSegment} SymlinksJunctions
+			${RunSegment} SymbolicJunctions
 		!endif
 	${EndIf}
 	!ifdef DirectoryCleanup
@@ -823,7 +823,7 @@ Function Unload
 			${RunSegment} Firewall
 		!endif
 		!ifdef SYMLINKSJUNCTIONS
-			${RunSegment} SymlinksJunctions
+			${RunSegment} SymbolicJunctions
 		!endif
 	${EndIf}
 	${RunSegment} Core
