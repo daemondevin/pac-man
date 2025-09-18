@@ -696,84 +696,87 @@ ${SegmentPre}
 	!ifdef FILEASSOCIATIONS_ENABLED
 		${DebugMsg} "Backing up existing file associations..."
 		
-		; Process file associations
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 FileAssociation$R0 Extension
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-			${ReadLauncherConfig} $1 FileAssociation$R0 ProgID
-			${ReadLauncherConfig} $2 FileAssociation$R0 IfExists
-			
-			${DebugMsg} "Processing file association: $0 -> $1"
-			
-			; Check for conflicts
-			${FileAssoc::CheckConflicts} "$0" "$1" $R8 $R9
-			${If} $R8 == "conflict"
-				${DebugMsg} "File association conflict detected: $0 is associated with $R9"
+		${ReadUserConfigWithDefault} $0 Associations= true
+    	${If} $0 == true
+			; Process file associations
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 FileAssociation$R0 Extension
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 				
-				${Switch} $2
-					${Case} "skip"
-						${DebugMsg} "Skipping file association due to conflict: $0"
-						${WriteRuntimeData} FileAssocState "$0_Action" "skipped"
-						${Break}
-					${Case} "backup"
-						${DebugMsg} "Backing up conflicting file association: $0"
-						${FileAssoc::Backup} "$0" "FileAssocBackup" "$0"
-						${WriteRuntimeData} FileAssocState "$0_Action" "backup"
-						${Break}
-					${Case} "replace"
-					${CaseElse}
-						${DebugMsg} "Will replace conflicting file association: $0"
-						${FileAssoc::Backup} "$0" "FileAssocBackup" "$0"
-						${WriteRuntimeData} FileAssocState "$0_Action" "replace"
-						${Break}
-				${EndSwitch}
-			${ElseIf} $R8 == "ours"
-				${DebugMsg} "File association already belongs to us: $0"
-				${WriteRuntimeData} FileAssocState "$0_Action" "ours"
-			${Else}
-				${DebugMsg} "No existing file association for: $0"
-				${WriteRuntimeData} FileAssocState "$0_Action" "create"
-			${EndIf}
+				${ReadLauncherConfig} $1 FileAssociation$R0 ProgID
+				${ReadLauncherConfig} $2 FileAssociation$R0 IfExists
+				
+				${DebugMsg} "Processing file association: $0 -> $1"
+				
+				; Check for conflicts
+				${FileAssoc::CheckConflicts} "$0" "$1" $R8 $R9
+				${If} $R8 == "conflict"
+					${DebugMsg} "File association conflict detected: $0 is associated with $R9"
+					
+					${Switch} $2
+						${Case} "skip"
+							${DebugMsg} "Skipping file association due to conflict: $0"
+							${WriteRuntimeData} FileAssocState "$0_Action" "skipped"
+							${Break}
+						${Case} "backup"
+							${DebugMsg} "Backing up conflicting file association: $0"
+							${FileAssoc::Backup} "$0" "FileAssocBackup" "$0"
+							${WriteRuntimeData} FileAssocState "$0_Action" "backup"
+							${Break}
+						${Case} "replace"
+						${CaseElse}
+							${DebugMsg} "Will replace conflicting file association: $0"
+							${FileAssoc::Backup} "$0" "FileAssocBackup" "$0"
+							${WriteRuntimeData} FileAssocState "$0_Action" "replace"
+							${Break}
+					${EndSwitch}
+				${ElseIf} $R8 == "ours"
+					${DebugMsg} "File association already belongs to us: $0"
+					${WriteRuntimeData} FileAssocState "$0_Action" "ours"
+				${Else}
+					${DebugMsg} "No existing file association for: $0"
+					${WriteRuntimeData} FileAssocState "$0_Action" "create"
+				${EndIf}
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
 			
-			IntOp $R0 $R0 + 1
-		${Loop}
-		
-		; Process protocol handlers
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 ProtocolHandler$R0 Protocol
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-			${ReadLauncherConfig} $1 ProtocolHandler$R0 IfExists
-			
-			${Protocol::Exists} "$0" $R8 $R9
-			${If} $R8 == "true"
-				${DebugMsg} "Protocol handler exists for: $0"
-				${Switch} $1
-					${Case} "skip"
-						${WriteRuntimeData} ProtocolState "$0_Action" "skipped"
-						${Break}
-					${Case} "backup"
-					${CaseElse}
-						; Backup existing protocol handler
-						ReadRegStr $2 HKCR "$0" ""
-						${WriteRuntimeData} ProtocolBackup "$0_Description" "$2"
-						ReadRegStr $3 HKCR "$0\shell\open\command" ""
-						${WriteRuntimeData} ProtocolBackup "$0_Command" "$3"
-						${WriteRuntimeData} ProtocolBackup "$0_BackupComplete" "true"
-						${WriteRuntimeData} ProtocolState "$0_Action" "replace"
-						${Break}
-				${EndSwitch}
-			${Else}
-				${WriteRuntimeData} ProtocolState "$0_Action" "create"
-			${EndIf}
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
+			; Process protocol handlers
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 ProtocolHandler$R0 Protocol
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+				
+				${ReadLauncherConfig} $1 ProtocolHandler$R0 IfExists
+				
+				${Protocol::Exists} "$0" $R8 $R9
+				${If} $R8 == "true"
+					${DebugMsg} "Protocol handler exists for: $0"
+					${Switch} $1
+						${Case} "skip"
+							${WriteRuntimeData} ProtocolState "$0_Action" "skipped"
+							${Break}
+						${Case} "backup"
+						${CaseElse}
+							; Backup existing protocol handler
+							ReadRegStr $2 HKCR "$0" ""
+							${WriteRuntimeData} ProtocolBackup "$0_Description" "$2"
+							ReadRegStr $3 HKCR "$0\shell\open\command" ""
+							${WriteRuntimeData} ProtocolBackup "$0_Command" "$3"
+							${WriteRuntimeData} ProtocolBackup "$0_BackupComplete" "true"
+							${WriteRuntimeData} ProtocolState "$0_Action" "replace"
+							${Break}
+					${EndSwitch}
+				${Else}
+					${WriteRuntimeData} ProtocolState "$0_Action" "create"
+				${EndIf}
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
+		${EndIf}
 		
 		${DebugMsg} "File association backup completed."
 	!endif
@@ -784,111 +787,114 @@ ${SegmentPrePrimary}
 	!ifdef FILEASSOCIATIONS_ENABLED
 		${DebugMsg} "Creating file associations and protocol handlers..."
 		
-		; Create file associations
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 FileAssociation$R0 Extension
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-			; Check if we should process this association
-			${ReadRuntimeData} $1 FileAssocState "$0_Action"
-			${If} $1 == "skipped"
-				${DebugMsg} "Skipping file association as requested: $0"
-				IntOp $R0 $R0 + 1
-				${Continue}
-			${EndIf}
-			
-			; Get configuration
-			${ReadLauncherConfig} $1 FileAssociation$R0 ProgID
-			${ReadLauncherConfig} $2 FileAssociation$R0 Description
-			${ReadLauncherConfig} $3 FileAssociation$R0 DefaultIcon
-			${ReadLauncherConfig} $4 FileAssociation$R0 OpenCommand
-			${ReadLauncherConfig} $5 FileAssociation$R0 EditCommand
-			${ReadLauncherConfig} $6 FileAssociation$R0 PrintCommand
-			${ReadLauncherConfig} $7 FileAssociation$R0 MimeType
-			${ReadLauncherConfig} $8 FileAssociation$R0 Priority
-			
-			${DebugMsg} "Creating file association: $0 -> $1"
-			
-			; Create the file association
-			${FileAssoc::Create} "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" $R8
-			${If} $R8 == "true"
-				${WriteRuntimeData} FileAssocState "$0_Created" "true"
-				${DebugMsg} "File association created successfully: $0"
+		${ReadUserConfigWithDefault} $0 Associations= true
+		${If} $0 == true
+			; Create file associations
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 FileAssociation$R0 Extension
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 				
-				; Set priority if specified
-				${If} $8 != ""
-					${FileAssoc::SetPriority} "$0" "$1" "$8"
+				; Check if we should process this association
+				${ReadRuntimeData} $1 FileAssocState "$0_Action"
+				${If} $1 == "skipped"
+					${DebugMsg} "Skipping file association as requested: $0"
+					IntOp $R0 $R0 + 1
+					${Continue}
 				${EndIf}
-			${Else}
-				${DebugMsg} "Failed to create file association: $0"
-				${WriteRuntimeData} FileAssocState "$0_Failed" "true"
-			${EndIf}
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
-		
-		; Create protocol handlers
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 ProtocolHandler$R0 Protocol
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-			; Check if we should process this protocol
-			${ReadRuntimeData} $1 ProtocolState "$0_Action"
-			${If} $1 == "skipped"
-				${DebugMsg} "Skipping protocol handler as requested: $0"
-				IntOp $R0 $R0 + 1
-				${Continue}
-			${EndIf}
-			
-			; Get configuration
-			${ReadLauncherConfig} $1 ProtocolHandler$R0 ProgID
-			${ReadLauncherConfig} $2 ProtocolHandler$R0 Description
-			${ReadLauncherConfig} $3 ProtocolHandler$R0 DefaultIcon
-			${ReadLauncherConfig} $4 ProtocolHandler$R0 OpenCommand
-			
-			${DebugMsg} "Creating protocol handler: $0"
-			
-			${Protocol::Create} "$0" "$1" "$2" "$3" "$4" $R8
-			${If} $R8 == "true"
-				${WriteRuntimeData} ProtocolState "$0_Created" "true"
-				${DebugMsg} "Protocol handler created successfully: $0"
-			${Else}
-				${DebugMsg} "Failed to create protocol handler: $0"
-			${EndIf}
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
-		
-		; Create context menu entries
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 ContextMenu$R0 Extension
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-			${ReadLauncherConfig} $1 ContextMenu$R0 MenuText
-			${ReadLauncherConfig} $2 ContextMenu$R0 MenuCommand
-			${ReadLauncherConfig} $3 ContextMenu$R0 MenuIcon
-			${ReadLauncherConfig} $4 ContextMenu$R0 Position
-			${ReadLauncherConfig} $5 ContextMenu$R0 IfExists
-			
-			${DebugMsg} "Creating context menu: $1 for $0"
-			
-			; Check if we should create this context menu
-			${If} $5 != "skip"
-				${ContextMenu::Create} "$0" "$1" "$2" "$3" "$4" $R8
+				
+				; Get configuration
+				${ReadLauncherConfig} $1 FileAssociation$R0 ProgID
+				${ReadLauncherConfig} $2 FileAssociation$R0 Description
+				${ReadLauncherConfig} $3 FileAssociation$R0 DefaultIcon
+				${ReadLauncherConfig} $4 FileAssociation$R0 OpenCommand
+				${ReadLauncherConfig} $5 FileAssociation$R0 EditCommand
+				${ReadLauncherConfig} $6 FileAssociation$R0 PrintCommand
+				${ReadLauncherConfig} $7 FileAssociation$R0 MimeType
+				${ReadLauncherConfig} $8 FileAssociation$R0 Priority
+				
+				${DebugMsg} "Creating file association: $0 -> $1"
+				
+				; Create the file association
+				${FileAssoc::Create} "$0" "$1" "$2" "$3" "$4" "$5" "$6" "$7" $R8
 				${If} $R8 == "true"
-					${WriteRuntimeData} ContextMenuState "$0_$1_Created" "true"
-					${DebugMsg} "Context menu created successfully: $1"
+					${WriteRuntimeData} FileAssocState "$0_Created" "true"
+					${DebugMsg} "File association created successfully: $0"
+					
+					; Set priority if specified
+					${If} $8 != ""
+						${FileAssoc::SetPriority} "$0" "$1" "$8"
+					${EndIf}
+				${Else}
+					${DebugMsg} "Failed to create file association: $0"
+					${WriteRuntimeData} FileAssocState "$0_Failed" "true"
 				${EndIf}
-			${EndIf}
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
 			
-			IntOp $R0 $R0 + 1
-		${Loop}
+			; Create protocol handlers
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 ProtocolHandler$R0 Protocol
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+				
+				; Check if we should process this protocol
+				${ReadRuntimeData} $1 ProtocolState "$0_Action"
+				${If} $1 == "skipped"
+					${DebugMsg} "Skipping protocol handler as requested: $0"
+					IntOp $R0 $R0 + 1
+					${Continue}
+				${EndIf}
+				
+				; Get configuration
+				${ReadLauncherConfig} $1 ProtocolHandler$R0 ProgID
+				${ReadLauncherConfig} $2 ProtocolHandler$R0 Description
+				${ReadLauncherConfig} $3 ProtocolHandler$R0 DefaultIcon
+				${ReadLauncherConfig} $4 ProtocolHandler$R0 OpenCommand
+				
+				${DebugMsg} "Creating protocol handler: $0"
+				
+				${Protocol::Create} "$0" "$1" "$2" "$3" "$4" $R8
+				${If} $R8 == "true"
+					${WriteRuntimeData} ProtocolState "$0_Created" "true"
+					${DebugMsg} "Protocol handler created successfully: $0"
+				${Else}
+					${DebugMsg} "Failed to create protocol handler: $0"
+				${EndIf}
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
+			
+			; Create context menu entries
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 ContextMenu$R0 Extension
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+				
+				${ReadLauncherConfig} $1 ContextMenu$R0 MenuText
+				${ReadLauncherConfig} $2 ContextMenu$R0 MenuCommand
+				${ReadLauncherConfig} $3 ContextMenu$R0 MenuIcon
+				${ReadLauncherConfig} $4 ContextMenu$R0 Position
+				${ReadLauncherConfig} $5 ContextMenu$R0 IfExists
+				
+				${DebugMsg} "Creating context menu: $1 for $0"
+				
+				; Check if we should create this context menu
+				${If} $5 != "skip"
+					${ContextMenu::Create} "$0" "$1" "$2" "$3" "$4" $R8
+					${If} $R8 == "true"
+						${WriteRuntimeData} ContextMenuState "$0_$1_Created" "true"
+						${DebugMsg} "Context menu created successfully: $1"
+					${EndIf}
+				${EndIf}
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
+		${EndIf}
 		
 		; Notify shell of changes
 		${SHCHANGENOTIFY}
@@ -901,59 +907,62 @@ ${SegmentPostPrimary}
 	!ifdef FILEASSOCIATIONS_ENABLED
 		${DebugMsg} "Cleaning up file associations and protocol handlers..."
 		
-		; Remove context menus first
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 ContextMenu$R0 Extension
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+		${ReadUserConfigWithDefault} $0 Associations= true
+		${If} $0 == true
+			; Remove context menus first
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 ContextMenu$R0 Extension
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+				
+				${ReadLauncherConfig} $1 ContextMenu$R0 MenuText
+				
+				; Check if we created this context menu
+				${ReadRuntimeData} $2 ContextMenuState "$0_$1_Created"
+				${IfNot} ${Errors}
+					${ContextMenu::Remove} "$0" "$1"
+					${DebugMsg} "Context menu removed: $1"
+				${EndIf}
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
 			
-			${ReadLauncherConfig} $1 ContextMenu$R0 MenuText
+			; Remove protocol handlers
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 ProtocolHandler$R0 Protocol
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+				
+				; Check if we created this protocol handler
+				${ReadRuntimeData} $1 ProtocolState "$0_Created"
+				${IfNot} ${Errors}
+					${Protocol::Remove} "$0"
+					${DebugMsg} "Protocol handler removed: $0"
+				${EndIf}
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
 			
-			; Check if we created this context menu
-			${ReadRuntimeData} $2 ContextMenuState "$0_$1_Created"
-			${IfNot} ${Errors}
-				${ContextMenu::Remove} "$0" "$1"
-				${DebugMsg} "Context menu removed: $1"
-			${EndIf}
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
-		
-		; Remove protocol handlers
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 ProtocolHandler$R0 Protocol
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-			; Check if we created this protocol handler
-			${ReadRuntimeData} $1 ProtocolState "$0_Created"
-			${IfNot} ${Errors}
-				${Protocol::Remove} "$0"
-				${DebugMsg} "Protocol handler removed: $0"
-			${EndIf}
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
-		
-		; Remove file associations
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 FileAssociation$R0 Extension
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-			; Check if we created this file association
-			${ReadRuntimeData} $1 FileAssocState "$0_Created"
-			${IfNot} ${Errors}
-				${ReadLauncherConfig} $2 FileAssociation$R0 ProgID
-				${FileAssoc::Remove} "$0" "$2"
-				${DebugMsg} "File association removed: $0"
-			${EndIf}
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
+			; Remove file associations
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 FileAssociation$R0 Extension
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+				
+				; Check if we created this file association
+				${ReadRuntimeData} $1 FileAssocState "$0_Created"
+				${IfNot} ${Errors}
+					${ReadLauncherConfig} $2 FileAssociation$R0 ProgID
+					${FileAssoc::Remove} "$0" "$2"
+					${DebugMsg} "File association removed: $0"
+				${EndIf}
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
+		${EndIf}
 		
 		; Notify shell of changes
 		${SHCHANGENOTIFY}
@@ -966,92 +975,95 @@ ${SegmentUnload}
 	!ifdef FILEASSOCIATIONS_ENABLED
 		${DebugMsg} "Restoring original file associations..."
 		
-		; Restore file associations
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 FileAssociation$R0 Extension
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-			; Check what action we took
-			${ReadRuntimeData} $1 FileAssocState "$0_Action"
-			${If} $1 == "backup"
-			${OrIf} $1 == "replace"
-				${FileAssoc::Restore} "$0" "FileAssocBackup" "$0" $R8
-				${If} $R8 == "true"
-					${DebugMsg} "File association restored: $0"
-				${Else}
-					${DebugMsg} "Failed to restore file association: $0"
+		${ReadUserConfigWithDefault} $0 Associations= true
+		${If} $0 == true
+			; Restore file associations
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 FileAssociation$R0 Extension
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+				
+				; Check what action we took
+				${ReadRuntimeData} $1 FileAssocState "$0_Action"
+				${If} $1 == "backup"
+				${OrIf} $1 == "replace"
+					${FileAssoc::Restore} "$0" "FileAssocBackup" "$0" $R8
+					${If} $R8 == "true"
+						${DebugMsg} "File association restored: $0"
+					${Else}
+						${DebugMsg} "Failed to restore file association: $0"
+					${EndIf}
 				${EndIf}
-			${EndIf}
-			
-			; Clean up state data
-			${DeleteRuntimeData} FileAssocState "$0_Action"
-			${DeleteRuntimeData} FileAssocState "$0_Created"
-			${DeleteRuntimeData} FileAssocState "$0_Failed"
-			
-			; Clean up backup data
-			${DeleteRuntimeData} FileAssocBackup "$0_ProgID"
-			${DeleteRuntimeData} FileAssocBackup "$0_Description"
-			${DeleteRuntimeData} FileAssocBackup "$0_DefaultIcon"
-			${DeleteRuntimeData} FileAssocBackup "$0_OpenCommand"
-			${DeleteRuntimeData} FileAssocBackup "$0_EditCommand"
-			${DeleteRuntimeData} FileAssocBackup "$0_PrintCommand"
-			${DeleteRuntimeData} FileAssocBackup "$0_MimeType"
-			${DeleteRuntimeData} FileAssocBackup "$0_PerceivedType"
-			${DeleteRuntimeData} FileAssocBackup "$0_BackupComplete"
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
-		
-		; Restore protocol handlers
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 ProtocolHandler$R0 Protocol
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-			; Check if we have a backup to restore
-			${ReadRuntimeData} $1 ProtocolBackup "$0_BackupComplete"
-			${IfNot} ${Errors}
-				${ReadRuntimeData} $2 ProtocolBackup "$0_Description"
-				${ReadRuntimeData} $3 ProtocolBackup "$0_Command"
 				
-				; Restore original protocol handler
-				WriteRegStr HKCR "$0" "" "$2"
-				WriteRegStr HKCR "$0" "URL Protocol" ""
-				WriteRegStr HKCR "$0\shell\open\command" "" "$3"
-				
-				${DebugMsg} "Protocol handler restored: $0"
+				; Clean up state data
+				${DeleteRuntimeData} FileAssocState "$0_Action"
+				${DeleteRuntimeData} FileAssocState "$0_Created"
+				${DeleteRuntimeData} FileAssocState "$0_Failed"
 				
 				; Clean up backup data
-				${DeleteRuntimeData} ProtocolBackup "$0_Description"
-				${DeleteRuntimeData} ProtocolBackup "$0_Command"
-				${DeleteRuntimeData} ProtocolBackup "$0_BackupComplete"
-			${EndIf}
+				${DeleteRuntimeData} FileAssocBackup "$0_ProgID"
+				${DeleteRuntimeData} FileAssocBackup "$0_Description"
+				${DeleteRuntimeData} FileAssocBackup "$0_DefaultIcon"
+				${DeleteRuntimeData} FileAssocBackup "$0_OpenCommand"
+				${DeleteRuntimeData} FileAssocBackup "$0_EditCommand"
+				${DeleteRuntimeData} FileAssocBackup "$0_PrintCommand"
+				${DeleteRuntimeData} FileAssocBackup "$0_MimeType"
+				${DeleteRuntimeData} FileAssocBackup "$0_PerceivedType"
+				${DeleteRuntimeData} FileAssocBackup "$0_BackupComplete"
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
 			
-			; Clean up state data
-			${DeleteRuntimeData} ProtocolState "$0_Action"
-			${DeleteRuntimeData} ProtocolState "$0_Created"
+			; Restore protocol handlers
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 ProtocolHandler$R0 Protocol
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+				
+				; Check if we have a backup to restore
+				${ReadRuntimeData} $1 ProtocolBackup "$0_BackupComplete"
+				${IfNot} ${Errors}
+					${ReadRuntimeData} $2 ProtocolBackup "$0_Description"
+					${ReadRuntimeData} $3 ProtocolBackup "$0_Command"
+					
+					; Restore original protocol handler
+					WriteRegStr HKCR "$0" "" "$2"
+					WriteRegStr HKCR "$0" "URL Protocol" ""
+					WriteRegStr HKCR "$0\shell\open\command" "" "$3"
+					
+					${DebugMsg} "Protocol handler restored: $0"
+					
+					; Clean up backup data
+					${DeleteRuntimeData} ProtocolBackup "$0_Description"
+					${DeleteRuntimeData} ProtocolBackup "$0_Command"
+					${DeleteRuntimeData} ProtocolBackup "$0_BackupComplete"
+				${EndIf}
+				
+				; Clean up state data
+				${DeleteRuntimeData} ProtocolState "$0_Action"
+				${DeleteRuntimeData} ProtocolState "$0_Created"
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
 			
-			IntOp $R0 $R0 + 1
-		${Loop}
-		
-		; Clean up context menu data
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $0 ContextMenu$R0 Extension
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-			${ReadLauncherConfig} $1 ContextMenu$R0 MenuText
-			
-			; Clean up state data
-			${DeleteRuntimeData} ContextMenuState "$0_$1_Created"
-			${DeleteRuntimeData} ContextMenus "$0_$1"
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
+			; Clean up context menu data
+			StrCpy $R0 1
+			${Do}
+				ClearErrors
+				${ReadLauncherConfig} $0 ContextMenu$R0 Extension
+				${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+				
+				${ReadLauncherConfig} $1 ContextMenu$R0 MenuText
+				
+				; Clean up state data
+				${DeleteRuntimeData} ContextMenuState "$0_$1_Created"
+				${DeleteRuntimeData} ContextMenus "$0_$1"
+				
+				IntOp $R0 $R0 + 1
+			${Loop}
+		${EndIf}
 		
 		; Final shell notification
 		${SHCHANGENOTIFY}
