@@ -13,9 +13,7 @@
 
 ${SegmentFile}
 ${SegmentInit}
-	!ifmacrodef Variables
-		!insertmacro Variables
-	!endif
+	${InsertMacroIfExists} Variables
 !macroend
 ${SegmentPre}
 	${ForEachINIPair} Environment $0 $1

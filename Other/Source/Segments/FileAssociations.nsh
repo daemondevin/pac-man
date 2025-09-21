@@ -58,20 +58,14 @@
 ;
 
 !ifdef FILEASSOCIATIONS
-!ifndef LOGICLIB
-	!include LogicLib.nsh
-!endif
-!ifndef STR_CASE_NSH_INCLUDED
-	!include StrCase.nsh
-!endif
-!ifndef WORDREPLACE_NSH_INCLUDED
-	!include WordReplace.nsh
-!endif
+${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
+${IncludeIfNotDefined} STR_CASE_NSH_INCLUDED StrCase.nsh
+${IncludeIfNotDefined} WORDREPLACE_NSH_INCLUDED WordReplace.nsh
 
 ; Shell notification constants
-!define SHCNE_ASSOCCHANGED 0x08000000
-!define SHCNF_IDLIST 0x0000
-!define SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i ${SHCNF_IDLIST}, i 0, i 0)`
+${DefineIfNotDefined} SHCNE_ASSOCCHANGED 0x08000000
+${DefineIfNotDefined} SHCNF_IDLIST 0x0000
+${DefineIfNotDefined} SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i ${SHCNF_IDLIST}, i 0, i 0)`
 
 ; File association management macros
 

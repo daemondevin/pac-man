@@ -11,12 +11,8 @@
 ;   This file enables support for handling the icon cache of Windows Explorer to refresh them before and after launch.
 ; 
 
-!ifndef SHCNE_ASSOCCHANGED
-	!define SHCNE_ASSOCCHANGED 0x08000000
-!endif
-!ifndef SHCNF_IDLIST
-	!define SHCNF_IDLIST 0
-!endif
+${DefineIfNotDefined} SHCNE_ASSOCCHANGED 0x08000000
+${DefineIfNotDefined} SHCNF_IDLIST 0
 
 ${SegmentFile}
 ${SegmentPreExec}

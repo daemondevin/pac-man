@@ -13,9 +13,7 @@
 
 ${SegmentFile}
 ${SegmentPrePrimary}
-	!ifmacrodef PreRegistryValue
-		!insertmacro PreRegistryValue
-	!endif
+	${InsertMacroIfExists} PreRegistryValue
 	${If} $Registry == true
 		StrCpy $R0 1
 		${Do}
@@ -30,14 +28,10 @@ ${SegmentPrePrimary}
 			IntOp $R0 $R0 + 1
 		${Loop}
 	${EndIf}
-	!ifmacrodef UnPreRegistryValue
-		!insertmacro UnPreRegistryValue
-	!endif
+	${InsertMacroIfExists} UnPreRegistryValue
 !macroend
 ${SegmentPostPrimary}
-	!ifmacrodef PostRegistryValue
-		!insertmacro PostRegistryValue
-	!endif
+	${InsertMacroIfExists} PostRegistryValue
 	${If} $Registry == true
 		StrCpy $R0 1
 		${Do}
@@ -55,7 +49,5 @@ ${SegmentPostPrimary}
 		${registry::DeleteKeyEmpty} HKCU\Software\PortableApps.com\Values $R4
 		${registry::DeleteKeyEmpty} HKCU\Software\PortableApps.com $R4
 	${EndIf}
-	!ifmacrodef UnPostRegistryValue
-		!insertmacro UnPostRegistryValue
-	!endif
+	${InsertMacroIfExists} UnPostRegistryValue
 !macroend

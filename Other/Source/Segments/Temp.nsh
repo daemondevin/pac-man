@@ -75,9 +75,7 @@ ${SegmentPre}
 	${SetEnvironmentVariable} PAL:_TEMP $R0
 !macroend
 ${SegmentPostPrimary}
-	!ifmacrodef TEMP
-		!insertmacro TEMP
-	!endif
+	${InsertMacroIfExists} TEMP
 	ReadEnvStr $R0 TMP
 	${ReadLauncherConfig} $R1 Launch CleanTemp
 	StrCmp $R1 false +3

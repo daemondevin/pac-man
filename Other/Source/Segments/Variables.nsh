@@ -95,15 +95,11 @@ ${SegmentFile}
 	;=== Make the forwardslashes path (e.g. X:/PortableApps/AppNamePortable)
 	${WordReplace} $R0 \ / + $R2
 	${SetEnvironmentVariable} "$R1:Forwardslash" $R2
-	!ifmacrodef VariablePath
-		!insertmacro VariablePath
-	!endif
+	${InsertMacroIfExists} VariablePath
 	;=== Make the double backslashes path (e.g. X:\\PortableApps\\AppNamePortable)
 	${WordReplace} $R0 \ \\ + $R3
 	${SetEnvironmentVariable} "$R1:DoubleBackslash" $R3
-	!ifmacrodef CustomVariablePath
-		!insertmacro CustomVariablePath
-	!endif
+	${InsertMacroIfExists} CustomVariablePath
 	!ifdef JAVA
 		;=== Make the java.util.prefs path
 		; Based on the forwardslashes path, s/[^a-z:]/\/&/g
@@ -179,9 +175,7 @@ Var PortableAppsCommonFiles
 Var PortableAppsBaseDirectory
 Var LastPortableAppsBaseDirectory
 ${SegmentInit}
-	!ifmacrodef EnvironmentVariables
-		!insertmacro EnvironmentVariables
-	!endif
+	${InsertMacroIfExists} EnvironmentVariables
 	StrCpy $AppDirectory `$EXEDIR\App`
 	StrCpy $DataDirectory `$EXEDIR\Data`
 	${SetEnvironmentVariablesPath} PAL:AppDir  $AppDirectory
@@ -231,9 +225,7 @@ ${SegmentInit}
 	${SetEnvironmentVariablesPath} ALLUSERSAPPDATA $APPDATA
 	${SetEnvironmentVariablesPath} PROGRAMDATA $APPDATA
 	SetShellVarContext current
-	!ifmacrodef PostEnvironmentVariables
-		!insertmacro PostEnvironmentVariables
-	!endif
+	${InsertMacroIfExists} PostEnvironmentVariables
 !macroend
 ${SegmentPrePrimary}
 	WriteINIStr `${SETINI}` ${PAL}LastRunEnvironment PAL:LastPortableAppsBaseDir `$PortableAppsBaseDirectory`

@@ -54,18 +54,12 @@
 ;
 
 !ifdef FIREWALL
-!ifndef LOGICLIB
-	!include LogicLib.nsh
-!endif
-!ifndef WORDREPLACE_NSH_INCLUDED
-	!include WordReplace.nsh
-!endif
-!ifndef STR_LOC_NSH_INCLUDED
-	!include StrLoc.nsh
-!endif
+${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
+${IncludeIfNotDefined} WORDREPLACE_NSH_INCLUDED WordReplace.nsh
+${IncludeIfNotDefined} STR_LOC_NSH_INCLUDED StrLoc.nsh
 
 ; Windows Firewall with Advanced Security command
-!define NETSH_ADVFIREWALL `$SYSDIR\netsh.exe advfirewall firewall`
+${DefineIfNotDefined} NETSH_ADVFIREWALL `$SYSDIR\netsh.exe advfirewall firewall`
 
 ; Firewall management macros
 

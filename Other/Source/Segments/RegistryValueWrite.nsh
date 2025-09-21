@@ -23,9 +23,7 @@
 
 ${SegmentFile}
 ${SegmentPrePrimary}
-	!ifmacrodef PreRegWrite
-		!insertmacro PreRegWrite
-	!endif
+	${InsertMacroIfExists} PreRegWrite
 	${If} $Registry == true
 		${ForEachINIPair} RegistryValueWrite $0 $1
 		${ValidateRegistryKey} $0
@@ -92,7 +90,5 @@ ${SegmentPrePrimary}
 		!endif
 		${NextINIPair}
 	${EndIf}
-	!ifmacrodef UnPreRegWrite
-		!insertmacro UnPreRegWrite
-	!endif
+	${InsertMacroIfExists} UnPreRegWrite
 !macroend

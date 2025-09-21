@@ -13,9 +13,7 @@
 
 ${SegmentFile}
 ${SegmentPostPrimary}
-	!ifmacrodef DirCleanup
-		!insertmacro DirCleanup
-	!endif
+	${InsertMacroIfExists} DirCleanup
 	StrCpy $R0 1
 	${Do}
 		ClearErrors

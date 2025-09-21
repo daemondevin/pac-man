@@ -39,12 +39,8 @@
 
 ${SegmentFile}
 ${Segment.onInit}
-	!ifmacrodef CustomOverride
-		!insertmacro CustomOverride
-	!endif
-	!ifmacrodef RunAsAdmin
-		!insertmacro RunAsAdmin
-	!else
+	${InsertMacroIfExists} CustomOverride
+	${InsertMacroIfExists} RunAsAdmin
 			ClearErrors
 			${ReadLauncherConfig} $RunAsAdmin Launch RunAsAdmin
 		!ifdef RUNASADMIN_COMPILEFORCE
@@ -103,7 +99,5 @@ ${Segment.onInit}
 			${EndIf}
 		!endif
 	!endif
-	!ifmacrodef UnRunAsAdmin
-		!insertmacro UnRunAsAdmin
-	!endif
+	${InsertMacroIfExists} UnRunAsAdmin
 !macroend

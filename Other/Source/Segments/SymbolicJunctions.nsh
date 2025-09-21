@@ -65,36 +65,22 @@
 !ifdef SYMLINKSJUNCTIONS
 
 ;= INCLUDES
-!ifndef LOGICLIB
-    !include LogicLib.nsh
-!endif
-!ifndef FILEFUNC_INCLUDED
-    !include FileFunc.nsh
-!endif
-!ifndef STR_LOC_NSH_INCLUDED
-    !include StrLoc.nsh
-!endif
-!ifndef CHECK_LINK_NSH_INCLUDED
-    !include CheckLink.nsh
-!endif
-!ifndef CREATE_HARDLINK_NSH_INCLUDED
-    !include CreateHardlink.nsh
-!endif
-!ifndef CREATE_SYMLINK_NSH_INCLUDED
-    !include CreateSymlink.nsh
-!endif
-!ifndef CREATE_JUNCTION_NSH_INCLUDED
-    !include CreateJunction.nsh
-!endif
+${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
+${IncludeIfNotDefined} FILEFUNC_INCLUDED FileFunc.nsh
+${IncludeIfNotDefined} STR_LOC_NSH_INCLUDED StrLoc.nsh
+${IncludeIfNotDefined} CHECK_LINK_NSH_INCLUDED CheckLink.nsh
+${IncludeIfNotDefined} CREATE_HARDLINK_NSH_INCLUDED CreateHardlink.nsh
+${IncludeIfNotDefined} CREATE_SYMLINK_NSH_INCLUDED CreateSymlink.nsh
+${IncludeIfNotDefined} CREATE_JUNCTION_NSH_INCLUDED CreateJunction.nsh
 
 ;= DEFINES
-!define MKLINK `$SYSDIR\cmd.exe /c mklink`
-!define RMDIR `$SYSDIR\rmdir.exe`
-!define DEL `$SYSDIR\del.exe`
+${DefineIfNotDefined} MKLINK `$SYSDIR\cmd.exe /c mklink`
+${DefineIfNotDefined} RMDIR `$SYSDIR\rmdir.exe`
+${DefineIfNotDefined} DEL `$SYSDIR\del.exe`
 
-!define LINK_TYPE_SYMBOLIC 1
-!define LINK_TYPE_JUNCTION 2
-!define LINK_TYPE_HARD 3
+${DefineIfNotDefined} LINK_TYPE_SYMBOLIC 1
+${DefineIfNotDefined} LINK_TYPE_JUNCTION 2
+${DefineIfNotDefined} LINK_TYPE_HARD 3
 
 ; Convenience macros
 !define Link::GetTarget `!insertmacro _Link::GetTarget`

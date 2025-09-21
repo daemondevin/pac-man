@@ -11,15 +11,11 @@
 ;   This file allows support for language handling and manipulates language variables.
 ; 
 
-!ifndef _XML_LIB_
-	!include XML.nsh
-!endif
+${IncludeIfNotDefined} _XML_LIB_ XML.nsh
 
 ${SegmentFile}
 ${Segment.onInit}
-	!ifmacrodef Lang
-		!insertmacro Lang
-	!endif
+	${InsertMacroIfExists} Lang
 	ReadEnvStr $0 PortableApps.comLocaleID
 	${Switch} $0
 		!insertmacro LanguageCases
@@ -28,9 +24,7 @@ ${Segment.onInit}
 	${EndSwitch}
 !macroend
 ${SegmentInit}
-	!ifmacrodef LangInit
-		!insertmacro LangInit
-	!endif
+	${InsertMacroIfExists} LangInit
 	!ifndef DisablePAL:LanguageCustom
 		ClearErrors
 		ReadEnvStr $8 PAL:LanguageCustom

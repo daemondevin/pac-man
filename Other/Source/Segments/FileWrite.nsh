@@ -13,9 +13,7 @@
 
 ${SegmentFile}
 ${SegmentPrePrimary}
-	!ifmacrodef FileWrite
-		!insertmacro FileWrite
-	!endif
+	${InsertMacroIfExists} FileWrite
 	StrCpy $R0 0
 	${Do}
 		IntOp $R0 $R0 + 1
@@ -179,7 +177,5 @@ ${SegmentPrePrimary}
 			${EndIf}
 		${NextFile}
 	${Loop}
-	!ifmacrodef PostFileWrite
-		!insertmacro PostFileWrite
-	!endif
+	${InsertMacroIfExists} PostFileWrite
 !macroend

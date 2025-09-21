@@ -12,12 +12,8 @@
 ; 
 
 !ifdef RegCopy
-!ifndef PAF
-	!define PAF `HKCU\Software\PortableApps.com`
-!endif
-!ifndef PAFKEYS
-	!define PAFKEYS `${PAF}\Keys`
-!endif
+${DefineIfNotDefined} PAF `HKCU\Software\PortableApps.com`
+${DefineIfNotDefined} PAFKEYS `${PAF}\Keys`
 
 ${SegmentFile}
 ${SegmentPrePrimary}

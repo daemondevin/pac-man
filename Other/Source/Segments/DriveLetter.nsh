@@ -13,9 +13,7 @@
 
 ${SegmentFile}
 ${SegmentInit}
-	!ifmacrodef Drive
-		!insertmacro Drive
-	!endif
+	${InsertMacroIfExists} Drive
 	ReadINIStr $1 ${SETINI} ${APPNAME}Settings LastDrive
 	${GetRoot} $EXEDIR $0
 	${IfThen} $1 == "" ${|} StrCpy $1 $0 ${|}
@@ -28,9 +26,7 @@ ${SegmentInit}
 !macroend
 
 ${SegmentPrePrimary}
-	!ifmacrodef PreDrive
-		!insertmacro PreDrive
-	!endif
+	${InsertMacroIfExists} PreDrive
 	ReadEnvStr $0 PAL:Drive
 	WriteINIStr `${SETINI}` `${APPNAME}Settings` LastDrive `$0`
 !macroend

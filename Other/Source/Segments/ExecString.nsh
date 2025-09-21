@@ -21,18 +21,14 @@ ${SegmentPre}
 	!else
 		StrCpy $ExecString `"$AppDirectory\$ProgramExecutable"`
 	!endif
-	!ifmacrodef ExecString
-		!insertmacro ExecString
-	!endif
+	${InsertMacroIfExists} ExecString
 	!ifmacrodef CommandLineArguments
 		!insertmacro CommandLineArguments
 	!else
 		ClearErrors
 		ReadINIStr $0 `${LAUNCHER}` Launch CommandLineArguments
 		${IfNot} ${Errors}
-			!ifmacrodef ParseCommandLineArguments
-				!insertmacro ParseCommandLineArguments
-			!endif
+			${InsertMacroIfExists} ParseCommandLineArguments
 			ExpandEnvStrings $0 $0
 			!ifdef ExecAsUser
 				StrCpy $Parameters "$Parameters $0"
@@ -42,9 +38,7 @@ ${SegmentPre}
 		${EndIf}
 	!endif
 	${GetParameters} $0
-	!ifmacrodef ParseParameters
-		!insertmacro ParseParameters
-	!endif
+	${InsertMacroIfExists} ParseParameters
 	!ifdef UAC
 		ClearErrors
 		${GetOptions} $0 /UAC $1
@@ -89,9 +83,7 @@ ${SegmentPre}
 	${EndIf}
 	${ConfigReads} `${CONFIG}` AdditionalParameters= $0
 	${If} $0 != ""
-		!ifmacrodef ParseAdditionalParameters
-			!insertmacro ParseAdditionalParameters
-		!endif
+		${InsertMacroIfExists} ParseAdditionalParameters
 		ExpandEnvStrings $0 $0
 		!ifdef ExecAsUser
 			StrCpy $Parameters "$Parameters $0"

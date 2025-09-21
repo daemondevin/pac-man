@@ -13,9 +13,7 @@
 
 ${SegmentFile}
 ${SegmentPostPrimary}
-	!ifmacrodef PreQT
-		!insertmacro PreQT
-	!endif
+	${InsertMacroIfExists} PreQT
 	StrCpy $R0 1
 	${Do}
 		ClearErrors
@@ -33,7 +31,5 @@ ${SegmentPostPrimary}
 		${LoopUntil} $1 == Software\Trolltech
 		IntOp $R0 $R0 + 1
 	${Loop}
-	!ifmacrodef PostQT
-		!insertmacro PostQT
-	!endif
+	${InsertMacroIfExists} PostQT
 !macroend

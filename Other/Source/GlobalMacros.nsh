@@ -226,3 +226,23 @@
 		!insertmacro ${_MACRO}
 	!endif
 !macroend
+;
+; ${IncludeIfNotDefined}
+; Include file if not defined
+;
+!define IncludeIfNotDefined "!insertmacro _IncludeIfNotDefined"
+!macro _IncludeIfNotDefined _DEFINE _FILE
+	!ifndef ${_DEFINE}
+		!include ${_FILE}
+	!endif
+!macroend
+;
+; ${DefineIfNot}
+; Include file if not defined
+;
+!define DefineIfNot "!insertmacro _DefineIfNot"
+!macro _DefineIfNot _DEFINE _GFLAG
+	!ifndef ${_DEFINE}
+		!include ${_FILE}
+	!endif
+!macroend

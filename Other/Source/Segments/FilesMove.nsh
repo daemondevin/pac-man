@@ -51,9 +51,7 @@
 
 ${SegmentFile}
 ${SegmentPrePrimary}
-	!ifmacrodef PreFilesMove
-		!insertmacro PreFilesMove
-	!endif
+	${InsertMacroIfExists} PreFilesMove
 	${ForEachINIPair} FilesMove $0 $1
 		!insertmacro _FilesMove_Start
 		StrLen $R0 $EXEDIR
@@ -92,14 +90,10 @@ ${SegmentPrePrimary}
 			${NextFile}
 		${EndIf}
 	${NextINIPair}
-	!ifmacrodef UnPreFilesMove
-		!insertmacro UnPreFilesMove
-	!endif
+	${InsertMacroIfExists} UnPreFilesMove
 !macroend
 ${SegmentPostPrimary}
-	!ifmacrodef PostFilesMove
-		!insertmacro PostFilesMove
-	!endif
+	${InsertMacroIfExists} PostFilesMove
 	${ForEachINIPair} FilesMove $0 $1
 		!insertmacro _FilesMove_Start
 		StrLen $R0 $EXEDIR
@@ -126,7 +120,5 @@ ${SegmentPostPrimary}
 			Rename $3 $4\$2
 		${NextFile}
 	${NextINIPair}
-	!ifmacrodef UnPostFilesMove
-		!insertmacro UnPostFilesMove
-	!endif
+	${InsertMacroIfExists} UnPostFilesMove
 !macroend

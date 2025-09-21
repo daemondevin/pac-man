@@ -47,23 +47,15 @@
 ;
 
 !ifdef DRIVERS
-!ifndef LOGICLIB
-	!include LogicLib.nsh
-!endif
-!ifndef WORDREPLACE_NSH_INCLUDED
-	!include WordReplace.nsh
-!endif
-!ifndef STR_LOC_NSH_INCLUDED
-    !include StrLoc.nsh
-!endif
-!ifndef SIGNTOOL
-    !define SIGNTOOL	`Contrib\bin\signtool\signtool.exe`
-!endif
+${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
+${IncludeIfNotDefined} WORDREPLACE_NSH_INCLUDED WordReplace.nsh
+${IncludeIfNotDefined} STR_LOC_NSH_INCLUDED StrLoc.nsh
+${DefineIfNotDefined} SIGNTOOL `Contrib\bin\signtool\signtool.exe`
 
 ; Driver installation tools
-!define PNPUTIL `$SYSDIR\pnputil.exe`
-!define DEVCON `$SYSDIR\devcon.exe` ; May not be available on all systems
-!define DRIVERQUERY `$SYSDIR\driverquery.exe`
+${DefineIfNotDefined} PNPUTIL `$SYSDIR\pnputil.exe`
+${DefineIfNotDefined} DEVCON `$SYSDIR\devcon.exe`
+${DefineIfNotDefined} DRIVERQUERY `$SYSDIR\driverquery.exe`
 
 ; Check if driver INF is valid
 !define Driver::ValidateInf `!insertmacro _Driver::ValidateInf`

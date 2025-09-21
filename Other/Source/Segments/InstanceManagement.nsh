@@ -56,9 +56,7 @@ ${SegmentInit}
 	${IfNot} ${Errors}
 		!insertmacro _InstanceManagement_QuitIfRunning
 	${EndIf}
-	!ifmacrodef CloseEXE
-		!insertmacro CloseEXE
-	!endif
+	${InsertMacroIfExists} CloseEXE
 	${If} $WaitForProgram == ""
 		ClearErrors
 		${ReadLauncherConfig} $WaitForProgram Launch WaitForProgram
@@ -68,9 +66,7 @@ ${SegmentInit}
 			${InvalidValueError} [Launch]:WaitForProgram $WaitForProgram
 		${EndIf}
 	${EndIf}
-	!ifmacrodef EXE
-		!insertmacro EXE
-	!endif
+	${InsertMacroIfExists} EXE
 	${IfNot} ${FileExists} `$EXEDIR\App\$ProgramExecutable`
 	${AndIfNot} $UsingJavaExecutable == true
 		StrCpy $MissingFileOrPath `App\$ProgramExecutable`

@@ -13,9 +13,7 @@
 
 ${SegmentFile}
 ${SegmentPostPrimary}
-	!ifmacrodef RegCleanup
-		!insertmacro RegCleanup
-	!endif
+	${InsertMacroIfExists} RegCleanup
 	${If} $Registry == true
 		StrCpy $R0 1
 		${Do}

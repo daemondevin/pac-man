@@ -58,26 +58,20 @@
 ;
 
 !ifdef TASKSCHEDULER
-!ifndef LOGICLIB
-	!include LogicLib.nsh
-!endif
-!ifndef WORDREPLACE_NSH_INCLUDED
-	!include WordReplace.nsh
-!endif
-!ifdef STR_LOC_NSH_INCLUDED
-	!include StrLoc.nsh
-!endif
+${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
+${IncludeIfNotDefined} WORDREPLACE_NSH_INCLUDED WordReplace.nsh
+${IncludeIfNotDefined} STR_LOC_NSH_INCLUDED StrLoc.nsh
 
 ; SCHTASKS command path
-!define SCHTASKS `$SYSDIR\schtasks.exe`
+${DefineIfNotDefined} SCHTASKS `$SYSDIR\schtasks.exe`
 
 ; Task priority constants
-!define TASK_PRIORITY_REALTIME 256
-!define TASK_PRIORITY_HIGH 128
-!define TASK_PRIORITY_ABOVE_NORMAL 128
-!define TASK_PRIORITY_NORMAL 32
-!define TASK_PRIORITY_BELOW_NORMAL 16384
-!define TASK_PRIORITY_IDLE 64
+${DefineIfNotDefined} TASK_PRIORITY_REALTIME 256
+${DefineIfNotDefined} TASK_PRIORITY_HIGH 128
+${DefineIfNotDefined} TASK_PRIORITY_ABOVE_NORMAL 128
+${DefineIfNotDefined} TASK_PRIORITY_NORMAL 32
+${DefineIfNotDefined} TASK_PRIORITY_BELOW_NORMAL 16384
+${DefineIfNotDefined} TASK_PRIORITY_IDLE 64
 
 ; Check if scheduled task exists
 !define Task::Exists `!insertmacro _Task::Exists`

@@ -1519,20 +1519,14 @@ ${SegmentInit}
 	StrCmpS $ProgramExecutable "" 0 +3
 	MessageBox MB_OK|MB_ICONSTOP `${RUNTIME} is missing [Launch]:ProgramExecutable - what am I to launch?`
 	Quit
-	!ifmacrodef UnProExecInit
-		!insertmacro UnProExecInit
-	!endif
+	${InsertMacroIfExists} UnProExecInit
 !macroend
 ${SegmentPreExecPrimary}
 	${WriteRuntimeData} ${PAL} PluginsDir $PLUGINSDIR
 !macroend
 ${SegmentUnload}
-	!ifmacrodef UnloadEXE
-		!insertmacro UnloadEXE
-	!endif
-	!ifmacrodef Unload
-		!insertmacro Unload
-	!endif
+	${InsertMacroIfExists} UnloadEXE
+	${InsertMacroIfExists} Unload
 	!ifdef REGISTRY
 		StrCmpS $Registry true 0 +2
 		Registry::_Unload

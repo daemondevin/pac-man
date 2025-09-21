@@ -11,18 +11,12 @@
 ;   This file handles the importing/restoring of registry keys that are declared in the Launcher.ini file.
 ; 
 
-!ifndef PAF
-	!define PAF HKCU\Software\PortableApps.com
-!endif
-!ifndef PAFKEYS
-	!define PAFKEYS ${PAF}\Keys
-!endif
+${DefineIfNotDefined} PAF HKCU\Software\PortableApps.com
+${DefineIfNotDefined} PAFKEYS ${PAF}\Keys
 
 ${SegmentFile}
 ${SegmentPrePrimary}
-	!ifmacrodef PreReg
-		!insertmacro PreReg
-	!endif
+	${InsertMacroIfExists} PreReg
 	${If} $Registry == true
 		${ForEachINIPair} RegistryKeys $R0 $R1
 			${ValidateRegistryKey} $R1
@@ -56,14 +50,10 @@ ${SegmentPrePrimary}
 			Pop $R2
 		${NextINIPair}
 	${EndIf}
-	!ifmacrodef UnPreReg
-		!insertmacro UnPreReg
-	!endif
+	${InsertMacroIfExists} UnPreReg
 !macroend
 ${SegmentPostPrimary}
-	!ifmacrodef PostReg
-		!insertmacro PostReg
-	!endif
+	${InsertMacroIfExists} PostReg
 	${If} $REGISTRY == true
 		${ForEachINIPair} RegistryKeys $R0 $R1
 			${ValidateRegistryKey} $R1
@@ -105,7 +95,5 @@ ${SegmentPostPrimary}
 		Registry::_DeleteKeyEmpty /NOUNLOAD `${PAF}`
 		Pop $R2
 	${EndIf}
-	!ifmacrodef UnPostReg
-		!insertmacro UnPostReg
-	!endif
+	${InsertMacroIfExists} UnPostReg
 !macroend

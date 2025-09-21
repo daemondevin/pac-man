@@ -21,33 +21,17 @@
 ; - Better conflict resolution when DLLs are already registered
 
 !ifdef REGISTERDLL
-!define SHCHANGENOTIFY	`Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i ${SHCNF_IDLIST}, i 0, i 0)`
-!define UNLOADFREELIB	`Ole32::CoFreeUnusedLibraries()`
-!define W				CabinetWClass
-!ifndef REGSVR
-	!define REGSVR		`$SYSDIR\regsvr32.exe`
-!endif
-!ifndef REGSVR_ALT
-	!define REGSVR_ALT	`$WINDIR\SysWOW64\regsvr32.exe`
-!endif
-!ifndef SHCNE_ASSOCCHANGED
-	!define SHCNE_ASSOCCHANGED 0x08000000
-!endif
-!ifndef SHCNF_IDLIST
-	!define SHCNF_IDLIST 0x0000
-!endif
-!ifndef ___X64__NSH___
-	!include x64.nsh
-!endif
-!ifndef LOGICLIB
-	!include LogicLib.nsh
-!endif
-!ifndef ISFILE_NSH_INCLUDED
-	!include IsFile.nsh
-!endif
-!ifndef TYPELIB_NSH_INCLUDED
-	!include TypeLib.nsh
-!endif
+${DefineIfNotDefined} SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i ${SHCNF_IDLIST}, i 0, i 0)`
+${DefineIfNotDefined} UNLOADFREELIB `Ole32::CoFreeUnusedLibraries()`
+${DefineIfNotDefined} W CabinetWClass
+${DefineIfNotDefined} REGSVR `$SYSDIR\regsvr32.exe`
+${DefineIfNotDefined} REGSVR_ALT `$WINDIR\SysWOW64\regsvr32.exe`
+${DefineIfNotDefined} SHCNE_ASSOCCHANGED 0x08000000
+${DefineIfNotDefined} SHCNF_IDLIST 0x0000
+${IncludeIfNotDefined} ___X64__NSH___ x64.nsh
+${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
+${IncludeIfNotDefined} ISFILE_NSH_INCLUDED IsFile.nsh
+${IncludeIfNotDefined} TYPELIB_NSH_INCLUDED TypeLib.nsh
 
 ;
 ; Macros for handling reg/unreg and backup/restore with error handling

@@ -103,9 +103,7 @@ ${SegmentFile}
 	ExpandEnvStrings $1 $1
 !macroend
 ${SegmentPrePrimary}
-	!ifmacrodef PreDirMove
-		!insertmacro PreDirMove
-	!endif
+	${InsertMacroIfExists} PreDirMove
 	${ForEachINIPair} DirectoriesMove $0 $1
 		!insertmacro _DirectoriesMove_Start
 		StrCmp $0 ${SET} 0 +2
@@ -160,14 +158,10 @@ ${SegmentPrePrimary}
 			${EndIf}
 		${EndIf}
 	${NextINIPair}
-	!ifmacrodef UnPreDirMove
-		!insertmacro UnPreDirMove
-	!endif
+	${InsertMacroIfExists} UnPreDirMove
 !macroend
 ${SegmentPostPrimary}
-	!ifmacrodef PostDirMove
-		!insertmacro PostDirMove
-	!endif
+	${InsertMacroIfExists} PostDirMove
 	${ForEachINIPair} DirectoriesMove $0 $1
 		!insertmacro _DirectoriesMove_Start
 		StrLen $R0 $EXEDIR
@@ -206,7 +200,5 @@ ${SegmentPostPrimary}
 			Rename $3 $4\$2
 		${NextDirectory}
 	${NextINIPair}
-	!ifmacrodef UnPostDirMove
-		!insertmacro UnPostDirMove
-	!endif
+	${InsertMacroIfExists} UnPostDirMove
 !macroend

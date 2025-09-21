@@ -35,7 +35,5 @@ ${SegmentInit}
 			CopyFiles /SILENT ${DEFDATA}\*.* ${DATA}
 		${EndIf}
 	${EndIf}
-	!ifmacrodef Init
-		!insertmacro Init
-	!endif
+	${InsertMacroIfExists} Init
 !macroend

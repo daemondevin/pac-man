@@ -11,9 +11,7 @@
 ;   This file handles support for the Host's allotted minimum/maximum operating system version.
 ; 
 
-!ifndef ___WINVER__NSH___
-	!include WinVer.nsh
-!endif
+${IncludeIfNotDefined} ___WINVER__NSH___ WinVer.nsh
 
 !define CheckOS "!insertmacro _CheckOS"
 !macro _CheckOS Check Value
@@ -68,9 +66,7 @@
 
 ${SegmentFile}
 ${Segment.onInit}
-	!ifmacrodef OS
-		!insertmacro OS
-	!endif
+	${InsertMacroIfExists} OS
 	${CheckOS} Least MinOS
 	${CheckOS} Most MaxOS
 !macroend
