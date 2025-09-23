@@ -45,22 +45,52 @@
 ;
 
 !ifdef FONTS_ENABLE
-${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
-${IncludeIfNotDefined} WORDREPLACE_NSH_INCLUDED WordReplace.nsh
+!ifndef LOGICLIB
+    !include LogicLib.nsh
+!endif
+
+!ifndef WORDREPLACE_NSH_INCLUDED
+    !include WordReplace.nsh
+!endif
+
 
 ; Font registry locations
-${DefineIfNotDefined} FONTS_SYSTEM_KEY "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
-${DefineIfNotDefined} FONTS_USER_KEY "HKCU\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+!ifndef FONTS_SYSTEM_KEY
+    !define FONTS_SYSTEM_KEY "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+!endif
+
+!ifndef FONTS_USER_KEY
+    !define FONTS_USER_KEY "HKCU\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+!endif
+
 
 ; Font file type constants
-${DefineIfNotDefined} FONT_TRUETYPE 1
-${DefineIfNotDefined} FONT_OPENTYPE 2
-${DefineIfNotDefined} FONT_BITMAP 3
-${DefineIfNotDefined} FONT_COLLECTION 4
+!ifndef FONT_TRUETYPE
+    !define FONT_TRUETYPE 1
+!endif
+
+!ifndef FONT_OPENTYPE
+    !define FONT_OPENTYPE 2
+!endif
+
+!ifndef FONT_BITMAP
+    !define FONT_BITMAP 3
+!endif
+
+!ifndef FONT_COLLECTION
+    !define FONT_COLLECTION 4
+!endif
+
 
 ; GDI font functions
-${DefineIfNotDefined} WM_FONTCHANGE 0x001D
-${DefineIfNotDefined} HWND_BROADCAST 0xFFFF
+!ifndef WM_FONTCHANGE
+    !define WM_FONTCHANGE 0x001D
+!endif
+
+!ifndef HWND_BROADCAST
+    !define HWND_BROADCAST 0xFFFF
+!endif
+
 
 ; Validate font file
 !define Font::Validate `!insertmacro _Font::Validate`

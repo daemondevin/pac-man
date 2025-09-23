@@ -58,14 +58,32 @@
 ;
 
 !ifdef FILEASSOCIATIONS
-${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
-${IncludeIfNotDefined} STR_CASE_NSH_INCLUDED StrCase.nsh
-${IncludeIfNotDefined} WORDREPLACE_NSH_INCLUDED WordReplace.nsh
+!ifndef LOGICLIB
+    !include LogicLib.nsh
+!endif
+
+!ifndef STR_CASE_NSH_INCLUDED
+    !include StrCase.nsh
+!endif
+
+!ifndef WORDREPLACE_NSH_INCLUDED
+    !include WordReplace.nsh
+!endif
+
 
 ; Shell notification constants
-${DefineIfNotDefined} SHCNE_ASSOCCHANGED 0x08000000
-${DefineIfNotDefined} SHCNF_IDLIST 0x0000
-${DefineIfNotDefined} SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i ${SHCNF_IDLIST}, i 0, i 0)`
+!ifndef SHCNE_ASSOCCHANGED
+    !define SHCNE_ASSOCCHANGED 0x08000000
+!endif
+
+!ifndef SHCNF_IDLIST
+    !define SHCNF_IDLIST 0x0000
+!endif
+
+!ifndef SHCHANGENOTIFY
+    !define SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHANGED}, i ${SHCNF_IDLIST}, i 0, i 0)`
+!endif
+
 
 ; File association management macros
 
@@ -201,25 +219,25 @@ ${DefineIfNotDefined} SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHA
 	
 	; Set default icon if provided
 	${If} "${_ICON}" != ""
-		${ParseLocations} "${_ICON}" $0
+		ExpandEnvStrings "${_ICON}" $0
 		WriteRegStr HKCR "${_PROGID}\DefaultIcon" "" "$0"
 	${EndIf}
 	
 	; Set open command
 	${If} "${_OPENCOMMAND}" != ""
-		${ParseLocations} "${_OPENCOMMAND}" $0
+		ExpandEnvStrings "${_OPENCOMMAND}" $0
 		WriteRegStr HKCR "${_PROGID}\shell\open\command" "" "$0"
 	${EndIf}
 	
 	; Set edit command if provided
 	${If} "${_EDITCOMMAND}" != ""
-		${ParseLocations} "${_EDITCOMMAND}" $0
+		ExpandEnvStrings "${_EDITCOMMAND}" $0
 		WriteRegStr HKCR "${_PROGID}\shell\edit\command" "" "$0"
 	${EndIf}
 	
 	; Set print command if provided
 	${If} "${_PRINTCOMMAND}" != ""
-		${ParseLocations} "${_PRINTCOMMAND}" $0
+		ExpandEnvStrings "${_PRINTCOMMAND}" $0
 		WriteRegStr HKCR "${_PROGID}\shell\print\command" "" "$0"
 	${EndIf}
 	
@@ -375,12 +393,12 @@ ${DefineIfNotDefined} SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHA
 	
 	; Set default icon if provided
 	${If} "${_ICON}" != ""
-		${ParseLocations} "${_ICON}" $0
+		ExpandEnvStrings "${_ICON}" $0
 		WriteRegStr HKCR "${_PROTOCOL}\DefaultIcon" "" "$0"
 	${EndIf}
 	
 	; Set open command
-	${ParseLocations} "${_OPENCOMMAND}" $0
+	ExpandEnvStrings "${_OPENCOMMAND}" $0
 	WriteRegStr HKCR "${_PROTOCOL}\shell\open\command" "" "$0"
 	
 	${DebugMsg} "Protocol handler created: ${_PROTOCOL}"
@@ -421,12 +439,12 @@ ${DefineIfNotDefined} SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHA
 	
 	; Set icon if provided
 	${If} "${_MENUICON}" != ""
-		${ParseLocations} "${_MENUICON}" $0
+		ExpandEnvStrings "${_MENUICON}" $0
 		WriteRegStr HKCR "$R8\$1" "Icon" "$0"
 	${EndIf}
 	
 	; Set command
-	${ParseLocations} "${_MENUCOMMAND}" $0
+	ExpandEnvStrings "${_MENUCOMMAND}" $0
 	WriteRegStr HKCR "$R8\$1\command" "" "$0"
 	
 	; Set position
@@ -494,6 +512,7 @@ ${DefineIfNotDefined} SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHA
 			${Break}
 	${EndSwitch}
 	
+    ; Note: WriteRegDWORD HKCU may need verification for desired DWORD value format
 	WriteRegStr HKCR "${_EXTENSION}\OpenWithProgids" "${_PROGID}" ""
 	WriteRegDWORD HKCU "Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\${_EXTENSION}\OpenWithProgids" "${_PROGID}" $R8
 	
@@ -606,7 +625,7 @@ ${DefineIfNotDefined} SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHA
 	WriteRegStr HKCR "Applications\${_PROGID}.exe\shell\open\command" "" "${_COMMAND}"
 	
 	${If} "${_ICON}" != ""
-		${ParseLocations} "${_ICON}" $0
+		ExpandEnvStrings "${_ICON}" $0
 		WriteRegStr HKCR "Applications\${_PROGID}.exe\DefaultIcon" "" "$0"
 	${EndIf}
 	
@@ -682,12 +701,10 @@ ${DefineIfNotDefined} SHCHANGENOTIFY `Shell32::SHChangeNotify(i ${SHCNE_ASSOCCHA
 !macroend
 ${SegmentFile}
 
-;= Enable file associations segment
-!define FILEASSOCIATIONS_ENABLED
 
 ;= Backup existing file associations
 ${SegmentPre}
-	!ifdef FILEASSOCIATIONS_ENABLED
+	!ifdef FILEASSOCIATIONS
 		${DebugMsg} "Backing up existing file associations..."
 		
 		${ReadUserConfigWithDefault} $0 Associations= true
@@ -778,7 +795,7 @@ ${SegmentPre}
 
 ;= Create file associations and protocol handlers
 ${SegmentPrePrimary}
-	!ifdef FILEASSOCIATIONS_ENABLED
+	!ifdef FILEASSOCIATIONS
 		${DebugMsg} "Creating file associations and protocol handlers..."
 		
 		${ReadUserConfigWithDefault} $0 Associations= true
@@ -898,7 +915,7 @@ ${SegmentPrePrimary}
 
 ;= Remove created associations and context menus
 ${SegmentPostPrimary}
-	!ifdef FILEASSOCIATIONS_ENABLED
+	!ifdef FILEASSOCIATIONS
 		${DebugMsg} "Cleaning up file associations and protocol handlers..."
 		
 		${ReadUserConfigWithDefault} $0 Associations= true
@@ -966,7 +983,7 @@ ${SegmentPostPrimary}
 
 ;= Restore original file associations
 ${SegmentUnload}
-	!ifdef FILEASSOCIATIONS_ENABLED
+	!ifdef FILEASSOCIATIONS
 		${DebugMsg} "Restoring original file associations..."
 		
 		${ReadUserConfigWithDefault} $0 Associations= true
@@ -1065,4 +1082,4 @@ ${SegmentUnload}
 	!endif
 !macroend
 
-!endif
+!endif ; FILEASSOCIATIONS

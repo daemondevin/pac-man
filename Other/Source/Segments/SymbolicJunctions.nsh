@@ -62,25 +62,64 @@
 ;	Temporary=true
 ;
 
-!ifdef SYMLINKSJUNCTIONS
+!ifdef SYMBOLICJUNCTIONS
 
 ;= INCLUDES
-${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
-${IncludeIfNotDefined} FILEFUNC_INCLUDED FileFunc.nsh
-${IncludeIfNotDefined} STR_LOC_NSH_INCLUDED StrLoc.nsh
-${IncludeIfNotDefined} CHECK_LINK_NSH_INCLUDED CheckLink.nsh
-${IncludeIfNotDefined} CREATE_HARDLINK_NSH_INCLUDED CreateHardlink.nsh
-${IncludeIfNotDefined} CREATE_SYMLINK_NSH_INCLUDED CreateSymlink.nsh
-${IncludeIfNotDefined} CREATE_JUNCTION_NSH_INCLUDED CreateJunction.nsh
+!ifndef LOGICLIB
+    !include LogicLib.nsh
+!endif
+
+!ifndef FILEFUNC_INCLUDED
+    !include FileFunc.nsh
+!endif
+
+!ifndef STR_LOC_NSH_INCLUDED
+    !include StrLoc.nsh
+!endif
+
+!ifndef CHECK_LINK_NSH_INCLUDED
+    !include CheckLink.nsh
+!endif
+
+!ifndef CREATE_HARDLINK_NSH_INCLUDED
+    !include CreateHardlink.nsh
+!endif
+
+!ifndef CREATE_SYMLINK_NSH_INCLUDED
+    !include CreateSymlink.nsh
+!endif
+
+!ifndef CREATE_JUNCTION_NSH_INCLUDED
+    !include CreateJunction.nsh
+!endif
+
 
 ;= DEFINES
-${DefineIfNotDefined} MKLINK `$SYSDIR\cmd.exe /c mklink`
-${DefineIfNotDefined} RMDIR `$SYSDIR\rmdir.exe`
-${DefineIfNotDefined} DEL `$SYSDIR\del.exe`
+!ifndef MKLINK
+    !define MKLINK `$SYSDIR\cmd.exe /c mklink`
+!endif
 
-${DefineIfNotDefined} LINK_TYPE_SYMBOLIC 1
-${DefineIfNotDefined} LINK_TYPE_JUNCTION 2
-${DefineIfNotDefined} LINK_TYPE_HARD 3
+!ifndef RMDIR
+    !define RMDIR `$SYSDIR\rmdir.exe`
+!endif
+
+!ifndef DEL
+    !define DEL `$SYSDIR\del.exe`
+!endif
+
+
+!ifndef LINK_TYPE_SYMBOLIC
+    !define LINK_TYPE_SYMBOLIC 1
+!endif
+
+!ifndef LINK_TYPE_JUNCTION
+    !define LINK_TYPE_JUNCTION 2
+!endif
+
+!ifndef LINK_TYPE_HARD
+    !define LINK_TYPE_HARD 3
+!endif
+
 
 ; Convenience macros
 !define Link::GetTarget `!insertmacro _Link::GetTarget`
@@ -278,12 +317,10 @@ FunctionEnd
 ;= SEGMENTS
 ${SegmentFile}
 
-;= Enable symbolic links and junctions segment
-!define SYMLINKSJUNCTIONS_ENABLED
 
 ;= Check permissions and backup existing links
 ${SegmentPre}
-  !ifdef SYMLINKSJUNCTIONS_ENABLED
+  !ifdef SYMBOLICJUNCTIONS
     ${DebugMsg} "Processing symbolic links and junctions..."
 
     ${ReadUserConfigWithDefault} $0 SymbolicJunctions= true
@@ -415,7 +452,7 @@ ${SegmentPre}
 
 ;= Create symbolic links, junctions, and hard links
 ${SegmentPrePrimary}
-  !ifdef SYMLINKSJUNCTIONS_ENABLED
+  !ifdef SYMBOLICJUNCTIONS
     ${DebugMsg} "Creating symbolic links, junctions, and hard links..."
 
     ${ReadUserConfigWithDefault} $0 SymbolicJunctions= true
@@ -629,7 +666,7 @@ ${SegmentPrePrimary}
 
 ;= Remove created links and junctions
 ${SegmentPostPrimary}
-  !ifdef SYMLINKSJUNCTIONS_ENABLED
+  !ifdef SYMBOLICJUNCTIONS
     ${DebugMsg} "Removing created links and junctions..."
 
     ${ReadUserConfigWithDefault} $0 SymbolicJunctions= true
@@ -767,7 +804,7 @@ ${SegmentPostPrimary}
 
 ;= Restore original files and directories
 ${SegmentUnload}
-  !ifdef SYMLINKSJUNCTIONS_ENABLED
+  !ifdef SYMBOLICJUNCTIONS
     ${DebugMsg} "Restoring original files and directories..."
 
     ${ReadUserConfigWithDefault} $0 SymbolicJunctions= true
@@ -932,4 +969,4 @@ ${SegmentUnload}
   !endif
 !macroend
 
-!endif ; SYMLINKSJUNCTIONS
+!endif ; SYMBOLICJUNCTIONS

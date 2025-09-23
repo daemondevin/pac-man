@@ -10,7 +10,7 @@ goto :INIT
 ::
 :: Sign.bat
 ::	This batch utility is executed from within the LauncherCompiler.nsi file.
-::	It can also be used as a standalone if you pass certain parameters it needs.
+::	It is used to sign a specified binary using SHA1/SHA256 hashes with an optional timestamp.
 :: 
 
 :HEADER

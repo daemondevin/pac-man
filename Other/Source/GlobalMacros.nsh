@@ -102,6 +102,17 @@
 	${ConfigWriteS} "${CONFIG}" "${_KEY}=" "${_VALUE}" $R0
 !macroend
 ; 
+; ${ReadLauncherConfigWithDefault}
+; Reads a key in Launcher.ini for a value. 
+; If it doesn't exist, defaults to a specified value.
+; 
+!define ReadUserConfigWithDefault "!insertmacro _ReadUserConfigWithDefault"
+!macro _ReadUserConfigWithDefault _VALUE _KEY _DEFAULT
+	ClearErrors
+	${ReadUserConfig} ${_VALUE} "${_KEY}"
+	${IfThen} ${Errors} ${|} StrCpy ${_VALUE} "${_DEFAULT}" ${|}
+!macroend
+; 
 ; ${InvalidValueError}
 ; Alerts the user if there is an invalid value used in an INI file.
 ; 
@@ -238,7 +249,7 @@
 !macroend
 ;
 ; ${DefineIfNot}
-; Include file if not defined
+; Define if found not to be
 ;
 !define DefineIfNot "!insertmacro _DefineIfNot"
 !macro _DefineIfNot _DEFINE _GFLAG

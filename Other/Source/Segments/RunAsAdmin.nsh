@@ -40,7 +40,9 @@
 ${SegmentFile}
 ${Segment.onInit}
 	${InsertMacroIfExists} CustomOverride
-	${InsertMacroIfExists} RunAsAdmin
+	!ifmacrodef RunAsAdmin
+		!insertmacro RunAsAdmin
+	!else
 			ClearErrors
 			${ReadLauncherConfig} $RunAsAdmin Launch RunAsAdmin
 		!ifdef RUNASADMIN_COMPILEFORCE

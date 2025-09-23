@@ -783,7 +783,7 @@ Section Main
         ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "FileAssociations"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "ASSOCIATIONS" "" ""
+			${WriteGlobalDefines} "FILEASSOCIATIONS" "" ""
 		${EndIf}
         ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "RuntimeDependencies"
@@ -801,9 +801,9 @@ Section Main
 			${WriteGlobalDefines} "FIREWALL" "" ""
 		${EndIf}
         ClearErrors
-		${ReadLauncherConfig} $0 "Activate" "SymlinksJunctions"
+		${ReadLauncherConfig} $0 "Activate" "SymbolicJunctions"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "SYMLINKSJUNCTIONS" "" ""
+			${WriteGlobalDefines} "SYMBOLICJUNCTIONS" "" ""
 		${EndIf}
 		
 		FileClose $GFLAGS

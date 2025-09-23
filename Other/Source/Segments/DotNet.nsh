@@ -98,7 +98,10 @@ Function HasDotNETFramework
 	Exch $0
 FunctionEnd
 
-${IncludeIfNotDefined} ___DOTNETVER__NSH___ DotNetVer.nsh
+!ifndef ___DOTNETVER__NSH___
+    !include DotNetVer.nsh
+!endif
+
 
 ${SegmentFile}
 ${SegmentInit}

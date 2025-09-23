@@ -11,7 +11,10 @@
 ;   This file allows support for language handling and manipulates language variables.
 ; 
 
-${IncludeIfNotDefined} _XML_LIB_ XML.nsh
+!ifndef _XML_LIB_
+    !include XML.nsh
+!endif
+
 
 ${SegmentFile}
 ${Segment.onInit}

@@ -14,6 +14,7 @@
 !define /date DISPLAYDATE	"%m.%d.%Y" ; MM.DD.YYYY HH am/pm
 !define PACVER				"3.0.0.0"
 !define PACUSERVER			"3.0.0"
-!define EDITION				"Rewrite"
+!define EDITION				"Stable Rewrite"
 !define DISPLAYBUILD		"PortableApps Compiler v${PACUSERVER} ${EDITION} Edition"
+!define PERSONAL
 

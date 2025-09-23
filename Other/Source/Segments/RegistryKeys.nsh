@@ -11,8 +11,14 @@
 ;   This file handles the importing/restoring of registry keys that are declared in the Launcher.ini file.
 ; 
 
-${DefineIfNotDefined} PAF HKCU\Software\PortableApps.com
-${DefineIfNotDefined} PAFKEYS ${PAF}\Keys
+!ifndef PAF
+    !define PAF HKCU\Software\PortableApps.com
+!endif
+
+!ifndef PAFKEYS
+    !define PAFKEYS ${PAF}\Keys
+!endif
+
 
 ${SegmentFile}
 ${SegmentPrePrimary}

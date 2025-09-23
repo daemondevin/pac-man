@@ -52,23 +52,65 @@
 ; - Detailed error categorization and user feedback
 ;
 !ifdef SERVICES
-${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
-${IncludeIfNotDefined} STR_CASE_NSH_INCLUDED StrCase.nsh
-${IncludeIfNotDefined} ISFILE_NSH_INCLUDED IsFile.nsh
-${IncludeIfNotDefined} STR_CONTAINS_NSH_INCLUDED StrContains.nsh
-${IncludeIfNotDefined} STR_LOC_NSH_INCLUDED StrLoc.nsh
+!ifndef LOGICLIB
+    !include LogicLib.nsh
+!endif
 
-${DefineIfNotDefined} SC `$SYSDIR\sc.exe`
-${DefineIfNotDefined} NET `$SYSDIR\net.exe`
+!ifndef STR_CASE_NSH_INCLUDED
+    !include StrCase.nsh
+!endif
+
+!ifndef ISFILE_NSH_INCLUDED
+    !include IsFile.nsh
+!endif
+
+!ifndef STR_CONTAINS_NSH_INCLUDED
+    !include StrContains.nsh
+!endif
+
+!ifndef STR_LOC_NSH_INCLUDED
+    !include StrLoc.nsh
+!endif
+
+
+!ifndef SC
+    !define SC `$SYSDIR\sc.exe`
+!endif
+
+!ifndef NET
+    !define NET `$SYSDIR\net.exe`
+!endif
+
 
 ; Service state constants
-${DefineIfNotDefined} SERVICE_STOPPED 1
-${DefineIfNotDefined} SERVICE_START_PENDING 2
-${DefineIfNotDefined} SERVICE_STOP_PENDING 3
-${DefineIfNotDefined} SERVICE_RUNNING 4
-${DefineIfNotDefined} SERVICE_CONTINUE_PENDING 5
-${DefineIfNotDefined} SERVICE_PAUSE_PENDING 6
-${DefineIfNotDefined} SERVICE_PAUSED 7
+!ifndef SERVICE_STOPPED
+    !define SERVICE_STOPPED 1
+!endif
+
+!ifndef SERVICE_START_PENDING
+    !define SERVICE_START_PENDING 2
+!endif
+
+!ifndef SERVICE_STOP_PENDING
+    !define SERVICE_STOP_PENDING 3
+!endif
+
+!ifndef SERVICE_RUNNING
+    !define SERVICE_RUNNING 4
+!endif
+
+!ifndef SERVICE_CONTINUE_PENDING
+    !define SERVICE_CONTINUE_PENDING 5
+!endif
+
+!ifndef SERVICE_PAUSE_PENDING
+    !define SERVICE_PAUSE_PENDING 6
+!endif
+
+!ifndef SERVICE_PAUSED
+    !define SERVICE_PAUSED 7
+!endif
+
 
 ; Service macros with timeout and error handling
 !define Service::Query `!insertmacro _Service::Query`

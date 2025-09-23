@@ -16,7 +16,7 @@
 ;
 
 !ifdef DIRECTX
-${DefineIfNotDefined} REGSVR `$SYSDIR\regsvr32.exe`
+${DefineIfNot} REGSVR `$SYSDIR\regsvr32.exe`
 
 ${SegmentFile}
 ${SegmentPrePrimary}

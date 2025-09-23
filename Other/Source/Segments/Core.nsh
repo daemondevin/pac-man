@@ -222,13 +222,14 @@ Var LauncherFile
 		Exch $0
 	FunctionEnd
 !endif
-Function Get.Parent
-	!macro Get.Parent _PATH _RET
+!ifndef GetParent
+Function GetParent
+	!define GetParent "!insertmacro _GetParent"
+	!macro _GetParent _PATH _RET
 		Push `${_PATH}`
-		Call Get.Parent
+		Call GetParent
 		Pop ${_RET}
 	!macroend
-	!define Get.Parent "!insertmacro _Get.Parent"
 	Exch $0
 	Push $1
 	Push $2
@@ -246,6 +247,7 @@ Function Get.Parent
 	Pop $1
 	Exch $0
 FunctionEnd
+!endif
 !ifdef ConFunc
 	Function WriteS
 		!macro _WriteS _FILE _ENTRY _VALUE _RESULT
@@ -1192,7 +1194,7 @@ FunctionEnd
 		Pop $0
 	FunctionEnd
 !endif
-!ifdef NTFS
+!ifdef SYMLBOLICJUNCTIONS
 	!define FILE_SUPPORTS_REPARSE_POINTS 0x00000080
 	!macro YESNO _FLAGS _BIT _VAR
 		IntOp ${_VAR} ${_FLAGS} & ${_BIT}
@@ -1436,38 +1438,6 @@ Function GetAfterChar
 	Pop $1
 	Exch $0
 FunctionEnd
-!ifdef FONTS_ENABLED
-	Function CreateFontsFolder
-		IfFileExists "${PACKAGE}\App\DefaultData\Fonts" +2
-		CreateDirectory /SILENT "${PACKAGE}\App\DefaultData\Fonts"
-		IfFileExists "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" _FNT_DONE
-		FileOpen $0 "${PACKAGE}\App\DefaultData\Fonts\.Portable.Fonts.txt" w
-		FileWrite $0		"Font(s) added here will be loaded on launch and accessible during runtime."
-		FileWriteByte $0	"13"
-		FileWriteByte $0	"10"
-		FileWrite $0		"NOTE:"
-		FileWriteByte $0	"13"
-		FileWriteByte $0	"10"
-		FileWrite $0		"$\tA lot of fonts will impact the speed/workload of the launcher."
-		FileWriteByte $0	"13"
-		FileWriteByte $0	"10"
-		FileWriteByte $0	"13"
-		FileWriteByte $0	"10"
-		FileWrite $0		"Supported Fonts:${NEWLINE}\
-							$\t • .fon${NEWLINE}\
-							$\t • .fnt${NEWLINE}\
-							$\t • .ttf${NEWLINE}\
-							$\t • .ttc${NEWLINE}\
-							$\t • .fot${NEWLINE}\
-							$\t • .otf${NEWLINE}\
-							$\t • .mmm${NEWLINE}\
-							$\t • .pfb${NEWLINE}\
-							$\t • .pfm${NEWLINE}"
-		FileWriteByte $0 "13"
-		FileWriteByte $0 "10"
-		_FNT_DONE:
-	FunctionEnd
-!endif
 ${SegmentFile}
 ${Segment.onInit}
 	${GetBaseName} $EXEFILE $BaseName

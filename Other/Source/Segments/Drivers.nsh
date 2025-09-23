@@ -47,15 +47,36 @@
 ;
 
 !ifdef DRIVERS
-${IncludeIfNotDefined} LOGICLIB LogicLib.nsh
-${IncludeIfNotDefined} WORDREPLACE_NSH_INCLUDED WordReplace.nsh
-${IncludeIfNotDefined} STR_LOC_NSH_INCLUDED StrLoc.nsh
-${DefineIfNotDefined} SIGNTOOL `Contrib\bin\signtool\signtool.exe`
+!ifndef LOGICLIB
+    !include LogicLib.nsh
+!endif
+
+!ifndef WORDREPLACE_NSH_INCLUDED
+    !include WordReplace.nsh
+!endif
+
+!ifndef STR_LOC_NSH_INCLUDED
+    !include StrLoc.nsh
+!endif
+
+!ifndef SIGNTOOL
+    !define SIGNTOOL `Contrib\bin\signtool\signtool.exe`
+!endif
+
 
 ; Driver installation tools
-${DefineIfNotDefined} PNPUTIL `$SYSDIR\pnputil.exe`
-${DefineIfNotDefined} DEVCON `$SYSDIR\devcon.exe`
-${DefineIfNotDefined} DRIVERQUERY `$SYSDIR\driverquery.exe`
+!ifndef PNPUTIL
+    !define PNPUTIL `$SYSDIR\pnputil.exe`
+!endif
+
+!ifndef DEVCON
+    !define DEVCON `$SYSDIR\devcon.exe`
+!endif
+
+!ifndef DRIVERQUERY
+    !define DRIVERQUERY `$SYSDIR\driverquery.exe`
+!endif
+
 
 ; Check if driver INF is valid
 !define Driver::ValidateInf `!insertmacro _Driver::ValidateInf`
@@ -71,7 +92,7 @@ ${DefineIfNotDefined} DRIVERQUERY `$SYSDIR\driverquery.exe`
 	StrCpy ${_PROVIDER} ""
 	StrCpy ${_CLASS} ""
 	
-	${ParseLocations} "${_INFFILE}" $R8
+	ExpandEnvStrings "${_INFFILE}" $R8
 	
 	${If} ${FileExists} "$R8"
 		FileOpen $0 "$R8" r
@@ -150,7 +171,7 @@ ${DefineIfNotDefined} DRIVERQUERY `$SYSDIR\driverquery.exe`
 	StrCpy ${_RESULT} "false"
 	StrCpy ${_DRIVER_INFO} ""
 	
-	${ParseLocations} "${_INFFILE}" $R8
+	ExpandEnvStrings "${_INFFILE}" $R8
 	
 	; Get INF filename
 	${GetFileName} "$R8" $R9
@@ -248,7 +269,7 @@ ${DefineIfNotDefined} DRIVERQUERY `$SYSDIR\driverquery.exe`
 	StrCpy ${_RESULT} "false"
 	StrCpy ${_ERROR} ""
 	
-	${ParseLocations} "${_INFFILE}" $R8
+	ExpandEnvStrings "${_INFFILE}" $R8
 	
 	; Validate INF file exists and is valid
 	${Driver::ValidateInf} "$R8" $R9 $0 $1 $2
@@ -344,7 +365,7 @@ ${DefineIfNotDefined} DRIVERQUERY `$SYSDIR\driverquery.exe`
 	StrCpy ${_RESULT} "false"
 	StrCpy ${_ERROR} ""
 	
-	${ParseLocations} "${_INFFILE}" $R8
+	ExpandEnvStrings "${_INFFILE}" $R8
 	${GetFileName} "$R8" $R9
 	
 	${DebugMsg} "Uninstalling driver: $R9"
@@ -424,7 +445,7 @@ ${DefineIfNotDefined} DRIVERQUERY `$SYSDIR\driverquery.exe`
 	Push $3
 	Push $R8
 	
-	${ParseLocations} "${_INFFILE}" $R8
+	ExpandEnvStrings "${_INFFILE}" $R8
 	${GetFileName} "$R8" $0
 	
 	${Driver::IsInstalled} "$R8" "${_HARDWAREID}" $1 $2
@@ -510,7 +531,7 @@ ${DefineIfNotDefined} DRIVERQUERY `$SYSDIR\driverquery.exe`
 	StrCpy ${_RESULT} "false"
 	StrCpy ${_SIGNER} ""
 	
-	${ParseLocations} "${_INFFILE}" $R8
+	ExpandEnvStrings "${_INFFILE}" $R8
 	
 	; Use signtool to verify signature
 	ExecDos::Exec /TOSTACK `"${SIGNTOOL}" verify /pa "$R8"`

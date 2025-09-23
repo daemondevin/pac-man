@@ -11,7 +11,10 @@
 ;   This file handles support for the Host's allotted minimum/maximum operating system version.
 ; 
 
-${IncludeIfNotDefined} ___WINVER__NSH___ WinVer.nsh
+!ifndef ___WINVER__NSH___
+    !include WinVer.nsh
+!endif
+
 
 !define CheckOS "!insertmacro _CheckOS"
 !macro _CheckOS Check Value

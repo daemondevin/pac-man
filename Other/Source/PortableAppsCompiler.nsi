@@ -64,6 +64,10 @@ SetCompressorDictSize 32
 	RequestExecutionLevel user
 !endif
 
+ManifestSupportedOS "{35138b9a-5d96-4fbd-8e2d-a2440225f93a}"  # Windows 7
+ManifestSupportedOS "{1f676c76-80e1-4239-95bb-83d0f6d0da78}"  # Windows 8.1
+ManifestSupportedOS "{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"  # Windows 10 & Later
+
 ;= PAC VERSION
 ;= ################
 !include Version.nsh
@@ -81,6 +85,7 @@ ${!ECHO} "${NEWLINE}Reading/Writing Package Definitions...${NEWLINE}${NEWLINE}"
 !endif
 !define APPINFO         `$EXEDIR\App\AppInfo`
 !define INFOINI			`${APPINFO}\appinfo.ini`
+!define INSTINI			`${APPINFO}\installer.ini`
 !define DATA            `$EXEDIR\Data`
 !define SET             `${DATA}\settings`
 !define DEFDATA         `$EXEDIR\App\DefaultData`
@@ -235,7 +240,7 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 		!define TrimString
 	!endif
 !endif
-!ifdef SYMLINKSJUNCTIONS
+!ifdef SYMBOLICJUNCTIONS
     !include CreateSymlink.nsh
     !include CreateJunction.nsh
     !include CreateHardLink.nsh
@@ -326,12 +331,12 @@ VIAddVersionKey /LANG=1033 ProductVersion   Portable
 
 ;= CODE SIGNING
 ;= ################
+!ifdef CertSigning
 ${!ECHO} "${NEWLINE} Grabbing the certificate and other information then signing ${OUTFILE}...${NEWLINE}${NEWLINE}"
 
 !define SIGNTOOL	`Contrib\bin\signtool\signtool.exe`
 !define CERT		`Contrib\certificates\${DEVELOPER}.${CertExtension}`
 !define PASS		``
-!ifdef CertSigning
 	!finalize `"${SIGNTOOL}" sign /f "Contrib\certificates\daemon.devin.pfx" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
 !else
 	!ifndef PACMAN

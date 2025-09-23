@@ -1,3 +1,7 @@
+
+!ifndef WORDREPLACE_NSH_INCLUDED
+!define WORDREPLACE_NSH_INCLUDED
+
 Function WordReplace
 	!define WordReplace `!insertmacro WordReplaceCall`
  
@@ -170,3 +174,5 @@ Function WordReplace
 	Pop $0
 	Exch $R0
 FunctionEnd
+
+!endif

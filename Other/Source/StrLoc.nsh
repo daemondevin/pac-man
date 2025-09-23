@@ -1,3 +1,7 @@
+
+!ifndef STR_LOC_NSH_INCLUDED
+!define STR_LOC_NSH_INCLUDED
+
 !define StrLoc "!insertmacro StrLoc"
  
 !macro StrLoc ResultVar String SubString StartPoint
@@ -70,3 +74,5 @@ Function StrLoc
   Pop $R1
   Exch $R0
 FunctionEnd
+
+!endif ; STR_LOC_NSH_INCLUDED
