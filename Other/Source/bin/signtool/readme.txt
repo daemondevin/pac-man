@@ -1,0 +1,1 @@
+Download SignTool from the Windows Software Development Kit (SDK) and copy those files here.
