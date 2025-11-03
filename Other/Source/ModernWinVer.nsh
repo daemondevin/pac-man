@@ -10,7 +10,6 @@
 !endif
 
 ; Windows Version Constants (Major.Minor.Build)
-!define WINVER_10         10.0    ; Windows 10 / Server 2016+
 !define WINVER_11_BUILD   22000   ; Windows 11 minimum build
 
 ; Windows 10/11 Version Numbers (Builds)
