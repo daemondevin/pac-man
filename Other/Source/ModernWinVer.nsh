@@ -10,6 +10,7 @@
 !endif
 
 ; Windows Version Constants (Major.Minor.Build)
+!define /ifndef WINVER_10         10.0    ; Windows 10 / Server 2016+
 !define WINVER_11_BUILD   22000   ; Windows 11 minimum build
 
 ; Windows 10/11 Version Numbers (Builds)
@@ -41,349 +42,240 @@
 !define WINSERVER_2025    26100   ; Expected build (may vary)
 
 ; Product Type Constants
-!define VER_NT_WORKSTATION       1
-!define VER_NT_DOMAIN_CONTROLLER 2
-!define VER_NT_SERVER            3
+!define /ifndef VER_NT_WORKSTATION       1
+!define /ifndef VER_NT_DOMAIN_CONTROLLER 2
+!define /ifndef VER_NT_SERVER            3
 
 ; Architecture Constants
 !define ARCH_X86    "x86"
 !define ARCH_X64    "x64"
 !define ARCH_ARM64  "ARM64"
 
+;= Internal Helper Functions
+!macro __WinVerCheck_AtLeastWin10
+    Push $R0
+    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentMajorVersionNumber"
+    IntCmp $R0 10 +3 +2 +3
+        Push 0
+        Goto +2
+        Push 1
+    Exch
+    Pop $R0
+!macroend
 
-;= LogicLib Integration - Version Checks
+!macro __WinVerCheck_AtMostWin10
+    Push $R0
+    Push $R1
+    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentMajorVersionNumber"
+    ReadRegStr $R1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
+    
+    IntCmp $R0 10 0 +4
+        IntCmp $R1 ${WINVER_11_BUILD} +2 +3 +2
+    
+    Push 1
+    Goto +2
+    Push 0
+    
+    Exch 2
+    Pop $R1
+    Pop $R0
+!macroend
+
+!macro __WinVerCheck_IsWin10
+    Push $R0
+    Push $R1
+    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentMajorVersionNumber"
+    ReadRegStr $R1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
+    
+    StrCmp $R0 "10" 0 +4
+        IntCmp $R1 ${WINVER_11_BUILD} +3 +2 +3
+    
+    Push 0
+    Goto +2
+    Push 1
+    
+    Exch 2
+    Pop $R1
+    Pop $R0
+!macroend
+
+!macro __WinVerCheck_AtLeastWin11
+    Push $R0
+    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
+    IntCmp $R0 ${WINVER_11_BUILD} +2 +3 +2
+        Push 1
+        Goto +2
+        Push 0
+    Exch
+    Pop $R0
+!macroend
+
+!macro __WinVerCheck_AtMostWin11
+    Push $R0
+    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
+    IntCmp $R0 ${WIN11_24H2} +2 +2 +3
+        Push 1
+        Goto +2
+        Push 0
+    Exch
+    Pop $R0
+!macroend
+
+!macro __WinVerCheck_IsWin11
+    Push $R0
+    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
+    IntCmp $R0 ${WINVER_11_BUILD} +2 +3 +2
+        Push 1
+        Goto +2
+        Push 0
+    Exch
+    Pop $R0
+!macroend
+
+!macro __WinVerCheck_IsWinServer
+    Push $R0
+    ClearErrors
+    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "InstallationType"
+    StrCmp $R0 "Server" +2
+    StrCmp $R0 "Server Core" +2 +3
+        Push 1
+        Goto +2
+        Push 0
+    Exch
+    Pop $R0
+!macroend
+
+!macro __WinVerCheck_IsWin10LTSC
+    Push $R0
+    Push $R1
+    ReadRegStr $R0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "EditionID"
+    
+    StrCmp $R0 "EnterpriseS" is_ltsc_yes
+    StrCmp $R0 "EnterpriseSN" is_ltsc_yes
+    StrCmp $R0 "IoTEnterpriseS" is_ltsc_yes
+    
+    ReadRegStr $R1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "ProductName"
+    StrLen $R0 $R1
+    IntOp $R0 $R0 - 4
+    StrCpy $R1 $R1 4 $R0
+    
+    StrCmp $R1 "LTSC" is_ltsc_yes
+    StrCmp $R1 "LTSB" is_ltsc_yes
+    
+    Push 0
+    Goto is_ltsc_done
+    
+    is_ltsc_yes:
+        Push 1
+    
+    is_ltsc_done:
+    Exch 2
+    Pop $R1
+    Pop $R0
+!macroend
+
+!macro __WinVerCheck_IsWin64
+    ${If} ${RunningX64}
+        Push 1
+    ${Else}
+        Push 0
+    ${EndIf}
+!macroend
+
+!macro __WinVerCheck_IsARM64
+    Push $R0
+    ReadRegStr $R0 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
+    StrCmp $R0 "ARM64" +3
+        Push 0
+        Goto +2
+        Push 1
+    Exch
+    Pop $R0
+!macroend
+
+;= LogicLib Integration
 ; AtLeastWin10
 !macro _AtLeastWin10 _a _b _t _f
-    !insertmacro _>= `${_b}` 10 `${_t}` `${_f}`
+    !insertmacro __WinVerCheck_AtLeastWin10
+    Pop $_LOGICLIB_TEMP
+    !insertmacro _== $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
 !macroend
-!define AtLeastWin10 `"" AtLeastWin10 ""`
+!define MWV_AtLeastWin10 `"" AtLeastWin10 ""`
 
 ; AtMostWin10
 !macro _AtMostWin10 _a _b _t _f
-    !insertmacro _<= `${_b}` 10 `${_t}` `${_f}`
+    !insertmacro __WinVerCheck_AtMostWin10
+    Pop $_LOGICLIB_TEMP
+    !insertmacro _== $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
 !macroend
-!define AtMostWin10 `"" AtMostWin10 ""`
+!define MWV_AtMostWin10 `"" AtMostWin10 ""`
 
 ; IsWin10
 !macro _IsWin10 _a _b _t _f
-    !insertmacro _= `${_b}` 10 `${_t}` `${_f}`
+    !insertmacro __WinVerCheck_IsWin10
+    Pop $_LOGICLIB_TEMP
+    !insertmacro _== $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
 !macroend
-!define IsWin10 `"" IsWin10 ""`
+!define MWV_IsWin10 `"" IsWin10 ""`
 
 ; AtLeastWin11
 !macro _AtLeastWin11 _a _b _t _f
-    !insertmacro _>= `${_b}` 11 `${_t}` `${_f}`
+    !insertmacro __WinVerCheck_AtLeastWin11
+    Pop $_LOGICLIB_TEMP
+    !insertmacro _== $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
 !macroend
-!define AtLeastWin11 `"" AtLeastWin11 ""`
+!define MWV_AtLeastWin11 `"" AtLeastWin11 ""`
 
 ; AtMostWin11
 !macro _AtMostWin11 _a _b _t _f
-    !insertmacro _<= `${_b}` 11 `${_t}` `${_f}`
+    !insertmacro __WinVerCheck_AtMostWin11
+    Pop $_LOGICLIB_TEMP
+    !insertmacro _== $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
 !macroend
-!define AtMostWin11 `"" AtMostWin11 ""`
+!define MWV_AtMostWin11 `"" AtMostWin11 ""`
 
 ; IsWin11
 !macro _IsWin11 _a _b _t _f
-    !insertmacro _= `${_b}` 11 `${_t}` `${_f}`
+    !insertmacro __WinVerCheck_IsWin11
+    Pop $_LOGICLIB_TEMP
+    !insertmacro _== $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
 !macroend
-!define IsWin11 `"" IsWin11 ""`
+!define MWV_IsWin11 `"" IsWin11 ""`
 
 ; IsWinServer
 !macro _IsWinServer _a _b _t _f
-    !insertmacro _= `${_b}` S `${_t}` `${_f}`
+    !insertmacro __WinVerCheck_IsWinServer
+    Pop $_LOGICLIB_TEMP
+    !insertmacro _== $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
 !macroend
-!define IsWinServer `"" IsWinServer ""`
-
-; AtLeastWin10Build - Compare against specific build numbers
-!macro _AtLeastWin10Build _a _b _t _f
-    !insertmacro _>= `${_b}` B `${_t}` `${_f}`
-!macroend
-!define AtLeastWin10Build `"" AtLeastWin10Build ""`
+!define MWV_IsWinServer `"" IsWinServer ""`
 
 ; IsWin10LTSC
 !macro _IsWin10LTSC _a _b _t _f
-    !insertmacro _= `${_b}` LTSC `${_t}` `${_f}`
+    !insertmacro __WinVerCheck_IsWin10LTSC
+    Pop $_LOGICLIB_TEMP
+    !insertmacro _== $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
 !macroend
-!define IsWin10LTSC `"" IsWin10LTSC ""`
+!define MWV_IsWin10LTSC `"" IsWin10LTSC ""`
 
 ; IsWin64
 !macro _IsWin64 _a _b _t _f
-    !insertmacro _= `${_b}` 64 `${_t}` `${_f}`
+    !insertmacro __WinVerCheck_IsWin64
+    Pop $_LOGICLIB_TEMP
+    !insertmacro _== $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
 !macroend
 !define IsWin64 `"" IsWin64 ""`
 
 ; IsARM64
 !macro _IsARM64 _a _b _t _f
-    !insertmacro _= `${_b}` ARM `${_t}` `${_f}`
+    !insertmacro __WinVerCheck_IsARM64
+    Pop $_LOGICLIB_TEMP
+    !insertmacro _== $_LOGICLIB_TEMP 1 `${_t}` `${_f}`
 !macroend
 !define IsARM64 `"" IsARM64 ""`
 
-;= Helper Functions for LogicLib
-!macro __ModernWinVer_DefineOSTest Test
-    !ifdef __ModernWinVer_${Test}_Defined
-        !undef __ModernWinVer_${Test}_Defined
-    !endif
-    !define __ModernWinVer_${Test}_Defined
-    
-    !ifndef __ModernWinVer_${Test}_Call
-        !define __ModernWinVer_${Test}_Call
-        
-        !ifdef __UNINSTALL__
-            !define __ModernWinVer_${Test}_Func Un.__ModernWinVer_${Test}
-        !else
-            !define __ModernWinVer_${Test}_Func __ModernWinVer_${Test}
-        !endif
-        
-        Function ${__ModernWinVer_${Test}_Func}
-            !insertmacro __ModernWinVer_${Test}_Impl
-        FunctionEnd
-    !endif
-!macroend
-
-; Comparison operator implementation
-!macro _>= _a _b _t _f
-    !verbose push
-    !verbose 4
-    !if `${_b}` == 10
-        !insertmacro __ModernWinVer_DefineOSTest AtLeastWin10
-        Call ${__ModernWinVer_AtLeastWin10_Func}
-        Pop $0
-        !insertmacro _= $0 true `${_t}` `${_f}`
-    !else if `${_b}` == 11
-        !insertmacro __ModernWinVer_DefineOSTest AtLeastWin11
-        Call ${__ModernWinVer_AtLeastWin11_Func}
-        Pop $0
-        !insertmacro _= $0 true `${_t}` `${_f}`
-    !else if `${_b}` == B
-        !insertmacro __ModernWinVer_DefineOSTest AtLeastBuild
-        Call ${__ModernWinVer_AtLeastBuild_Func}
-        Pop $0
-        !insertmacro _= $0 true `${_t}` `${_f}`
-    !else
-        !error "Unsupported version comparison: ${_b}"
-    !endif
-    !verbose pop
-!macroend
-
-!macro _<= _a _b _t _f
-    !verbose push
-    !verbose 4
-    !if `${_b}` == 10
-        !insertmacro __ModernWinVer_DefineOSTest AtMostWin10
-        Call ${__ModernWinVer_AtMostWin10_Func}
-        Pop $0
-        !insertmacro _= $0 true `${_t}` `${_f}`
-    !else if `${_b}` == 11
-        !insertmacro __ModernWinVer_DefineOSTest AtMostWin11
-        Call ${__ModernWinVer_AtMostWin11_Func}
-        Pop $0
-        !insertmacro _= $0 true `${_t}` `${_f}`
-    !else
-        !error "Unsupported version comparison: ${_b}"
-    !endif
-    !verbose pop
-!macroend
-
-!macro _= _a _b _t _f
-    !verbose push
-    !verbose 4
-    !if `${_b}` == 10
-        !insertmacro __ModernWinVer_DefineOSTest IsWin10
-        Call ${__ModernWinVer_IsWin10_Func}
-        Pop $0
-        !insertmacro _== $0 true `${_t}` `${_f}`
-    !else if `${_b}` == 11
-        !insertmacro __ModernWinVer_DefineOSTest IsWin11
-        Call ${__ModernWinVer_IsWin11_Func}
-        Pop $0
-        !insertmacro _== $0 true `${_t}` `${_f}`
-    !else if `${_b}` == S
-        !insertmacro __ModernWinVer_DefineOSTest IsServer
-        Call ${__ModernWinVer_IsServer_Func}
-        Pop $0
-        !insertmacro _== $0 true `${_t}` `${_f}`
-    !else if `${_b}` == LTSC
-        !insertmacro __ModernWinVer_DefineOSTest IsLTSC
-        Call ${__ModernWinVer_IsLTSC_Func}
-        Pop $0
-        !insertmacro _== $0 true `${_t}` `${_f}`
-    !else if `${_b}` == 64
-        !insertmacro __ModernWinVer_DefineOSTest Is64
-        Call ${__ModernWinVer_Is64_Func}
-        Pop $0
-        !insertmacro _== $0 true `${_t}` `${_f}`
-    !else if `${_b}` == ARM
-        !insertmacro __ModernWinVer_DefineOSTest IsARM
-        Call ${__ModernWinVer_IsARM_Func}
-        Pop $0
-        !insertmacro _== $0 true `${_t}` `${_f}`
-    !else
-        StrCmp `${_a}` `${_b}` `${_t}` `${_f}`
-    !endif
-    !verbose pop
-!macroend
-
-;= Macros for OS Tests
-!macro __ModernWinVer_AtLeastWin10_Impl
-    Push $1
-    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentMajorVersionNumber"
-    IntCmp $1 10 0 not_atleast10
-        Push "true"
-        Goto done_atleast10
-    not_atleast10:
-        Push "false"
-    done_atleast10:
-    Exch
-    Pop $1
-!macroend
-
-!macro __ModernWinVer_AtMostWin10_Impl
-    Push $1
-    Push $2
-    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentMajorVersionNumber"
-    ReadRegStr $2 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
-    
-    ${If} $1 < 10
-        Push "true"
-    ${ElseIf} $1 == 10
-        IntCmp $2 ${WINVER_11_BUILD} not_atmost10 not_atmost10 0
-            Push "true"
-            Goto done_atmost10
-    ${EndIf}
-    
-    not_atmost10:
-        Push "false"
-    done_atmost10:
-    Exch 2
-    Pop $2
-    Pop $1
-!macroend
-
-!macro __ModernWinVer_IsWin10_Impl
-    Push $1
-    Push $2
-    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentMajorVersionNumber"
-    ReadRegStr $2 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
-    
-    ${If} $1 == 10
-        IntCmp $2 ${WINVER_11_BUILD} not_win10 not_win10 0
-            Push "true"
-            Goto done_win10
-    ${EndIf}
-    
-    not_win10:
-        Push "false"
-    done_win10:
-    Exch 2
-    Pop $2
-    Pop $1
-!macroend
-
-!macro __ModernWinVer_AtLeastWin11_Impl
-    Push $1
-    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
-    IntCmp $1 ${WINVER_11_BUILD} 0 not_atleast11
-        Push "true"
-        Goto done_atleast11
-    not_atleast11:
-        Push "false"
-    done_atleast11:
-    Exch
-    Pop $1
-!macroend
-
-!macro __ModernWinVer_AtMostWin11_Impl
-    Push $1
-    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
-    IntCmp $1 ${WIN11_24H2} 0 0 not_atmost11
-        Push "true"
-        Goto done_atmost11
-    not_atmost11:
-        Push "false"
-    done_atmost11:
-    Exch
-    Pop $1
-!macroend
-
-!macro __ModernWinVer_IsWin11_Impl
-    Push $1
-    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
-    IntCmp $1 ${WINVER_11_BUILD} 0 not_win11
-        Push "true"
-        Goto done_win11
-    not_win11:
-        Push "false"
-    done_win11:
-    Exch
-    Pop $1
-!macroend
-
-!macro __ModernWinVer_IsServer_Impl
-    Push $1
-    ClearErrors
-    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "InstallationType"
-    ${If} $1 == "Server"
-    ${OrIf} $1 == "Server Core"
-        Push "true"
-    ${Else}
-        Push "false"
-    ${EndIf}
-    Exch
-    Pop $1
-!macroend
-
-!macro __ModernWinVer_IsLTSC_Impl
-    Push $1
-    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "EditionID"
-    ${If} $1 == "EnterpriseS"
-    ${OrIf} $1 == "EnterpriseSN"
-    ${OrIf} $1 == "IoTEnterpriseS"
-        Push "true"
-    ${Else}
-        ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "ProductName"
-        StrCpy $1 $1 "" -4
-        ${If} $1 == "LTSC"
-        ${OrIf} $1 == "LTSB"
-            Push "true"
-        ${Else}
-            Push "false"
-        ${EndIf}
-    ${EndIf}
-    Exch
-    Pop $1
-!macroend
-
-!macro __ModernWinVer_Is64_Impl
-    ${If} ${RunningX64}
-        Push "true"
-    ${Else}
-        Push "false"
-    ${EndIf}
-!macroend
-
-!macro __ModernWinVer_IsARM_Impl
-    Push $1
-    ReadRegStr $1 HKLM "SYSTEM\CurrentControlSet\Control\Session Manager\Environment" "PROCESSOR_ARCHITECTURE"
-    ${If} $1 == "ARM64"
-        Push "true"
-    ${Else}
-        Push "false"
-    ${EndIf}
-    Exch
-    Pop $1
-!macroend
-
-!macro __ModernWinVer_AtLeastBuild_Impl
-    Push $1
-    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
-    ; This is a placeholder - actual build comparison would need the build number passed
-    Push "false"
-    Exch
-    Pop $1
-!macroend
-
 ;= Macro-based Functions (Alternative API)
-!macro IsWindows11 _RESULT
+!macro MWV_IsWindows11 _RESULT
     Push $0
     Push $1
     ReadRegStr $0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentBuild"
@@ -398,7 +290,7 @@
     Pop $0
 !macroend
 
-!macro IsWindows10 _RESULT
+!macro MWV_IsWindows10 _RESULT
     Push $0
     Push $1
     ReadRegStr $0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "CurrentMajorVersionNumber"
@@ -533,8 +425,9 @@
     ${EndIf}
 !macroend
 
-!macro IsWindows10LTSC _RESULT
+!macro IsWindows10LTSC_Func _RESULT
     Push $0
+    Push $1
     ReadRegStr $0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "EditionID"
     ${If} $0 == "EnterpriseS"
     ${OrIf} $0 == "EnterpriseSN"
@@ -542,15 +435,18 @@
         StrCpy ${_RESULT} 1
         Goto done_ltsc_macro
     ${EndIf}
-    ReadRegStr $0 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "ProductName"
-    StrCpy $0 $0 "" -4
-    ${If} $0 == "LTSC"
-    ${OrIf} $0 == "LTSB"
+    ReadRegStr $1 HKLM "SOFTWARE\Microsoft\Windows NT\CurrentVersion" "ProductName"
+    StrLen $0 $1
+    IntOp $0 $0 - 4
+    StrCpy $1 $1 4 $0
+    ${If} $1 == "LTSC"
+    ${OrIf} $1 == "LTSB"
         StrCpy ${_RESULT} 1
     ${Else}
         StrCpy ${_RESULT} 0
     ${EndIf}
     done_ltsc_macro:
+    Pop $1
     Pop $0
 !macroend
 
@@ -563,6 +459,6 @@
 !define RequireWindows10OrLater "!insertmacro RequireWindows10OrLater"
 !define RequireWindows11OrLater "!insertmacro RequireWindows11OrLater"
 !define GetWindowsDisplayVersion "!insertmacro GetWindowsDisplayVersion"
-!define IsWindows10LTSC "!insertmacro IsWindows10LTSC"
+!define IsWindows10LTSC "!insertmacro IsWindows10LTSC_Func"
 
 !endif ; MODERN_WINVER_NSH
