@@ -14,7 +14,9 @@
 !ifndef ___WINVER__NSH___
     !include WinVer.nsh
 !endif
-
+!ifndef MODERN_WINVER_NSH
+    !include ModernWinVer.nsh
+!endif
 
 !define CheckOS "!insertmacro _CheckOS"
 !macro _CheckOS Check Value
@@ -37,6 +39,10 @@
 			${IfNotThen} ${At${Check}Win8}      ${|} StrCpy $2 bad-os ${|}
 		${Case} "2008 R2"
 			${IfNotThen} ${At${Check}Win2008R2} ${|} StrCpy $2 bad-os ${|}
+		${Case} 10
+			${IfNotThen} ${At${Check}Win10}     ${|} StrCpy $2 bad-os ${|}
+		${Case} 11
+			${IfNotThen} ${At${Check}Win11}     ${|} StrCpy $2 bad-os ${|}
 		${Default}
 			${IfNot} ${Errors} ; If it's defined and we're here, it's a bad value
 				${InvalidValueError} [Launch]:${Value} $0
@@ -59,6 +65,10 @@
 			StrCpy $1 8
 		${ElseIf} ${IsWin2008R2}
 			StrCpy $1 "2008 R2"
+		${ElseIf} ${IsWin10}
+			StrCpy $1 10
+		${ElseIf} ${IsWin11}
+			StrCpy $1 11
 		${Else}
 			StrCpy $1 ? ; I wonder what it is.
 		${EndIf}
