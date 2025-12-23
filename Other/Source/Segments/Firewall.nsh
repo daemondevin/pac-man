@@ -12,7 +12,9 @@
 ;   and restoration capabilities for portable applications.
 ; 
 ; USAGE
-;	Add sections [FirewallRule1], [FirewallRule2] etc. to Launcher.ini
+;	Add sections [FirewallRule1], [FirewallRule2] etc. to Launcher.ini. There 
+;   is special keys you can use to (un)block all EXEs in a folder. See 
+;   'SPECIAL OPTIONS' further down below.
 ;
 ;	FirewallRule Keys:
 ;	Name			-	Rule display name (unique identifier)
@@ -34,9 +36,14 @@
 ;	EdgeTraversal	-	true/false (allow edge traversal for inbound rules)
 ;	Security		-	Authenticate, AuthEnc, AuthNoEnc, NotRequired
 ;
-;	Protocol-specific options:
-;	ICMPType		-	ICMP type number (for ICMP protocols)
-;	ICMPCode		-	ICMP code number (for ICMP protocols)
+;	SPECIAL OPTIONS
+;   ATTN: If you do not need this functionality then omit these keys entirely!
+;
+;   Keys: 
+;   BlockAll        -   Set to true if you want to block all EXEs in a specified folder. 
+;   BlockAllDir     -   Folder of all the EXEs to block. May use environment variables.
+;   BlockAllRecur   -   Set to true if (Un)BlockAll should recursively search 
+;                       subfolders for EXEs to block and unblock. Defaults to true.
 ;
 ; EXAMPLE
 ;	[FirewallRule1]
@@ -45,16 +52,27 @@
 ;	Action=Allow
 ;	Protocol=TCP
 ;	LocalPort=8080
-;	Program=%PAL:AppDir%\server.exe
+;	Program=%PAL:AppDir%\myprogram\server.exe
 ;	Profile=Private,Public
 ;	IfExists=replace
 ;	Enabled=true
 ;	Description=Allow HTTP access to MyApp server
 ;	Required=true
 ;
+;   ; Recursively scan a directory and it's subdirectories for EXEs to block
+;	[FirewallRule2]
+;   BlockAll=true
+;   BlockAllDir=%PAL:AppDir%\myprogram\LotsOFApps
+;   BlockAllRecur=true
+;
+
+!ifdef SEGMENTS_FIREWALL
 
 ;= VARIABLES
 Var FWName
+Var FWBlockAll
+Var FWBlockAllDir
+Var FWBlockAllRecur
 Var FWDirection
 Var FWAction
 Var FWProtocol
@@ -88,6 +106,7 @@ Var FWSecurity
     ${Using:StrFunc} StrRep
     ${Using:StrFunc} StrLoc
     ${Using:StrFunc} StrTrimNewLines
+    ${Using:StrFunc} StrCase
 !endif
 
 ;= MACROS
@@ -97,8 +116,93 @@ Var FWSecurity
     Call Unload
     Quit
 !macroend
+!define Firewall::BlockAll `!insertmacro _Firewall::BlockAll`
+!macro _Firewall::BlockAll _DIR _RECURSIVE
+    Push "${_DIR}"      ; folder path
+    Push ${_RECURSIVE}  ; 1 = recursive, 0 = current folder only
+    Call BlockAll
+!macroend
+!define Firewall::UnblockAll `!insertmacro _Firewall::UnblockAll`
+!macro _Firewall::UnblockAll _DIR _RECURSIVE
+    Push ${_RECURSIVE}  ; 1 = recursive, 0 = current folder only
+    Call UnblockAll
+!macroend
 
 ;= FUNCTIONS
+Function BlockAll
+    Exch $1  ; recursion flag | 1 = recursive, 0 = current folder only
+    Exch
+    Exch $0  ; folder path
+    Push $2
+    Push $3
+    Push $4
+
+    ; Block all EXEs in this folder
+    FindFirst $2 $3 "$0\*.exe"
+    ${DoWhile} $3 != ""
+        DetailPrint "Blocking outbound for: $0\$3"
+        nsExec::ExecToLog 'netsh advfirewall firewall add rule name="Block_$3 Portable" dir=out program="$0\$3" action=block enable=yes'
+        FindNext $2 $3
+    ${Loop}
+    FindClose $2
+
+    ; If recursive flag is 1, process subfolders
+    ${If} $1 == 1
+        FindFirst $2 $4 "$0\*.*"
+        ${DoWhile} $4 != ""
+            ${If} ${FileExists} "$0\$4\."
+                Push "$0\$4"
+                Push $1
+                Call BlockAll
+            ${EndIf}
+            FindNext $2 $4
+        ${Loop}
+        FindClose $2
+    ${EndIf}
+
+    Pop $4
+    Pop $3
+    Pop $2
+    Pop $0
+    Pop $1
+FunctionEnd
+Function UnblockAll
+    Exch $1  ; recursion flag | 1 = recursive, 0 = current folder only
+    Exch
+    Exch $0  ; folder path
+    Push $2
+    Push $3
+    Push $4
+
+    ; Remove firewall rules for all EXEs in this folder
+    FindFirst $2 $3 "$0\*.exe"
+    ${DoWhile} $3 != ""
+        DetailPrint "Removing firewall rule: Block_$3"
+        nsExec::ExecToLog 'netsh advfirewall firewall delete rule name="Block_$3 Portable"'
+        FindNext $2 $3
+    ${Loop}
+    FindClose $2
+
+    ; If recursive flag is 1, process subfolders
+    ${If} $1 == 1
+        FindFirst $2 $4 "$0\*.*"
+        ${DoWhile} $4 != ""
+            ${If} ${FileExists} "$0\$4\."
+                Push "$0\$4"
+                Push $1
+                Call UnblockAll
+            ${EndIf}
+            FindNext $2 $4
+        ${Loop}
+        FindClose $2
+    ${EndIf}
+
+    Pop $4
+    Pop $3
+    Pop $2
+    Pop $0
+    Pop $1
+FunctionEnd
 Function IsNumeric
     Exch $R0  ; Input string
     Push $R1
@@ -137,10 +241,18 @@ ${SegmentPre}
 			${ReadLauncherConfig} $FWName FirewallRule$R0 Name
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 			
+            ${ReadLauncherConfig} $FWBlockAll FirewallRule$R0 BlockAll
 			${ReadLauncherConfig} $FWDirection FirewallRule$R0 Direction
 			${ReadLauncherConfig} $FWAction FirewallRule$R0 Action
 			${ReadLauncherConfig} $FWProtocol FirewallRule$R0 Protocol
 			${ReadLauncherConfig} $FWLocalPort FirewallRule$R0 LocalPort
+            
+            ${StrCase} $0 "$FWBlockAll" "L"
+            
+            ${If} $0 != ""
+            ${AndIf} $0 == "true"
+                Goto _PRE_FIREWALL_BLOCK_ALL
+            ${EndIf}
 
             ; --- Validate direction ---
             ${Switch} "$FWDirection"
@@ -304,10 +416,27 @@ ${SegmentPre}
 				${DebugMsg} "Firewall rule does not exist: $FWName Portable"
 				${WriteRuntimeData} Firewall$R0 "Action" "create"
 			${EndIf}
+            _PRE_FIREWALL_BLOCK_ALL:
+            ${DebugMsg} "Blocking all EXEs"
+            ${ReadLauncherConfig} $FWBlockAllDir FirewallRule$R0 BlockAllDir
+            ${If} $FWBlockAllDir != ""
+                ${ParseLocations} $FWBlockAllDir
+                ${If} ${DirExists} $FWBlockAllDir
+                    ${DebugMsg} "Blocking all EXEs in $FWBlockAllDir"
+                    ${ReadLauncherConfigWithDefault} $FWBlockAllRecur FirewallRule$R0  Recursive true
+                    ${If} $FWBlockAllRecur == "true"
+                        StrCpy $FWBlockAllRecur 1
+                    ${Else}
+                        StrCpy $FWBlockAllRecur 0
+                    ${EndIf}
+                    ${Firewall::BlockAll} "$FWBlockAllDir" $FWBlockAllRecur
+                    ${WriteRuntimeData} Firewall$R0 "BlockAllEXEs" "true"
+                ${EndIf}
+            ${EndIf}
 			
 			IntOp $R0 $R0 + 1
 		${Loop}
-		
+	
 		${DebugMsg} "Processing Windows Firewall rule(s) Pre complete."
 !macroend
 ${SegmentPrePrimary}
@@ -320,6 +449,11 @@ ${SegmentPrePrimary}
 			${ReadLauncherConfig} $FWName FirewallRule$R0 Name
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
 			
+            ${ReadRuntimeData} $R9 FirewallRule$R0 "BlockAll"
+            ${If} $R9 == "true"
+                Goto _PREPRIMARY_FIREWALL_BLOCK_ALL
+            ${EndIf}
+
 			; Get configuration
 			${ReadLauncherConfig} $FWDirection FirewallRule$R0 Direction
 			${ReadLauncherConfig} $FWAction FirewallRule$R0 Action
@@ -482,6 +616,7 @@ ${SegmentPrePrimary}
 					${Firewall::InvalidKeyMsg} "Error: Failed to create required firewall rule '$FWName Portable'$\n$\nError: $2"
 				${EndIf}
 			${EndIf}
+            _PREPRIMARY_FIREWALL_BLOCK_ALL:
 			
 			IntOp $R0 $R0 + 1
 		${Loop}
@@ -497,6 +632,11 @@ ${SegmentPostPrimary}
 			ClearErrors
 			${ReadLauncherConfig} $FWName FirewallRule$R0 Name
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+                        
+            ${ReadRuntimeData} $R9 FirewallRule$R0 "BlockAll"
+            ${If} $R9 == "true"
+                Goto _POSTPRIMARY_FIREWALL_BLOCK_ALL
+            ${EndIf}
 			
 			; Check if we created this rule
 			${ReadRuntimeData} $1 Firewall$R0 "Created"
@@ -512,6 +652,7 @@ ${SegmentPostPrimary}
 					${DebugMsg} "Failed to remove portable firewall rule $FWName Portable$r$\nError: $3"
 				${EndIf}
 			${EndIf}
+            _POSTPRIMARY_FIREWALL_BLOCK_ALL:
 			
 			IntOp $R0 $R0 + 1
 		${Loop}
@@ -527,6 +668,11 @@ ${SegmentPost}
 			ClearErrors
 			${ReadLauncherConfig} $FWName FirewallRule$R0 Name
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+            
+            ${ReadRuntimeData} $R9 FirewallRule$R0 "BlockAll"
+            ${If} $R9 == "true"
+                Goto _POST_FIREWALL_BLOCK_ALL
+            ${EndIf}
 			
 			; Check if we need to restore this rule
 			${ReadRuntimeData} $1 Firewall$R0 "Action"
@@ -750,9 +896,25 @@ ${SegmentPost}
                 ${EndIf}
                 _FIREWALL_RESTORE_END:
 			${EndIf}
+            _POST_FIREWALL_BLOCK_ALL:
+            ${ReadLauncherConfig} $FWBlockAllDir FirewallRule$R0 BlockAllDir
+            ${If} $FWBlockAllDir != ""
+                ${ParseLocations} $FWBlockAllDir
+                ${If} ${DirExists} $FWBlockAllDir
+                    ${DebugMsg} "Deleting all rules for EXEs in $FWBlockAllDir"
+                    ${ReadLauncherConfigWithDefault} $FWBlockAllRecur FirewallRule$R0  Recursive true
+                    ${If} $FWBlockAllRecur == "true"
+                        StrCpy $FWBlockAllRecur 1
+                    ${Else}
+                        StrCpy $FWBlockAllRecur 0
+                    ${EndIf}
+                    ${Firewall::UnblockAll} "$FWBlockAllDir" $FWBlockAllRecur
+                ${EndIf}
+            ${EndIf}
 			
 			IntOp $R0 $R0 + 1
 		${Loop}
 		
 		${DebugMsg} "Restoring Windows Firewall rule(s) Post complete."
 !macroend
+!endif
