@@ -29,6 +29,7 @@
 ;   Source="Symlink'Folder"
 ;   Target="%APPDATA%\Symlink'Folder"
 
+!ifdef SEGMENTS_SYMLINKS
 ;= VARIABLES
 Var LinkType
 Var LinkPath
@@ -186,3 +187,4 @@ ${SegmentPostPrimary}
         ${DebugMsg} "Portable links and junctions removal completed."
     ${EndIf}
 !macroend
+!endif
