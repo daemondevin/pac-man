@@ -1,408 +1,322 @@
-# PortableApps Compiler & Management
+# PortableApps Compiler – Segment & Recovery Framework
+## Overview
+
+Welcome! `PortableApps Compiler & Management` (_PortableApps Compiler_ or _Pac-Man_ for short), is an enhanced, compatibility-aware launcher framework inspired by the PortableApps.com Launcher (PAL). It is designed to support complex, modern, and legacy Windows applications that PAL intentionally does not target. **pac-man's** framework is built on top of **PAL**. It introduces a **deterministic, crash-resilient segment system** for controlled interaction with Windows subsystems while preserving portability principles.
+
+pac-man does **not** replace PAL. It augments PAL by adding:
+
+- Structured lifecycle segments  
+- Crash-recovery guarantees  
+- Explicit rollback journaling  
+- Windows 10/11–compliant integration patterns  
+
+pac-man is designed to behave like a **transactional runtime environment**, not an installer. pac-man is **not a replacement for PAL**. It exists to solve a different class of problems.
 
 ---
 
-Welcome! This project started out as a modified variant of the official [PortableApps.com Launcher](https://portableapps.com/portableapps.comlauncher). The creator of the original version left the project over 5 years ago and since then, all development and updates ceased completely and _PAL_ became stagnant. PortableApps Compiler & Management (or _Pac-Man_ for short), is an alternative solution to creating portable applications that still adhere to the [PortableApps.com Format](https://portableapps.com/manuals/PortableApps.comLauncher/ref/paf/index.html#portableapps-com-format-specification) specification.
+## Project Status: Pre-Production / Under Heavy Construction
 
-From the uninitiated software programmer wanting a reliable method for porting their programs portability, to the most loyal and dedicated _PAF Developer_ who would love to finally see full-featured and reliable utility for developing _PAFs_—**Pac-Man** is a much better solution when it comes to creating a portable launcher for the more complex Windows applications. Even if a program seems to thread itself deep within the Windows registry and/or file-system, this utility will most likely have you covered.
+pac-man is not ready for production deployment. The project is currently under active, foundational development, with core systems still evolving. While major architectural components are designed and implemented, the following remain incomplete or unstable:
 
-While the techniques being implemented by this project are highly advanced, this can be used by beginners who are just starting out with portable programming, getting familiar with the practices of the official [PortableApps.com Launcher](https://portableapps.com/portableapps.comlauncher) will greatly improve your ability to understand the features being implemented in the project. Understanding the intricacies behind the advanced capabilities currently being used by this project.
+- Segment APIs are still subject to change
+- Recovery and rollback paths are being hardened and audited
+- Edge cases across Windows versions are still being validated
+- Long-term compatibility guarantees have not yet been established
+- Internal tooling, documentation, and safety checks are incomplete
 
-With this branch you will find the coding practices of Chris Morgan, FukenGruven, Azure Zanculmarktum, and myself (daemon.devin). You will also see minor influence from contributors like LegendaryHawk, DoomStorm, and other fellow developers as well. So you can expect to see great things to come out of this experimental build.
+As a result:
 
-## Under Construction
+- Behavior may change between revisions
+- Configuration formats are not yet frozen
+- Backward compatibility is not guaranteed
+- Use in production environments may result in unintended system changes
 
----
+At this stage, pac-man should be considered suitable only for development, testing, and experimentation by advanced users who understand the risks.
 
-The following is a list of things currently being worked on for Pac-Man so you can look forward too in this project. This list is a work in progress so come back later to see if these features have been added.
+Production use is explicitly discouraged until:
 
-- [x] **Add Wiki**
-      I've finally added the Wiki for referance. Refer to the Wiki for help with general PortableApp development and/or need more understanding of what's underneath Pac-Man's hood.
+- The segment SDK stabilizes
+- Crash-recovery logic is fully verified
+- Windows 10/11 behavior is exhaustively tested
+- Formal release guarantees are documented
 
-- [ ] **AiO GUI**
-      Working on a nice all-in-one GUI that will enable the developer to quickly create the necessary configuration files for creating and generating a PA.c compliant portable application. After creation, than ask to compile.
+### Definition of “Production-Ready” for pac-man
 
-- [ ] **AiO Compiler**
-      Working on combining both the PortableApps.com Launcher with the PortableApps.com Installer. Basically, have a single GUI (including the config creator) which can be used to create and generate a portable application package from compiling the portable launcher to creating the PAF installer.
+pac-man is considered production-ready when:
 
-- [ ] **Etc. Etc. And So On**
+- **A crash cannot leave the host system modified**
+- **Every segment can fail safely**
+- **Recovery is automatic, deterministic, and tested**
+- **Behavior is documented and enforced**
+- **No hidden system state is introduced**
 
-Other things could follow depending on our availability, interest.. and of course the interest and support from others.
+For more information on what's planned for pac-man visit our [roadmap](Other/Source/docs/ROADMAP.md)
 
-## Branches
+## Design Philosophy Differences
 
----
+### PortableApps.com Launcher (PAL)
 
-There are two branches in which you may find in this project. The **Master Branch** (_a.k.a._ Stable Edition) and the [**Dev Branch**](https://github.com/daemondevin/pac-man/tree/dev) (_a.k.a._ Development Edition). In the case for the stable variant (which you're currentlu browsing), you can rest assured you're building launchers with a (_near_)bug-free utility, but the latter case is meant for the cutting-edge of development. Don't expect the Dev. Branch to work-out-of-the-box as it is constantly under going revisions for testing new ideas and theoratical code. There **will** be bugs hidden throughout the experimental version.
+- Conservative system interaction
+- Optimized for simple, well-behaved portable applications
+- Avoids modifying:
+  - File associations
+  - Protocol handlers
+  - Services
+  - Firewall rules
+  - Hosts file
+- Prefers portability purity over compatibility
 
-## Features
+### pac-man (PortableApps Compiler)
 
----
-
-The following is a list of features that is currently available with PortableApps Compiler. Everything listed here has been tested and is in working order.
-
-- Everything that is available with [PortableApps.com Launcher](https://portableapps.com/apps/development/portableapps.com_launcher) is also available with PortableApps Compiler.
-- Minipulating Windows Services.
-- Dealing with Windows Tasks.
-- Registering DLL files.
-- Registry redirection support.
-- File-system redirection support.
-- Automatic [code-signing](#code-signing) with the [CompilerSigner](#compilersignerexe)
-- Font support for apps that make use of fonts.
-- **Hidden Functionality**
-  - To skip the welcome page and bypass that first message, you can simply add `SkipWelcomePage=true` to the section under `[LauncherCompiler]` in the `settings.ini` file inside the `Data` folder.
-  - More hidden extras soon to come!
-
----
-
-#### **Launcher.ini**
-
-**Environment Variables**
-
-- `%PROGRAMDATA%` has now been added and kept `%ALLUSERSAPPDATA%` for backwards compatibility. Both can be used anywhere you can use an evironment variable.
-- `%PAL:CommonFiles%` may now be used within the _Launcher.ini_ configuration file. This environment variable will point to `..\PortableApps\CommonFiles` if applicable. Can be used anywhere you can use an environment variable.
-  > Example:
-  >
-  > ```INI
-  > [Environment]
-  > PATH=%PATH%;%PAL:CommonFiles%\AndroidSDK
-  > JAVA_HOME=%PAL:CommonFiles%\Java64
-  > ```
-
-Added new keys to the `[Activate]` section. They are as follows (a short description of what each key means or does can be found further below):
-
-> Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
-
-```INI
-[Activate]
-Registry=true
-RegRedirection=true
-RegCopyKeys=true
-Redirection=true
-ForceRedirection=true
-ExecAsUser=true
-Services=true
-RegDLLs=true
-Tasks=true
-Java=true
-JDK=true
-XML=true
-Ghostscript=true
-FontsFolder=true
-FileCleanup=true
-DirectoryCleanup=true
-```
-
-- **Registry:** Add support for manipulating the Windows Registry.
-
-- **RegRedirection:** Enable support for enabling/disabling registry redirection.
-
-- **RegCopyKeys:** Enable support for copying registry keys to a special hive (`HKCU\Software\PortableApps.com`) before launching the application and restoring the keys after the application exits. See `RegistryCopyKeys.nsh` in the Segments directory.
-
-  > To use this feature add the section `[RegistryCopyKeys]` to the `Launcher.ini` file. Each entry should be the path to the registry key to be copied back and forth. Example usage:
-  >
-  > ```INI
-  > [RegistryCopyKeys]
-  > 1=HKCU\Software\MyProgram\ExtraCareNeededKey
-  > 2=HKLM\SOFTWARE\MyProgram\AnotherFragileKey
-  > ```
-
-- **Redirection:** Enable support for enabling/disabling file system redirection.
-
-- **ForceRedirection:** Checks using the variable `$Bit` to disable/enable file system redirection.
-
-- **ExecAsUser:** For applications which need to run as normal user but need the launcher to have elevated privileges. [Read this](http://mdb-blog.blogspot.com/2013/01/nsis-lunch-program-as-user-from-uac.html) for more information on this concept.
-
-- **Services:** Add support for handling Windows Services.
-  > To use this feature add the section `[Service1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports six keys which are as follows:
-
-| **Key**  | **Value**                                                                                                                                                                                            |
-| :------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Name     | The local/portable service name.                                                                                                                                                                     |
-| Path     | The path to the portable service executable. Supports environment variables.                                                                                                                         |
-| Type     | Specify whether you are dealing with a service, a kernel driver or a file system driver, etc.<br />Choose from: _own_, _share_, _interact_, _kernel_, _filesys_, _rec_                               |
-| Start    | Specify when the service is supposed to start.<br />Choose from: _boot_, _system_, _auto_, _demand_, _disabled_, _delayed-auto_                                                                      |
-| Depend   | List any dependencies here separated by `/` (forward slash).                                                                                                                                         |
-| IfExists | If the service already exists, you can either skip it or replace it with the portable version of the service (the original service will be restored afterwards).<br />Choose from: _skip_, _replace_ |
-
-> Example usage:
->
-> ```INI
-> [Service1]
-> Name=SomeServiceName
-> Path=%PAL:AppDir%\service32.sys
-> Type=kernel
-> Start=auto
-> Depend=
-> IfExists=replace
->
-> [Service2]
-> Name=AnotherService
-> Path=%PAL:DataDir%\service64.exe
-> Type=own
-> Start=demand
-> Depend=
-> IfExists=skip
-> ```
-
-- **RegDLLs:** Add support for handling library (DLLs) file registration.
-
-  > To use this feature add the section `[RegisterDLL1]` (numerical ordering) to the `Launcher.ini` file. Each entry supports two keys; _ProgID_ (The DLL's ProgID) and _File_ (The path to DLL. Supports environment variables). Example usage:
-  >
-  > ```INI
-  > [RegisterDLL1]
-  > ProgID=MyAppControlPanel
-  > File=%PAL:AppDir%\controller.cpl
-  >
-  > [RegisterDLL2]
-  > ProgID=DynamicLibrary
-  > File=%PAL:DataDir%\dynlib.dll
-  > ```
-
-- **Tasks:** Enable the TaskCleanup segment for removing any Windows Tasks that were added during runtime.
-
-  > To use this feature add the section `[TaskCleanup]` to the `Launcher.ini` file. Each entry should be the Windows Task name to be removed. Example usage:
-  >
-  > ```INI
-  > [TaskCleanup]
-  > 1=MyAppTask1
-  > 2=Another Task w/ Spaces
-  > ```
-
-- **Java:** Add support for the Java Runtime Environment.
-
-- **JDK:** Add support for the Java Development Kit.
-
-- **XML:** Add XML support.
-
-- **Ghostscript:** Add Ghostscript support.
-
-- **FontsFolder:** Allows the portable application to support fonts within the directory `..\Data\Fonts`. Any fonts added in this folder will be added and are available for usage during runtime. Be aware, the more fonts to process the longer it will take for the launcher to load and unload these fonts.
-
-  > Supported Fonts:
-  >
-  > - .fon
-  > - .fnt
-  > - .ttf
-  > - .ttc
-  > - .fot
-  > - .otf
-  > - .mmm
-  > - .pfb
-  > - .pfm
-
-- **FileCleanup:** Enable support for adding the section `[FilesCleanup]` in `Launcher.ini`. See `FilesCleanup.nsh` in the Segments directory.
-
-  > To use this feature add the section `[FilesCleanup]` to the `Launcher.ini` file. Each entry should be the path to the file that needs deleting. Supports environment variables. Example usage:
-  >
-  > ```INI
-  > [FilesCleanup]
-  > 1=%PAL:DataDir%\uselessUpgradeFile.xml
-  > 2=%APPDATA%\MyProgram\purposelessCfg.ini
-  > ```
-
-- **DirectoryCleanup:** Enable support for the sections `[DirectoriesCleanupIfEmpty]` and `[DirectoriesCleanupForce]` in `Launcher.ini`. See `DirectoriesCleanup.nsh` in the Segments directory.
+- Compatibility-first design
+- Supports complex and legacy applications
+- Allows temporary system modification with:
+  - Explicit scope
+  - Journaling
+  - Guaranteed rollback
+- Treats crash recovery as mandatory
 
 ---
 
-#### **AppInfo.ini**
+### Functional Comparison
 
-Added the section `[Team]` for use with code signing and application specifications. New keys are as follows (a short description of what each key means or does can be found further below):
+| Feature | PAL | pac-man |
+|------|-----|--------|
+| Crash Recovery | Limited | Journal-based |
+| File Associations | Not supported | User-scoped |
+| URL Protocols | Not supported | Supported |
+| Windows Services | Not supported | Temporary |
+| Firewall Rules | Not supported | Reversible |
+| Scheduled Tasks | Not supported | Session-bound |
+| COM Registration | Minimal | Fully tracked |
+| Fonts | Limited | Fully reversible |
+| Hosts File | Not supported | Transactional |
+| Windows 11 Compliance | Partial | Explicit |
 
-> Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
-
-```INI
-[Team]
-Developer=daemon.devin
-Contributors=DoomStorm
-Creator=FukenGruven
-CertSigning=true
-CertAlgorithm=SHA512
-CertExtension=p12
-CertTimestamp=VeriSign
-```
-
-- **Developer:** The name of the developer that created the portable application.
-
-- **Contributors:** Specify here anyone who has helped with the creation of the portable application.
-
-- **Creator:** Specify here the original developer of the PAF if you're updating someone else's work.
-
-I've added several new keys to the `[Dependencies]` section. These newly added keys act like on/off switches to allow support for certain plugins and/or macros/functions (a short description of what each key means or does can be found further below):
-
-> Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.
-
-```INI
-[Dependencies]
-ElevatedPrivileges=true
-UsesJava=true
-UsesGhostscript=true
-UsesDotNetVersion=4.5
-UseStdUtils=true
-InstallINF=true
-RegistryValueWrite=true
-FileWriteReplace=true
-FileLocking=true
-Firewall=true
-Junctions=true
-ACLRegSupport=true
-ACLDirSupport=true
-RMEmptyDir=true
-LocalLow=true
-PublicDoc=true
-CompareVersions=true
-ConfigFunctions=true
-CloseWindow=true
-JSONSupport=true
-RestartSleep=500
-WinMessages=true
-LineWrite=true
-TrimString=true
-CloseProcess=true
-Include64=true
-IncludeWordRep=true
-GetBetween=true
-```
-
-- **ElevatedPrivileges:** For launchers which need to run with elevated privileges.
-
-- **UsesJava:** Specifies whether the portable application makes use of [Java Portable][javaportable].
-
-- **UsesGhostscript:** Specifies whether the portable application makes use of [Ghostscript Portable][ghostscriptportable].
-
-- **UsesDotNetVersion:** Specify the minimum required version of the .NET framework the portable application needs. Values can be from `1.0` thru `4.7` (_e.g._ `UsesDotNetVersion=1.1` or `UsesDotNetVersion=4.6.2`).
-
-- **UseStdUtils:** Include the _StdUtils_ plug-in without `ExecAsUser`
-
-- **InstallINF:** Add support and macros for INF installation. Refer to the `Services.nsh` file in the Segments directory for reference.
-
-- **RegistryValueWrite:** If you're using `[RegistryValueWrite]` than set this to true otherwise the function is inaccurate.
-
-- **FileWriteReplace:** Enables the Replace functionality in `[FileWrite]`
-
-- **FileLocking:** Enable this to prevent ejection/unplugging problems for USB devices. Windows Explorer tend to lock application's DLL(s).
-  **Note:** As of right now, this only enables support for using `${If} ${FileLocked}` and/or `${IfNot} ${FileLocked}` in the `custom.nsh` file.
-  **ToDo:** Handle without the use of `custom.nsh`. (Got a couple ideas already. Check back soon.)
-
-- **Firewall:** Enable Firewall support.
-
-- **Junctions:** Enable support for Junctions (_SymLinks_) functionality.
-
-- **ACLRegSupport:** Enable support for AccessControl on registry keys.
-
-- **ACLDirSupport:** Enable support for AccessControl on directories.
-
-- **RMEmptyDir:** Enable the function `RMEmptyDir`. See the `Core.nsh` segment on line 1192 for reference.
-
-- **LocalLow:** Enable the function `GetLocalAppDataLow`. See the `Core.nsh` segment on line 1351 for reference.
-
-- **PublicDoc:** Enable the function `GetPublicDoc`. See the `Core.nsh` segment on line 1427 for reference.
-
-- **CompareVersions:** Enable the function `Compare`. See the `Core.nsh` segment on line 141 for reference.
-
-- **ConfigFunctions:** Enable `Write(S)` and `Read(S)` functions (4 total). See the `Core.nsh` segment on line 236 for reference.
-
-- **CloseWindow:** Enable `Close` function. See the `Core.nsh` segment on line 1288 for reference.
-
-- **JSONSupport:** Include the _nsJSON_ plugin allowing `nsJSON::Get`, `nsJSON::Set`, and `nsJSON::Serialize` for use within `custom.nsh`.
-
-- **RestartSleep:** Set this to a numerical value (in milliseconds) to set a sleep value for applications that need to restart (i.e. Notepad++ after installing new plugins).
-
-- **WinMessages:** Include the `WinMessages.nsh` file.
-
-- **LineWrite:** Include the `LineWrite.nsh` file.
-
-- **TrimString:** Enable the function `Trim`. See the `Core.nsh` segment on line 1093 for reference.
-
-- **CloseProcess:** Enable the function `CloseX`. See the `Core.nsh` segment on line 1125 for reference.
-
-- **Include64:** Include the `64.nsh` file.
-
-- **IncludeWordRep:** Include both `WordRepS` and `WordRep` functions. See the `Core.nsh` segment on line 608 for reference.
-
-- **GetBetween:** Include the `GetBetween.nsh` file.
-
-## Code-Signing
+To learn more about the differences between `PAL` and `pac-man` visit [pac-man vs. PAL](Other/Source/docs/pac-man-vs-pal.md)
 
 ---
 
-I have created a small, commandline utility (`CompilerSigner.exe`, source included) to help with code signing using dual signature hashing algorithm standards (_SHA-2_ and _SHA-1_). If you set `[Team]CertSigning` to equal true along with the other need information, than no further assistance is required on your part as this tool will handle the signing for you but [refer further below](#compilersigner.exe) for how to use this tool on the command line for other things you may wish to sign. I decided to use both because Windows 8 supports SHA256 certificates (SHA-2 hashing algorithm); whereas, Windows 7 may only support SHA1 certificates (SHA-1 hashing algorithm). It should be noted that Windows 10 has stopped accepting SHA-1 certificates and certificate chains for Authenticode-signed binaries (unless a timestamp marked the binary as being signed before 1/1/2016). You can visit this [Microsoft Security Advisory article][msadvisory] on the availability of SHA-2 code signing support for Windows 7 and Windows Server 2008 R2 for more information about this topic. If you've got a certificate you wish to sign your launchers with than read the following for information on how to get started.
+## Design Principles
 
-- **CertSigning:** If set to true, the `Launcher.exe` will automatically be signed
-  > **_ATTENTION:_** As it is written right now, the `PortableApps.comLauncherGenerator.exe` expects the certificate file to be the developer's name (same as the `[Team]Developer` key's value) and located in `..\Other\Source\Contrib\certificates`.
-  >
-  > _NOTE_: If your certificate requires you to use a password, refer to line 324 and input your password starting at column 22.
-  > Be sure it is similar to something like this: `!define PASS 'PASSWORD'` where PASSWORD is your password.
-- **CertAlgorithm:** The hashing algorithm to be used when signing the executable.
-- **CertExtension:** If the key `CertSigning` is set to true then this should be set to the certificate's file extension without the period (e.g. "_pfx_" not "_.pfx_").
-- **CertTimestamp:** Here you can choose which time-stamping service you would like to use. Refer to the table below for a small list of available services and their available hashing algorithms. I would recommend using a service which uses both signature hashes. Be aware that this key is case-sensitive. If this key is omitted, the compiler will default to using _Comodo_.
+pac-man adheres to the following principles:
 
-| **CertTimestamp**=_`Value`_ | **Timestamp Service**        | **Algorithms** | **Notes**                             |
-| :-------------------------- | :--------------------------- | :------------- | :------------------------------------ |
-| `Sectigo`                   | Sectigo Limited              | up to _SHA512_ | wait 15 seconds between each request. |
-| `ACCV`                      | ACCV                         | up to _SHA512_ |                                       |
-| `GlobalSign`                | GMO GlobalSign, Inc.         | up to _SHA512_ |                                       |
-| `Symantec`                  | Symantec                     | up to _SHA512_ |                                       |
-| `Starfield`                 | Starfield Technologies, LLC. | up to _SHA512_ |                                       |
-| `Entrust`                   | Entrust DataCard Corp.       | up to _SHA512_ |                                       |
-| `SwissSign`                 | SwissSign AG                 | up to _SHA512_ | only 10 requests per day.             |
-| `IDnomic`                   | Atos SE                      | up to _SHA512_ |                                       |
-| `IZENPE`                    | Izenpe SA                    | up to _SHA512_ |                                       |
-| `CERTUM`                    | Asseco Data Systems S.A.     | up to _SHA512_ |                                       |
-| `CatCert`                   | AOC Consortium               | up to _SHA512_ |                                       |
-| `Apple`                     | Apple Inc.                   | up to _SHA512_ |                                       |
-
-### CompilerSigner.exe
-
-If you'd like to use `CompilerSigner.exe` outside the compiling wizard, you can use the following commandline parameters to do so. When you call this tool, be sure to call it from where it's currently located within the `Other\Source` directory because this tool assumes that the `signtool.exe` utility is in `Contrib\bin\signtool`. I'll update it to use a static file from inside the binary but until than, keep the stucture as is otherwise it will not work correctly.
-
-```
-CompilerSigner.exe --switch=value
-
-	 --PFX= | Path to the certificate.
-	--PASS= | If your certificate requires a password.
-	 --TSA= | This can be any of the above Time-Stamping Authorities listed in the table above.
-	--HASH= | Either SHA1 or SHA2 - NOTE: when using dual signing, be sure to sign using SHA1 first.
-	 --EXE= | Path to the binary you wish to sign.
-	--MODE= | When set to offline, this optional parameter will tell it to not add support for time-stamping.
-
-For example:
-	CompilerSigner.exe --PFX=MyCert.p12 --PASS=PASSWORD --TSA=Entrust --HASH=SHA2 --EXE=MyProgram.exe --MODE=
-```
-
-## Documentation
+1. No permanent system mutation  
+2. Every mutation must be reversible  
+3. Recovery must not depend on successful startup  
+4. User scope first, system scope only when required  
+5. Deterministic execution order  
+6. Fail closed, not open  
 
 ---
 
-Check out the Wiki section for various related articles related to creating PortableApps. The Wiki serves who need a quick reminder on certain functions and macros for use within the `custom.nsh` file. As an added bonus, all (not yet but most) of the source code I've used here is outlined and better explained/documented there as well. For instance, a short guide on registering DLLs and all the macros I used to create the `RegisterDLL.nsh` segment can be found in the Wiki. You can also find an exhaustive tutorial on dealing with Windows Services; plus it explains what each macro is and does within the `Services.nsh` segment and how to use them in action.
+## Crash Recovery Model
 
-#### **Visit the Wiki:** [Pac-Man Wiki][wikihome]
+### Recovery Philosophy
 
-## Contributors
+Crash recovery in pac-man is:
+
+- **Deterministic**, not heuristic  
+- **Journal-driven**, not best-effort  
+- **Idempotent**, safe to re-run  
+
+If pac-man detects that a previous session ended unexpectedly, it **recovers first**, before any new changes are made.
+
+### Recovery Order
+
+Recovery always runs in **reverse dependency order**:
+
+1. Tasks  
+2. Services  
+3. Hosts  
+4. Firewall  
+5. Associations  
+6. Symlinks  
+7. Fonts  
+8. RegDLL  
+9. Runtime  
+
+This mirrors how Windows itself unwinds dependent resources.
 
 ---
 
-This project has been started by [demon.devin][author] and hopefully maintained on a regular basis. However, if you would like to be a part of this then please do not hesitate on getting involved! I'm always open to new ideas and a willingness for the betterment of all things code. =)
+## Journaling System
 
-Thanks to [zodi](http://compucode.blogspot.com/) for developing the GUI (coming soon).
-Thanks to [DoomStorm][tekspert] for all the suggestions and heavily testing for bugs.
+### Purpose
 
-Thank you to the following people; Dave Green (RIP), HandyPAF, all those on the [Discord Workbench][discordworkbench] and anyone else who makes use of this version to _port and let portable!_
+The journal records **only what is necessary to undo a change**.  
+It is not a log; it is a rollback ledger.
 
-A special thanks to FukenGruven. His codebase was the skeleton which was used to start this project.
+### Storage
+
+- Location: `HKCU\Software\pac-man\Journal`  
+- One subkey per segment  
+- No shared keys between segments  
+
+### Rules
+
+- Journal **before** mutation  
+- Never infer state  
+- Never delete data you did not create  
+- Cleanup must clear the journal  
 
 ---
 
-=)
+## Segment Architecture
 
-[2]: http://portableapps.com/ "PortableApps.com/"
-[3]: https://portableapps.com/node/56500 "A Superfluous Discussion"
-[4]: https://portableapps.com/apps/development/nsis_portable "NSIS Portable"
-[5]: http://johnhaller.com/useful-stuff/dot-net-portable-apps ".NET Availability and Viability With Portable Apps"
-[msadvisory]: https://support.microsoft.com/en-us/kb/3033929 "MS Security Advisory: SHA2 support for Win7/Windows Server '08 R2: March 10, 2015"
-[javaportable]: http://portableapps.com/apps/utilities/java_portable "Java Portable"
-[ghostscriptportable]: https://portableapps.com/apps/utilities/ghostscript_portable "Ghostscript Portable"
-[wikihome]: https://github.com/daemondevin/pac-man/wiki "Pac-Man Wiki"
-[author]: http://portableappz.x10.mx/ "daemon.devin"
-[tekspert]: http://tekspert.se/ "Webmaster of TekSpert.se/"
-[discordworkbench]: https://discord.gg/ExKbgXg "A PAFing Community (Discord Chat Platform)"
+Each pac-man segment is an **isolated unit** responsible for exactly one Windows integration domain.
+
+### Segment Lifecycle Functions
+
+A segment may define:
+
+| Function | Required | Description |
+|--------|----------|-------------|
+| `<Segment>_Detect` | Optional | Determines whether the segment should run |
+| `<Segment>_Apply` | Yes | Applies system changes |
+| `<Segment>_Recover` | Required if Apply mutates | Reverts partial or completed changes |
+| `<Segment>_Cleanup` | Yes | Normal teardown (usually calls Recover) |
+
+### Mandatory Rules
+
+- `Recover` must succeed even if `Apply` failed halfway  
+- `Cleanup` must never assume clean state  
+- Segments must not depend on undocumented side effects  
+
+---
+
+## Official Segment Set
+
+pac-man defines the following **first-class segments**:
+
+### Runtime
+- PATH manipulation  
+- Portable VC++ / .NET handling  
+- Process-scoped environment setup  
+
+### RegDLL
+- COM registration/unregistration  
+- DLL lifecycle tracking  
+
+### Fonts
+- User-scoped font registration  
+- Temporary font availability  
+
+### Symlinks
+- Junctions  
+- Hard links  
+- Symbolic links  
+
+### Associations
+- File extensions  
+- Protocol handlers  
+- Shell verbs  
+- Application capabilities (Windows 10/11 compliant)  
+
+### Firewall
+- Program-specific firewall rules  
+- Named, reversible entries  
+
+### Hosts
+- Temporary hostname overrides  
+- Full snapshot restoration  
+
+### Services
+- On-demand Windows services  
+- Explicit creation and deletion  
+
+### Tasks
+- Scheduled tasks  
+- Explicit naming and teardown  
+
+---
+
+## Execution Order
+
+### Apply Order
+
+1. Runtime  
+2. RegDLL  
+3. Fonts  
+4. Symlinks  
+5. Associations  
+6. Firewall  
+7. Hosts  
+8. Services  
+9. Tasks  
+
+### Cleanup / Recovery Order
+
+Exact reverse order.
+
+This ensures no consumer exists without its provider.
+
+---
+
+## Windows 10 / 11 Compliance
+
+pac-man explicitly avoids:
+
+- `UserChoice` hash tampering  
+- Silent default-app hijacking  
+- Undocumented Explorer hooks  
+- Global COM pollution  
+
+All shell integration follows **documented registry contracts** and respects OS safeguards.
+
+---
+
+## Security & Privilege Model
+
+- Default execution is **non-admin**  
+- Admin-only segments must explicitly check elevation  
+- No silent privilege escalation  
+- No persistent background components  
+
+This aligns pac-man with least-privilege principles.
+
+---
+
+## Failure Handling
+
+pac-man treats failure conservatively:
+
+- Partial apply → full recovery  
+- Uncertain state → rollback  
+- Missing journal → do nothing  
+
+Data safety is prioritized over feature completeness.
+
+---
+
+## Extending pac-man
+
+Third-party segments must:
+
+- Follow the lifecycle contract  
+- Use the journal API  
+- Register with the dispatcher  
+- Declare privilege requirements  
+
+Segments that violate these rules are considered **unsafe**.
+
+---
+
+## Intended Use Cases
+
+pac-man is suitable for:
+
+- Portable developer tools  
+- Security tooling  
+- Controlled enterprise environments  
+- Forensic or sandbox workflows  
+
+pac-man is **not** intended for:
+
+- Silent system takeover  
+- Persistent background services  
+- Circumventing OS security policies  
+
+--- 
+
+This README is still being written...
