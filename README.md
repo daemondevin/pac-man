@@ -164,24 +164,20 @@ It is not a log; it is a rollback ledger.
 
 ## Segment Architecture
 
-Each pac-man segment is an **isolated unit** responsible for exactly one Windows integration domain.
+Each segment must fully comply with a strict criteria.
 
-### Segment Lifecycle Functions
-
-A segment may define:
-
-| Function | Required | Description |
-|--------|----------|-------------|
-| `<Segment>_Detect` | Optional | Determines whether the segment should run |
-| `<Segment>_Apply` | Yes | Applies system changes |
-| `<Segment>_Recover` | Required if Apply mutates | Reverts partial or completed changes |
-| `<Segment>_Cleanup` | Yes | Normal teardown (usually calls Recover) |
-
-### Mandatory Rules
-
-- `Recover` must succeed even if `Apply` failed halfway  
-- `Cleanup` must never assume clean state  
-- Segments must not depend on undocumented side effects  
+A compliant segment must:
+- Be self-contained
+- Never assume admin rights
+- Never assume it completes
+- Never assume a successful cleanup
+- Never leak filesystem state
+- Have every mutation reversible without context
+- Declare changes before mutation
+- Be callable from:
+  - normal lifecycle
+  - crash recovery
+  - secondary instance (safe no-op)
 
 ---
 
