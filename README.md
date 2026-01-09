@@ -122,22 +122,6 @@ Crash recovery in pac-man is:
 
 If pac-man detects that a previous session ended unexpectedly, it **recovers first**, before any new changes are made.
 
-### Recovery Order
-
-Recovery always runs in **reverse dependency order**:
-
-1. Tasks  
-2. Services  
-3. Hosts  
-4. Firewall  
-5. Associations  
-6. Symlinks  
-7. Fonts  
-8. RegDLL  
-9. Runtime  
-
-This mirrors how Windows itself unwinds dependent resources.
-
 ---
 
 ## Journaling System
