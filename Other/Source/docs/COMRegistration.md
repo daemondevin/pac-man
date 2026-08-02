@@ -196,7 +196,7 @@ That's just my opinion but you may use what works for you.
 
 #### In the `Custom.nsh` File
 
-```
+```nsis
 ;= Regardless of bit depth we're only using following:
 !define REGSVR      `$SYSDIR\regsvr32.exe`                         ;= define where RegSrv32 is
 !define DLL         `$AppDirectory\App\MyLegalProgram\myLegit.dll` ;= define the file to register
