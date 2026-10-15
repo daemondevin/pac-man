@@ -183,13 +183,13 @@ Exact reverse order. This ensures no consumer exists without its provider. Segme
 | Journal + recovery dispatcher | always on | **Done**, runtime-tested (normal run, forced crash, recovery, foreign edits preserved) |
 | Hosts | `Hosts` | **Journaled**, runtime-tested |
 | Runtime | `Runtime` | Not journaled; does not compile yet |
-| RegDLL | `RegDLLs` | Not journaled; compiles |
+| RegDLL | `RegDLLs` | **Journaled**, user scope by default; runtime-tested for user and machine scope, crash recovery and protection of an existing registration |
 | Fonts | `Fonts` | Not journaled; does not compile yet |
 | Symlinks | `Symlinks` | Not journaled; does not compile yet |
 | Associations | `FileAssociations` | Not journaled; does not compile yet |
 | Firewall | `Firewall` | Not journaled; does not compile yet |
 | Drivers | `Drivers` | Not journaled; does not compile yet |
-| Services | `Services` | Not journaled; compiles |
+| Services | `Services` | **Journaled**; runtime-tested for new services and crash recovery.) |
 | Tasks | `Tasks` | Not journaled; does not compile yet |
 
 PAL-inherited segments (registry keys, file and directory moves, file writes and so on) keep their PAL behavior and are not part of the journal.

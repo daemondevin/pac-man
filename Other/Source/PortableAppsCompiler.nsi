@@ -283,6 +283,12 @@ Var Parameters
 	Var GSExecutable
 !endif
 
+;= DEBUGGING
+;= ################
+; Included before the journal and the segments so their functions can use
+; ${DebugMsg} when they are compiled.
+!include Debug.nsh
+
 ;= JOURNAL
 ;= ################
 ${ECHO} "${NEWLINE}Loading the rollback journal...${NEWLINE}${NEWLINE}"
@@ -292,10 +298,6 @@ ${ECHO} "${NEWLINE}Loading the rollback journal...${NEWLINE}${NEWLINE}"
 ;= ################
 ${ECHO} "${NEWLINE}Loading Segments...${NEWLINE}${NEWLINE}"
 !include Segments.nsh
-
-;= DEBUGGING
-;= ################
-!include Debug.nsh
 
 ;= PACKAGE DETAILS
 ;= ################

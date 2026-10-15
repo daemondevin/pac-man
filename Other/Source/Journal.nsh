@@ -48,6 +48,15 @@
 ;		FONT       A=font file B=AddFontResourceEx flags used (16 = private)
 ;		STRIPLINES A=text file B=marker
 ;		           Removes every line containing the marker.
+;		SVCSTOP    A=service name B=timeout in seconds (default 30)
+;		           Stops the service and waits until it reports STOPPED.
+;		COMDLL     A=COM server (.dll/.ocx/.exe) B=scope(user|machine)
+;		           C=bitness(32|64) D=CLSID or ""
+;		           Unregisters the server. User scope calls DllUnregisterServer
+;		           in-process with HKCR/HKLM redirected to HKCU. When a CLSID is
+;		           given and is no longer registered, nothing is called.
+;		TYPELIB    A=type library B=scope(user|machine)
+;		           Unregisters the type library if it is still registered.
 ;
 ;	Rules for segment authors
 ;		1. Record before you mutate.
@@ -69,6 +78,8 @@
 ; Rollback order for recovery. This is the README apply order reversed, so no
 ; consumer outlives its provider. Segments not in this list are rolled back
 ; afterwards in registry enumeration order.
+!include TypeLib.nsh
+
 !define JOURNAL_RECOVERY_ORDER `Tasks Services Hosts Firewall Associations Symlinks Fonts RegDLL Runtime`
 
 Var JournalActive
@@ -120,6 +131,45 @@ Var _JT4
 !macro _Journal::Rollback _SEG
 	Push `${_SEG}`
 	Call Journal_Rollback
+!macroend
+
+; ${Journal::Discard} Segment
+; Drops the newest entry of Segment without undoing it. Only for the case
+; where the mutation it was recorded for definitely did not happen.
+!define Journal::Discard `!insertmacro _Journal::Discard`
+!macro _Journal::Discard _SEG
+	Push `${_SEG}`
+	Call Journal_Discard
+!macroend
+
+; ${Journal::PEBitness} Path $var
+; Sets $var to 32 or 64 from the file's PE header (0 when unknown).
+!define Journal::PEBitness `!insertmacro _Journal::PEBitness`
+!macro _Journal::PEBitness _PATH _VAR
+	StrCpy $_JT1 `${_PATH}`
+	Call Journal_PEBitness
+	StrCpy ${_VAR} $_JT4
+!macroend
+
+; ${Journal::ComUserCall} Path Proc $var
+; Calls DllRegisterServer or DllUnregisterServer in-process with HKCR and
+; HKLM redirected to HKCU, so a 32-bit COM DLL registers for the current
+; user only. $var receives the HRESULT (0 on success, negative on failure).
+!define Journal::ComUserCall `!insertmacro _Journal::ComUserCall`
+!macro _Journal::ComUserCall _PATH _PROC _VAR
+	StrCpy $_JT1 `${_PATH}`
+	StrCpy $_JT2 `${_PROC}`
+	Call Journal_ComUserCall
+	StrCpy ${_VAR} $_JT4
+!macroend
+
+; ${Journal::RegSvr32} Bitness $var
+; Sets $var to the regsvr32.exe that matches a 32 or 64-bit server.
+!define Journal::RegSvr32 `!insertmacro _Journal::RegSvr32`
+!macro _Journal::RegSvr32 _BITS _VAR
+	StrCpy $_JT1 `${_BITS}`
+	Call Journal_RegSvr32
+	StrCpy ${_VAR} $_JT4
 !macroend
 
 ; ${Journal::HasEntries} Segment $var
@@ -206,6 +256,122 @@ Function Journal_BackupFile
 			StrCpy $_JT1 ""
 		${EndIf}
 	${EndIf}
+FunctionEnd
+
+; Sets $_JT4 to 32 or 64 from the PE header of $_JT1, 0 when unknown.
+Function Journal_PEBitness
+	Push $0
+	Push $1
+	Push $2
+	Push $3
+	StrCpy $_JT4 0
+	ClearErrors
+	FileOpen $0 `$_JT1` r
+	${IfNot} ${Errors}
+		FileSeek $0 0x3C SET
+		FileReadByte $0 $1
+		FileReadByte $0 $2
+		IntOp $2 $2 << 8
+		IntOp $1 $1 | $2
+		FileReadByte $0 $2
+		IntOp $2 $2 << 16
+		IntOp $1 $1 | $2
+		FileReadByte $0 $2
+		IntOp $2 $2 << 24
+		IntOp $1 $1 | $2
+		IntOp $1 $1 + 4
+		FileSeek $0 $1 SET
+		FileReadByte $0 $2
+		FileReadByte $0 $3
+		IntOp $3 $3 << 8
+		IntOp $2 $2 | $3
+		${If} $2 = 0x14C
+			StrCpy $_JT4 32
+		${ElseIf} $2 = 0x8664
+			StrCpy $_JT4 64
+		${ElseIf} $2 = 0xAA64
+			StrCpy $_JT4 64
+		${EndIf}
+		FileClose $0
+	${EndIf}
+	Pop $3
+	Pop $2
+	Pop $1
+	Pop $0
+FunctionEnd
+
+; Sets $_JT4 to the regsvr32.exe matching bitness $_JT1 (32 or 64).
+Function Journal_RegSvr32
+	Push $0
+	System::Call `kernel32::GetCurrentProcess()i.s`
+	System::Call `kernel32::IsWow64Process(is,*i.r0)`
+	${If} $0 <> 0
+		; 32-bit launcher on 64-bit Windows: Sysnative reaches the real System32.
+		${If} $_JT1 == 64
+			StrCpy $_JT4 `$WINDIR\Sysnative\regsvr32.exe`
+		${Else}
+			StrCpy $_JT4 `$WINDIR\SysWOW64\regsvr32.exe`
+		${EndIf}
+	${Else}
+		StrCpy $_JT4 `$SYSDIR\regsvr32.exe`
+	${EndIf}
+	Pop $0
+FunctionEnd
+
+; In-process COM (un)registration redirected to the current user.
+; In: $_JT1 = DLL path, $_JT2 = DllRegisterServer | DllUnregisterServer
+; Out: $_JT4 = HRESULT, or -1 (no entry point), -2 (load failed), -3 (no key)
+Function Journal_ComUserCall
+	Push $0
+	Push $1
+	Push $2
+	Push $3
+	Push $4
+	System::Call `advapi32::RegCreateKeyEx(p 0x80000001, t "Software\Classes", i 0, p 0, i 0, i 0x2001F, p 0, *p .r0, p 0)i .r1`
+	${If} $1 = 0
+		System::Call `advapi32::RegOverridePredefKey(p 0x80000000, p r0)i .r2`
+		System::Call `advapi32::RegOverridePredefKey(p 0x80000002, p 0x80000001)i .r2`
+		System::Call `kernel32::LoadLibraryEx(t "$_JT1", p 0, i 8)p .r4`
+		${If} $4 <> 0
+			System::Call `kernel32::GetProcAddress(p r4, m "$_JT2")p .r2`
+			${If} $2 <> 0
+				System::Call `::$2()i .r3`
+				StrCpy $_JT4 $3
+			${Else}
+				StrCpy $_JT4 -1
+			${EndIf}
+			System::Call `kernel32::FreeLibrary(p r4)`
+		${Else}
+			StrCpy $_JT4 -2
+		${EndIf}
+		System::Call `advapi32::RegOverridePredefKey(p 0x80000000, p 0)`
+		System::Call `advapi32::RegOverridePredefKey(p 0x80000002, p 0)`
+		System::Call `advapi32::RegCloseKey(p r0)`
+	${Else}
+		StrCpy $_JT4 -3
+	${EndIf}
+	Pop $4
+	Pop $3
+	Pop $2
+	Pop $1
+	Pop $0
+FunctionEnd
+
+Function Journal_Discard
+	Exch $_JSeg
+	Push $0
+	ReadRegStr $0 HKCU `${JOURNAL_KEY}\$_JSeg` "Count"
+	${If} $0 > 0
+		DeleteRegValue HKCU `${JOURNAL_KEY}\$_JSeg` "$0.Op"
+		DeleteRegValue HKCU `${JOURNAL_KEY}\$_JSeg` "$0.A"
+		DeleteRegValue HKCU `${JOURNAL_KEY}\$_JSeg` "$0.B"
+		DeleteRegValue HKCU `${JOURNAL_KEY}\$_JSeg` "$0.C"
+		DeleteRegValue HKCU `${JOURNAL_KEY}\$_JSeg` "$0.D"
+		IntOp $0 $0 - 1
+		WriteRegStr HKCU `${JOURNAL_KEY}\$_JSeg` "Count" "$0"
+	${EndIf}
+	Pop $0
+	Pop $_JSeg
 FunctionEnd
 
 ; Returns 1 in $_JT4 when $_JT1 contains $_JT2 (case-insensitive), else 0.
@@ -429,6 +595,90 @@ Function Journal_UndoEntry
 						StrCpy $_JOk false
 					${EndIf}
 					Delete `$2`
+				${EndIf}
+			${EndIf}
+
+		${Case} SVCSTOP
+			${IfThen} $_JB == "" ${|} StrCpy $_JB 30 ${|}
+			nsExec::ExecToStack `"$SYSDIR\sc.exe" stop "$_JA"`
+			Pop $0
+			Pop $1
+			${If} $0 != 1060
+				StrCpy $2 0
+				StrCpy $_JOk false
+				${Do}
+					nsExec::ExecToStack `"$SYSDIR\sc.exe" query "$_JA"`
+					Pop $0
+					Pop $_JT1
+					${If} $0 == 1060
+						StrCpy $_JOk true
+						${ExitDo}
+					${EndIf}
+					StrCpy $_JT2 STOPPED
+					Call Journal_Contains
+					${If} $_JT4 == 1
+						StrCpy $_JOk true
+						${ExitDo}
+					${EndIf}
+					IntOp $2 $2 + 1
+					${IfThen} $2 > $_JB ${|} ${ExitDo} ${|}
+					Sleep 1000
+				${Loop}
+			${EndIf}
+
+		${Case} COMDLL
+			; Already gone? Then there is nothing to undo.
+			StrCpy $2 present
+			${If} $_JD != ""
+				ClearErrors
+				${If} $_JB == user
+					EnumRegKey $0 HKCU `Software\Classes\CLSID\$_JD` 0
+				${Else}
+					${If} $_JC == 64
+						SetRegView 64
+					${EndIf}
+					EnumRegKey $0 HKLM `Software\Classes\CLSID\$_JD` 0
+					SetRegView lastused
+				${EndIf}
+				${IfThen} ${Errors} ${|} StrCpy $2 absent ${|}
+			${EndIf}
+			${If} $2 == present
+				${IfNot} ${FileExists} `$_JA`
+					StrCpy $_JOk false
+				${ElseIf} $_JB == user
+					${Journal::ComUserCall} `$_JA` DllUnregisterServer $0
+					${IfThen} $0 <> 0 ${|} StrCpy $_JOk false ${|}
+				${ElseIf} $Admin != true
+					StrCpy $_JOk false
+				${Else}
+					StrCpy $0 $_JA 4 -4
+					${If} $0 == .exe
+						nsExec::ExecToStack `"$_JA" /unregserver`
+					${Else}
+						${Journal::RegSvr32} $_JC $1
+						nsExec::ExecToStack `"$1" /s /u "$_JA"`
+					${EndIf}
+					Pop $0
+					Pop $1
+					${IfThen} $0 != 0 ${|} StrCpy $_JOk false ${|}
+				${EndIf}
+			${EndIf}
+
+		${Case} TYPELIB
+			${GetPathToLib} `$_JA` $0 $1
+			${If} $_JB == user
+				${If} $1 != ""
+					ClearErrors
+					${UnRegTlbForUser} `$_JA`
+					${IfThen} ${Errors} ${|} StrCpy $_JOk false ${|}
+				${EndIf}
+			${ElseIf} $0 != ""
+				${If} $Admin != true
+					StrCpy $_JOk false
+				${Else}
+					ClearErrors
+					${UnRegTlb} `$_JA`
+					${IfThen} ${Errors} ${|} StrCpy $_JOk false ${|}
 				${EndIf}
 			${EndIf}
 
