@@ -12,8 +12,7 @@
 ;= GFLAGS
 ;= ################
 !define CustomIconAndName
-!define CONTRIB		`Contrib\bin`
-!define SIGNDIR		`${CONTRIB}\signtool`
+!define SIGNDIR		`bin\signtool`
 !define SIGNTOOL	`${SIGNDIR}\signtool.exe`
 !define NEWLINE		`$\r$\n`
 !define TAB			`$\t`
@@ -533,14 +532,7 @@ Section Main
 		${ReadAppInfoConfig} $0 "Control" "Start"
 		${IfNot} ${Errors}
 			${WriteGlobalDefines} "OUTFILE" "$0" "$\t$\t$\t"
-		${EndIf}		
-		ClearErrors
-		${ReadAppInfoConfig} $0 "Dependencies" "UsesDotNetVersion"
-		${IfNot} ${Errors}
-			${If} $0 != false
-				${WriteGlobalDefines} "DOTNET" "" ""
-			${EndIf}
-		${EndIf}
+		${EndIf}	
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "UseStdUtils"
 		${IfNot} ${Errors}
@@ -576,11 +568,6 @@ Section Main
 		${ReadAppInfoConfig} $0 "Dependencies" "Firewall"
 		${IfNot} ${Errors}
 			${WriteGlobalDefines} "FIREWALL" "" ""
-		${EndIf}
-		ClearErrors
-		${ReadAppInfoConfig} $0 "Dependencies" "Junctions"
-		${IfNot} ${Errors}
-			${WriteGlobalDefines} "NTFS" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "ACLRegSupport"
@@ -694,116 +681,125 @@ Section Main
 			${If} $0 == "try"
 			${OrIf} $0 == "force"
 			${OrIf} $0 == "compile-force"
+			${OrIf} $0 == "prompt"
 				${WriteGlobalDefines} "UAC" "" ""
 			${EndIf}
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "DualMode"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "HYBRID" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Registry"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "REGISTRY" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_REGISTRY" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "RegRedirection"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "DISABLEFSR" "" ""
-		${EndIf}
-		ClearErrors
-		${ReadLauncherConfig} $0 "Activate" "RegCopyKeys"
-		${IfNot} ${Errors}
-			${WriteGlobalDefines} "RegCopy" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Redirection"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "SYSTEMWIDE_DISABLEREDIR" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "ForceRedirection"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "FORCE_SYSTEMWIDE_DISABLEREDIR" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "ExecAsUser"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "ExecAsUser" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "EXEC_AS_USER" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Services"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "SERVICES" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_SERVICES" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "RegDLLs"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "REGISTERDLL" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_REGDLL" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Tasks"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "TASKSCHEDULER" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_TASKS" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Java"
 		${IfNot} ${Errors}
 			${If} $0 == "find"
 			${OrIf} $0 == "require"
-				${WriteGlobalDefines} "JAVA" "" ""
+				${WriteGlobalDefines} "SEGMENTS_JAVA" "" ""
 			${EndIf}
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "XML"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "XML_PLUGIN" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_XML" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Ghostscript"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "GHOSTSCRIPT" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_GHOSTSCRIPT" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Fonts"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "FONTS_ENABLE" "" ""
-		${EndIf}
-		ClearErrors
-		${ReadLauncherConfig} $0 "Activate" "FileCleanup"
-		${IfNot} ${Errors}
-			${WriteGlobalDefines} "FileCleanup" "" ""
-		${EndIf}
-		ClearErrors
-		${ReadLauncherConfig} $0 "Activate" "DirectoryCleanup"
-		${IfNot} ${Errors}
-			${WriteGlobalDefines} "DirectoryCleanup" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_FONTS" "" ""
 		${EndIf}
         ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "FileAssociations"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "FILEASSOCIATIONS" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_ASSOCIATIONS" "" ""
 		${EndIf}
         ClearErrors
-		${ReadLauncherConfig} $0 "Activate" "RuntimeDependencies"
+		${ReadLauncherConfig} $0 "Activate" "Runtime"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "RUNTIME" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_RUNTIME" "" ""
 		${EndIf}
         ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Drivers"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "DRIVERS" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_DRIVERS" "" ""
 		${EndIf}
         ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Firewall"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "FIREWALL" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_FIREWALL" "" ""
 		${EndIf}
         ClearErrors
-		${ReadLauncherConfig} $0 "Activate" "SymbolicJunctions"
+		${ReadLauncherConfig} $0 "Activate" "Symlinks"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "SYMBOLICJUNCTIONS" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_SYMLINKS" "" ""
+		${EndIf}
+		ClearErrors
+		${ReadLauncherConfig} $0 "Activate" "Hosts"
+		${IfNot} ${Errors}
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_HOSTS" "" ""
 		${EndIf}
 		
 		FileClose $GFLAGS
@@ -869,4 +865,4 @@ Function .onGUIEnd
 FunctionEnd
 
 ; Sign ourselves using both SHA-1 and SHA-2 too.
-!finalize `"${SIGNTOOL}" sign /f "Contrib\certificates\daemon.devin.pfx" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
+!finalize `"${SIGNTOOL}" sign /f "contrib\certificates\daemon.devin.pfx" /p "FuckYouMendi" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`

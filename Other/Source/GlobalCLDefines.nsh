@@ -37,7 +37,8 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Redirection=` SYSTEMWIDE_DISABLEREDIR
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `ForceRedirection=` FORCE_SYSTEMWIDE_DISABLEREDIR
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Tasks=` TASKSCHEDULER
-!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `RuntimeDependencies=` RUNTIME
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `RuntimeDependencies=` SEGMENTS_RUNTIME
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Hosts=` SEGMENTS_HOSTS
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Drivers=` DRIVERS
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `FileAssociations=` ASSOCIATIONS
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Firewall=` FIREWALL
@@ -100,11 +101,19 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 		!undef REGISTRY
 	!endif
 !endif
-!if "${RUNTIME}" == true
-	!define /REDEF RUNTIME
+; Named SEGMENTS_RUNTIME because RUNTIME is the runtime-data INI path.
+!if "${SEGMENTS_RUNTIME}" == true
+	!define /REDEF SEGMENTS_RUNTIME
 !else
-	!ifdef RUNTIME
-		!undef RUNTIME
+	!ifdef SEGMENTS_RUNTIME
+		!undef SEGMENTS_RUNTIME
+	!endif
+!endif
+!if "${SEGMENTS_HOSTS}" == true
+	!define /REDEF SEGMENTS_HOSTS
+!else
+	!ifdef SEGMENTS_HOSTS
+		!undef SEGMENTS_HOSTS
 	!endif
 !endif
 !if "${DRIVERS}" == true

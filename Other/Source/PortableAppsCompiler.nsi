@@ -34,13 +34,13 @@
 
 ;= ECHO
 ;= ################
-!macro !ECHO _MSG
+!define ECHO "!insertmacro _ECHO"
+!macro _ECHO _MSG
 	!verbose push
 	!verbose 4
 	!echo "${_MSG}"
 	!verbose pop
 !macroend
-!define !ECHO "!insertmacro !ECHO"
 !define NEWLINE	`$\r$\n`
 
 ;= NSIS VERSION
@@ -58,7 +58,7 @@ SetCompressor /SOLID lzma
 SetCompressorDictSize 32
 !ifdef RUNASADMIN_COMPILEFORCE
 	RequestExecutionLevel admin
-!else ifdef UAC
+!else ifdef SEGMENTS_UAC
 	RequestExecutionLevel admin
 !else
 	RequestExecutionLevel user
@@ -71,7 +71,7 @@ ManifestSupportedOS "{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"  # Windows 10 & Lat
 ;= PAC VERSION
 ;= ################
 !include Version.nsh
-${!ECHO} "${NEWLINE}PORTABLEAPPS COMPILER\
+${ECHO} "${NEWLINE}PORTABLEAPPS COMPILER\
 		${NEWLINE}$\tFOUNDER: daemon.devin\
 		${NEWLINE}$\tEDITION: ${EDITION}\
 		${NEWLINE}$\tVERSION: ${PACVER}\
@@ -79,10 +79,11 @@ ${!ECHO} "${NEWLINE}PORTABLEAPPS COMPILER\
 
 ;= GLOBAL DEFINES
 ;= ################
-${!ECHO} "${NEWLINE}Reading/Writing Package Definitions...${NEWLINE}${NEWLINE}"
+${ECHO} "${NEWLINE}Reading/Writing Package Definitions...${NEWLINE}${NEWLINE}"
 !ifndef PACMAN
     !include GlobalCLDefines.nsh
 !endif
+!include FeatureFlags.nsh
 !define APPINFO         `$EXEDIR\App\AppInfo`
 !define INFOINI			`${APPINFO}\appinfo.ini`
 !define INSTINI			`${APPINFO}\installer.ini`
@@ -112,7 +113,7 @@ ${!ECHO} "${NEWLINE}Reading/Writing Package Definitions...${NEWLINE}${NEWLINE}"
 
 ;= INCLUDES/PLUGINS
 ;= ################
-${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLINE}"
+${ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLINE}"
 !include LangFile.nsh
 !include LogicLib.nsh
 !include FileFunc.nsh
@@ -124,7 +125,7 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 		!AddPluginDir Plugins
 	!endif
 !endif
-!ifdef ExecAsUser
+!ifdef EXEC_AS_USER
 	!include StdUtils.nsh
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
@@ -133,18 +134,19 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 !endif
 !ifdef REPLACE
 	!include NewTextReplace.nsh
+	!include ReplaceInFileWithTextReplace.nsh
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
 		!AddPluginDir Plugins
 	!endif
 !endif
-!ifdef FIREWALL
+!ifdef SEGMENTS_FIREWALL
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
 		!AddPluginDir Plugins
 	!endif
 !endif
-!ifdef UAC
+!ifdef SEGMENTS_UAC
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
 		!AddPluginDir Plugins
@@ -156,18 +158,15 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 		!AddPluginDir Plugins
 	!endif
 !endif
-!ifdef XML_PLUGIN
+!ifdef SEGMENTS_XML
 	!include XML.nsh
 	!ifndef PLUGINSDIR
 		!define PLUGINSDIR
 		!AddPluginDir Plugins
 	!endif
 !endif
-!ifdef DOTNET
-	!include DotNetVer.nsh
-!endif
 !ifdef StdUtils
-	!ifndef ExecAsUser
+	!ifndef EXEC_AS_USER
 		!include StdUtils.nsh
 		!ifndef PLUGINSDIR
 			!define PLUGINSDIR
@@ -185,13 +184,10 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 		!AddPluginDir Plugins
 	!endif
 !endif
-!ifdef REGISTRY
+!ifdef SEGMENTS_REGISTRY
 	!include Registry.nsh
 	!define REGEXE	`$SYSDIR\reg.exe`
 	!define REGEDIT	`$SYSDIR\regedit.exe`
-!endif
-!ifdef REPLACE
-	!include ReplaceInFileWithTextReplace.nsh
 !endif
 !include ForEachINIPair.nsh
 !include ForEachPath.nsh
@@ -203,7 +199,6 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 !include IsFile.nsh
 !include LogicLibAdditions.nsh
 !include nsDialogs.nsh
-!include AddCertToStore.nsh
 !ifdef GetBetween.nsh
 	!include GetBetween.nsh
 !endif
@@ -224,8 +219,11 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 !ifdef Include_WinMessages.nsh
 	!include WinMessages.nsh
 !endif
-!ifdef UAC
+!ifdef SEGMENTS_UAC
 	!include UAC.nsh
+    !ifdef CertSigning
+        !include AddCertToStore.nsh
+    !endif
 	!ifndef TrimString
 		!define TrimString
 	!endif
@@ -235,23 +233,18 @@ ${!ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLIN
 		!define GET_ROOT
 	!endif
 !endif
-!ifdef RUNTIMEDEPENDENCIES
+!ifdef SEGMENTS_RUNTIME
 	!ifndef TrimString
 		!define TrimString
 	!endif
-!endif
-!ifdef SYMBOLICJUNCTIONS
-    !include CreateSymlink.nsh
-    !include CreateJunction.nsh
-    !include CreateHardLink.nsh
-!endif
+!endif 
 ;= PAC MACROS
 ;= ################
 !include GlobalMacros.nsh
 
 ;= LANGUAGES
 ;= ################
-${!ECHO} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
+${ECHO} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 !verbose push
 !verbose 1
 !include Languages.nsh
@@ -259,7 +252,7 @@ ${!ECHO} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 
 ;= VARIABLES
 ;= ################
-${!ECHO} "${NEWLINE}Initializing variables and macros...${NEWLINE}${NEWLINE}"
+${ECHO} "${NEWLINE}Initializing variables and macros...${NEWLINE}${NEWLINE}"
 Var Bit
 Var App
 Var Admin
@@ -273,29 +266,31 @@ Var StatusMutex
 Var WaitForProgram
 Var UsingJavaExecutable
 Var Parameters
-!ifdef REGISTRY
+!ifdef SEGMENTS_REGISTRY
 	Var Registry
 !endif
-!ifdef UAC
+!ifdef SEGMENTS_UAC
 	Var RunAsAdmin
 !endif
-!ifdef DOTNET
-	Var DotNETVersion
-!endif
-!ifdef JAVA
+!ifdef SEGMENTS_JAVA
 	Var JavaMode
 	Var JavaDirectory
 !endif
-!ifdef GHOSTSCRIPT
+!ifdef SEGMENTS_GHOSTSCRIPT
 	Var GSMode
 	Var GSDirectory
 	Var GSRegExists
 	Var GSExecutable
 !endif
 
+;= JOURNAL
+;= ################
+${ECHO} "${NEWLINE}Loading the rollback journal...${NEWLINE}${NEWLINE}"
+!include Journal.nsh
+
 ;= SEGMENTS
 ;= ################
-${!ECHO} "${NEWLINE}Loading Segments...${NEWLINE}${NEWLINE}"
+${ECHO} "${NEWLINE}Loading Segments...${NEWLINE}${NEWLINE}"
 !include Segments.nsh
 
 ;= DEBUGGING
@@ -304,7 +299,7 @@ ${!ECHO} "${NEWLINE}Loading Segments...${NEWLINE}${NEWLINE}"
 
 ;= PACKAGE DETAILS
 ;= ################
-${!ECHO}			`${NEWLINE}Writing launcher's specification details...${NEWLINE}${NEWLINE}`
+${ECHO}			    `${NEWLINE}Writing launcher's specification details...${NEWLINE}${NEWLINE}`
 Name				`${PORTABLEAPPNAME}`
 OutFile				`${PACKAGE}\${APPNAME}.exe`
 Icon				`${PACKAGE}\App\AppInfo\AppIcon.ico`
@@ -331,61 +326,34 @@ VIAddVersionKey /LANG=1033 ProductVersion   Portable
 
 ;= CODE SIGNING
 ;= ################
+; The certificate password is never stored in source. Set it in the
+; environment before compiling, e.g.  set PACMAN_CERT_PASS=secret
+; It is read at compile time only and never ends up in the launcher.
 !ifdef CertSigning
-${!ECHO} "${NEWLINE} Grabbing the certificate and other information then signing ${OUTFILE}...${NEWLINE}${NEWLINE}"
-
-!define SIGNTOOL	`Contrib\bin\signtool\signtool.exe`
-!define CERT		`Contrib\certificates\${DEVELOPER}.${CertExtension}`
-!define PASS		``
-	!finalize `"${SIGNTOOL}" sign /f "Contrib\certificates\daemon.devin.pfx" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
-!else
-	!ifndef PACMAN
-
-		!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertSigning=` Certificate
-		!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertExtension=` CERT_EXT
-		!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertAlgorithm=` CERT_HASH
-		!searchparse /ignorecase /noerrors /file "${PACKAGE}\App\AppInfo\appinfo.ini" `CertTimestamp=` TIMESTAMP_SVC
-		
-		!if "${Certificate}" == true
-			!define /REDEF Certificate
+	${ECHO} "${NEWLINE}Grabbing the certificate and other information then signing ${OUTFILE}...${NEWLINE}${NEWLINE}"
+	!define /ifndef CertExtension	pfx
+	; CertTimestamp may be a URL or a service name; names fall back to Sectigo.
+	!define /ifndef CertTimestamp	`http://timestamp.sectigo.com/`
+	!searchparse /noerrors "${CertTimestamp}" "://" _TSA_IS_URL
+	!ifdef _TSA_IS_URL
+		!define TSA_URL `${CertTimestamp}`
+	!else
+		!define TSA_URL `http://timestamp.sectigo.com/`
+	!endif
+	!define SIGNTOOL	`bin\signtool\signtool.exe`
+	!define CERT		`contrib\certificates\${DEVELOPER}.${CertExtension}`
+	!define _PASS_RAW	`$%PACMAN_CERT_PASS%`
+	!searchparse /noerrors "${_PASS_RAW}" "%PACMAN_CERT_PASS" _PASS_UNSET
+	!if /FileExists "${CERT}"
+		!ifdef _PASS_UNSET
+			!finalize `"${SIGNTOOL}" sign /f "${CERT}" /fd sha512 /t "${TSA_URL}" /v "%1"`
+		!else
+			!finalize `"${SIGNTOOL}" sign /f "${CERT}" /p "${_PASS_RAW}" /fd sha512 /t "${TSA_URL}" /v "%1"`
 		!endif
-		!if ! "${CERT_EXT}" == ""
-			!define CertExtension `${CERT_EXT}`
-		!endif
-		!if ! "${CERT_HASH}" == ""
-			!define CertAlgorithm `${CERT_HASH}`
-		!endif
-		!if ! "${TIMESTAMP_SVC}" == ""
-			!if "${TIMESTAMP_SVC}" == "offline"
-				!define MODE "offline"
-			!else
-				!define CertTimestamp `${TIMESTAMP_SVC}`
-			!endif
-		!endif
-
-		!if /FileExists "${CERT}"
-		    ; Sign only if we can locate the certificate..
-			;
-			; Sign using dual signature hashing 
-			; algorithms (SHA1/SHA2) as well as
-			; add a time-stamp to the signature
-			; using a specified TSA service.   
-			;
-			!finalize `CompilerSigner.exe \
-					/pfx "${CERT}" \
-					/p "${PASS}" \
-					/tsa "${CertTimestamp}" \
-					/hash "${CertAlgorithm}" \
-					/exe "${PACKAGE}\${OUTFILE}" ${MODE}`
-		!else ; Cannot find the certificate..
-			!warning "Cannot find a certificate to sign the launcher. Please \
-					  check the spelling and/or the path to your certificate \
-					  is correct and recompile to sign ${OUTFILE}!"
-
-		!endif
+	!else
+		!warning "Cannot find the certificate ${CERT}; ${OUTFILE} will not be signed."
 	!endif
 !endif
-
 ;= FUNCTIONS
 ;= ################
 Function IsWOW64
@@ -454,12 +422,56 @@ Function .onInit
 	${RunSegment} Temp
 	${RunSegment} Language
 	${RunSegment} OperatingSystem
-	!ifdef UAC
+	!ifdef SEGMENTS_UAC
 		${RunSegment} RunAsAdmin
 	!endif
 	${ENABLE_REDIRECTION}
 	Pop $0
 FunctionEnd
+; PAC-MAN segment ordering
+; Apply order follows the README: Runtime, RegDLL, Fonts, Symlinks,
+; Associations, Firewall, Hosts, Services, Tasks. Drivers and DirectX sit
+; with their providers. Cleanup and recovery run the exact reverse, so no
+; consumer outlives its provider. A segment is only dispatched when its
+; feature flag is compiled in, which keeps disabled segments out of the
+; build and out of the warning log.
+!macro _RunIfEnabled _FLAG _SEG
+	!ifdef ${_FLAG}
+		; Segments only implement the hooks they need, so skip missing ones quietly.
+		!ifmacrodef ${_SEG}.nsh_${__FUNCTION__}
+			${RunSegment} ${_SEG}
+		!endif
+	!endif
+!macroend
+!define RunIfEnabled `!insertmacro _RunIfEnabled`
+!macro _PacSegmentsApply
+	${RunIfEnabled} SEGMENTS_RUNTIME       Runtime
+	${RunIfEnabled} SEGMENTS_REGDLL        RegDLL
+	${RunIfEnabled} SEGMENTS_DIRECTX       DirectX
+	${RunIfEnabled} SEGMENTS_FONTS         Fonts
+	${RunIfEnabled} SEGMENTS_SYMLINKS      Symlinks
+	${RunIfEnabled} SEGMENTS_ASSOCIATIONS  Associations
+	${RunIfEnabled} SEGMENTS_FIREWALL      Firewall
+	${RunIfEnabled} SEGMENTS_HOSTS         Hosts
+	${RunIfEnabled} SEGMENTS_DRIVERS       Drivers
+	${RunIfEnabled} SEGMENTS_SERVICES      Services
+	${RunIfEnabled} SEGMENTS_TASKS         Tasks
+!macroend
+!define PacSegmentsApply `!insertmacro _PacSegmentsApply`
+!macro _PacSegmentsCleanup
+	${RunIfEnabled} SEGMENTS_TASKS         Tasks
+	${RunIfEnabled} SEGMENTS_SERVICES      Services
+	${RunIfEnabled} SEGMENTS_DRIVERS       Drivers
+	${RunIfEnabled} SEGMENTS_HOSTS         Hosts
+	${RunIfEnabled} SEGMENTS_FIREWALL      Firewall
+	${RunIfEnabled} SEGMENTS_ASSOCIATIONS  Associations
+	${RunIfEnabled} SEGMENTS_SYMLINKS      Symlinks
+	${RunIfEnabled} SEGMENTS_FONTS         Fonts
+	${RunIfEnabled} SEGMENTS_DIRECTX       DirectX
+	${RunIfEnabled} SEGMENTS_REGDLL        RegDLL
+	${RunIfEnabled} SEGMENTS_RUNTIME       Runtime
+!macroend
+!define PacSegmentsCleanup `!insertmacro _PacSegmentsCleanup`
 Function Init
 	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
@@ -474,12 +486,9 @@ Function Init
 	${EndIf}
 	${RunSegment} DirectoryMoving
 	${RunSegment} Variables
-	!ifdef JAVA
-		${RunSegment} Java
-	!endif
-	!ifdef GHOSTSCRIPT
-		${RunSegment} Ghostscript
-	!endif
+	${RunIfEnabled} SEGMENTS_JAVA Java
+	${RunIfEnabled} SEGMENTS_GHOSTSCRIPT Ghostscript
+	${RunIfEnabled} SEGMENTS_DOTNET DotNet
 	${RunSegment} RunLocally
 	${If} ${PrimaryInstance}
 		${RunSegment} Temp
@@ -493,37 +502,9 @@ FunctionEnd
 Function Pre
 	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
-		!ifdef FIREWALL
-			${RunSegment} Firewall
-		!endif
-		!ifdef RUNTIME
-			${RunSegment} RuntimeDependencies
-		!endif
-		!ifdef SERVICES
-			${RunSegment} Services
-		!endif
-		!ifdef DRIVERS
-			${RunSegment} Drivers
-		!endif
-		!ifdef REGISTERDLL
-			${RunSegment} RegisterDLL
-		!endif
-		!ifdef ASSOCIATIONS
-			${RunSegment} FileAssociations
-		!endif
-		!ifdef TASKSCHEDULER
-			${RunSegment} TaskScheduler
-		!endif
-		!ifdef SYMLINKSJUNCTIONS
-			${RunSegment} SymbolicJunctions
-		!endif
+		${PacSegmentsApply}
 	${EndIf}
-	!ifdef REGISTRY
-		${RunSegment} Registry
-	!endif
-	!ifdef FONTS_ENABLED
-		${RunSegment} Fonts
-	!endif
+	${RunIfEnabled} SEGMENTS_REGISTRY Registry
 	${RunSegment} Custom
 	${RunSegment} RunLocally
 	${RunSegment} Temp
@@ -532,13 +513,9 @@ Function Pre
 	${RunSegment} ExecString
 	${ENABLE_REDIRECTION}
 FunctionEnd
-Function PrePrimary        
+Function PrePrimary
 	${DISABLE_REDIRECTION}
-	${If} ${PrimaryInstance}
-		!ifdef FileCleanup
-			${RunSegment} FilesCleanup
-		!endif
-	${EndIf}
+	${RunIfEnabled} FileCleanup FilesCleanup
 	${RunSegment} Custom
 	${RunSegment} DriveLetter
 	${RunSegment} Variables
@@ -547,80 +524,36 @@ Function PrePrimary
 	${RunSegment} FileWrite
 	${RunSegment} FilesMove
 	${RunSegment} DirectoriesMove
-	!ifdef REGISTRY
+	!ifdef SEGMENTS_REGISTRY
 		${RunSegment} RegistryKeys
-		!ifdef RegCopy
-			${If} ${PrimaryInstance}
-				${RunSegment} RegistryCopyKeys
-			${EndIf}
-		!endif
+		${RunSegment} RegistryCopyKeys
 		${RunSegment} RegistryValueBackupDelete
-	!endif
-	${If} ${PrimaryInstance}
-		!ifdef FIREWALL
-			${RunSegment} Firewall
-		!endif
-		!ifdef RUNTIME
-			${RunSegment} RuntimeDependencies
-		!endif
-		!ifdef DRIVERS
-			${RunSegment} Drivers
-		!endif
-		!ifdef SERVICES
-			${RunSegment} Services
-		!endif
-		!ifdef REGISTERDLL
-			${RunSegment} RegisterDLL
-		!endif
-		!ifdef DIRECTX
-			${RunSegment} DirectX
-		!endif
-		!ifdef ASSOCIATIONS
-			${RunSegment} FileAssociations
-		!endif
-		!ifdef SYMLINKSJUNCTIONS
-			${RunSegment} SymbolicJunctions
-		!endif
-	${EndIf}
-	!ifdef REGISTRY
 		${RunSegment} RegistryValueWrite
 	!endif
-	${If} ${PrimaryInstance}
-		!ifdef TASKSCHEDULER
-			${RunSegment} TaskScheduler
-		!endif
-		!ifdef FONTS_ENABLE
-			${RunSegment} Fonts
-		!endif
-	${EndIf}
+	${PacSegmentsApply}
 	${ENABLE_REDIRECTION}
 FunctionEnd
-Function PreSecondary        
+Function PreSecondary
 	${DISABLE_REDIRECTION}
 	${RunSegment} Custom
 	${ENABLE_REDIRECTION}
 FunctionEnd
-Function PreExec        
+Function PreExec
 	${DISABLE_REDIRECTION}
 	${RunSegment} Custom
-	${If} ${PrimaryInstance}
-		!ifdef REGISTERDLL
-			${RunSegment} RegisterDLL
-		!endif
-	${EndIf}
 	${RunSegment} RefreshShellIcons
 	${RunSegment} WorkingDirectory
 	${RunSegment} RunBeforeAfter
 	${ENABLE_REDIRECTION}
 FunctionEnd
-Function PreExecPrimary        
+Function PreExecPrimary
 	${DISABLE_REDIRECTION}
 	${RunSegment} Custom
 	${RunSegment} Core
 	;${RunSegment} LastRunEnvironment
 	${ENABLE_REDIRECTION}
 FunctionEnd
-Function PreExecSecondary        
+Function PreExecSecondary
 	${DISABLE_REDIRECTION}
 	${RunSegment} Custom
 	${ENABLE_REDIRECTION}
@@ -646,7 +579,7 @@ Function Execute
 				${InvalidValueError} [Launch]:HideCommandLineWindow $0
 			${EndIf}
 			${If} $WaitForProgram != false
-				!ifdef ExecAsUser
+				!ifdef EXEC_AS_USER
 					${ConfigReads} `${CONFIG}` ExecAsAdmin= $0
 					${If} $0 == true
 						StrCpy $ExecString "$ExecString $Parameters"
@@ -666,7 +599,7 @@ Function Execute
 					ExecWait $ExecString
 				!endif
 			${Else}
-				!ifdef ExecAsUser
+				!ifdef EXEC_AS_USER
 					${StdUtils.ExecShellAsUser} $0 "$ExecString" "" "$Parameters"
 				!else
 					Exec $ExecString
@@ -716,63 +649,22 @@ FunctionEnd
 Function PostExecSecondary
 	${RunSegment} Custom
 FunctionEnd
-Function PostExec       
+Function PostExec
 	${RunSegment} RunBeforeAfter
 	${RunSegment} Custom
 FunctionEnd
-Function PostPrimary        
+Function PostPrimary
 	${DISABLE_REDIRECTION}
-	${If} ${PrimaryInstance}
-		!ifdef FIREWALL
-			${RunSegment} Firewall
-		!endif
-		!ifdef REGISTERDLL
-			${RunSegment} RegisterDLL
-		!endif
-		!ifdef DIRECTX
-			${RunSegment} DirectX
-		!endif
-		!ifdef RUNTIME
-			${RunSegment} RuntimeDependencies
-		!endif
-		!ifdef SERVICES
-			${RunSegment} Services
-		!endif
-		!ifdef DRIVERS
-			${RunSegment} Drivers
-		!endif
-		!ifdef TASKSCHEDULER
-			${RunSegment} TaskScheduler
-		!endif
-		!ifdef ASSOCIATIONS
-			${RunSegment} FileAssociations
-		!endif
-		!ifdef FONTS_ENABLED
-			${RunSegment} Fonts
-		!endif
-	${EndIf}
-	!ifdef REGISTRY
+	${PacSegmentsCleanup}
+	!ifdef SEGMENTS_REGISTRY
 		${RunSegment} RegistryValueBackupDelete
-		${If} ${PrimaryInstance}
-			!ifdef RegCopy
-				${RunSegment} RegistryCopyKeys
-			!endif
-		${EndIf}
+		${RunSegment} RegistryCopyKeys
 		${RunSegment} RegistryKeys
 		${RunSegment} RegistryCleanup
 	!endif
-	${If} ${PrimaryInstance}
-		${RunSegment} Qt
-		!ifdef FileCleanup
-			${RunSegment} FilesCleanup
-		!endif
-		!ifdef SYMLINKSJUNCTIONS
-			${RunSegment} SymbolicJunctions
-		!endif
-	${EndIf}
-	!ifdef DirectoryCleanup
-		${RunSegment} DirectoriesCleanup
-	!endif
+	${RunSegment} Qt
+	${RunIfEnabled} FileCleanup FilesCleanup
+	${RunSegment} DirectoriesCleanup
 	${RunSegment} DirectoriesMove
 	${RunSegment} FilesMove
 	${RunSegment} RunLocally
@@ -780,56 +672,38 @@ Function PostPrimary
 	${RunSegment} Custom
 	${ENABLE_REDIRECTION}
 FunctionEnd
-Function PostSecondary        
+Function PostSecondary
 	${DISABLE_REDIRECTION}
 	${RunSegment} Custom
 	${ENABLE_REDIRECTION}
 FunctionEnd
-Function Post        
+Function Post
 	${DISABLE_REDIRECTION}
-	!ifdef GHOSTSCRIPT
-		${RunSegment} Ghostscript
-	!endif
+	${If} ${PrimaryInstance}
+		${PacSegmentsCleanup}
+	${EndIf}
+	${RunIfEnabled} SEGMENTS_GHOSTSCRIPT Ghostscript
 	${RunSegment} RefreshShellIcons
 	${RunSegment} Custom
 	${ENABLE_REDIRECTION}
 FunctionEnd
-Function Unload        
+Function Unload
 	${DISABLE_REDIRECTION}
 	${If} ${PrimaryInstance}
-		!ifdef REGISTERDLL
-			${RunSegment} RegisterDLL
-		!endif
-		!ifdef RUNTIME
-			${RunSegment} RuntimeDependencies
-		!endif
-		!ifdef SERVICES
-			${RunSegment} Services
-		!endif
-		!ifdef DRIVERS
-			${RunSegment} Drivers
-		!endif
-		!ifdef FONTS_ENABLE
-			${RunSegment} Fonts
-		!endif
-		!ifdef ASSOCIATIONS
-			${RunSegment} FileAssociations
-		!endif
-		!ifdef FileCleanup
-			${RunSegment} FilesCleanup
-		!endif
-		!ifdef DirectoryCleanup
-			${RunSegment} DirectoriesCleanup
-		!endif
-		!ifdef TASKSCHEDULER
-			${RunSegment} TaskScheduler
-		!endif
-		!ifdef FIREWALL
-			${RunSegment} Firewall
-		!endif
-		!ifdef SYMLINKSJUNCTIONS
-			${RunSegment} SymbolicJunctions
-		!endif
+		${PacSegmentsCleanup}
+		${RunIfEnabled} FileCleanup FilesCleanup
+		${RunSegment} DirectoriesCleanup
+		; Safety net: whatever a segment left in the journal is rolled back
+		; here, in recovery order. When the launcher does not wait for the
+		; program (WaitForProgram=false) the system changes must outlive the
+		; launcher, so the session is left open and the next launch's
+		; recovery dispatcher rolls it back.
+		${If} $WaitForProgram != false
+			Call Journal_RollbackAll
+			${Journal::End}
+		${ElseIf} $JournalActive == true
+			WriteRegStr HKCU `${JOURNAL_KEY}` "State" "detached"
+		${EndIf}
 	${EndIf}
 	${RunSegment} Core
 	${RunSegment} Custom
@@ -867,11 +741,22 @@ Section
 		MessageBox MB_ICONSTOP $(LauncherAlreadyStopping)
 		Quit
 	${EndIf}
+	; Crash recovery comes first, before this launch changes anything. Only
+	; the primary instance may recover: a secondary instance means another
+	; launcher for this app is alive and its journal is not stale.
+	${If} ${PrimaryInstance}
+		${If} ${FileExists} `${RUNTIME}`
+			; The PAL crash notice below already tells the user; stay quiet.
+			StrCpy $JournalQuiet true
+		${EndIf}
+		${Journal::Recover}
+	${EndIf}
 	${IfNot} ${FileExists} `${RUNTIME}`
 	${OrIf} ${SecondInstance}
 		${If} ${PrimaryInstance}
 			System::Call 'Kernel32::CreateMutex(i0, i0, t"${PAL}${APPNAME}-${APPNAME}::Starting") i.r0'
 			StrCpy $StatusMutex $0
+			${Journal::Begin}
 		${EndIf}
 		${CallPS} Pre +
 		${CallPS} PreExec +
@@ -881,6 +766,9 @@ Section
 			Pop $R9
 		${EndIf}
 		Call Execute
+		${If} $WaitForProgram != false
+			${CallPS} PostExec -
+		${EndIf}
 	${Else}
 		MessageBox MB_ICONSTOP $(LauncherCrashCleanup)
 	${EndIf}
@@ -893,6 +781,6 @@ Section
 	Call Unload
 	${ENABLE_REDIRECTION}
 SectionEnd
-Function .onInstFailed        
+Function .onInstFailed
 	Call Unload
 FunctionEnd

@@ -91,7 +91,7 @@
 ; 
 !define ReadUserConfig "!insertmacro _ReadUserConfig"
 !macro _ReadUserConfig _VALUE _KEY
-	${ConfigReadS} "${CONFIG}" "${_KEY}=" "${_VALUE}"
+    ReadINIStr ${_VALUE} "${CONFIG}" "${APPNAME}" "${_KEY}"
 !macroend
 ; 
 ; ${WriteUserConfig}
@@ -99,11 +99,11 @@
 ; 
 !define WriteUserConfig "!insertmacro _WriteUserConfig"
 !macro _WriteUserConfig _VALUE _KEY
-	${ConfigWriteS} "${CONFIG}" "${_KEY}=" "${_VALUE}" $R0
+    WriteINIStr "${CONFIG}" "${APPNAME}" "${_KEY}" "${_VALUE}"
 !macroend
 ; 
-; ${ReadLauncherConfigWithDefault}
-; Reads a key in Launcher.ini for a value. 
+; ${ReadUserConfigWithDefault}
+; Reads a key in the user config.ini for a value. 
 ; If it doesn't exist, defaults to a specified value.
 ; 
 !define ReadUserConfigWithDefault "!insertmacro _ReadUserConfigWithDefault"
@@ -228,6 +228,26 @@
 	!endif
 !macroend
 ;
+; ${RunCmd}
+; Runs a command via nsExec::ExecToStack, checks exit code.  (leaves exit code in $R9)
+;
+!define RunCmd `!insertmacro _RunCmd`
+!macro _RunCmd _CMDLINE
+    nsExec::ExecToStack `${_CMDLINE}`
+    Pop $R9   ; exit code
+    Pop $R8   ; stdout/stderr (discarded here; use RunCmdOut to capture)
+!macroend
+;
+; ${RunCmdOut}
+; Same as above but keeps stdout in $R8 for the caller to use
+;
+!define RunCmdOut `!insertmacro _RunCmdOut`
+!macro _RunCmdOut _CMDLINE
+    nsExec::ExecToStack `${_CMDLINE}`
+    Pop $R9   ; exit code
+    Pop $R8   ; output
+!macroend
+;
 ; ${InsertMacroIfExists}
 ; Inserts a defined macro if it exists.
 ;
@@ -254,6 +274,6 @@
 !define DefineIfNot "!insertmacro _DefineIfNot"
 !macro _DefineIfNot _DEFINE _GFLAG
 	!ifndef ${_DEFINE}
-		!include ${_FILE}
+		!define `${_GFLAG}`
 	!endif
 !macroend

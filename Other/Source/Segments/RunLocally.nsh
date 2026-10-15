@@ -45,7 +45,7 @@ ${SegmentPre}
 	CreateDirectory $DataDirectory
 !macroend
 ${SegmentPostPrimary}
-	StrCmp $RunLocally true +3
+	StrCmp $RunLocally true 0 +3
 	ReadEnvStr $R0 TMP
 	RMDir /r `$R0\${APPNAME}Live`
 !macroend
