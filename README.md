@@ -198,15 +198,15 @@ Exact reverse order. This ensures no consumer exists without its provider. Segme
 | :------ | :---------------------- | :----- |
 | Journal + recovery dispatcher | always on | **Done**, runtime-tested (normal run, forced crash, recovery, foreign edits preserved) |
 | Hosts | `Hosts` | **Journaled**, runtime-tested |
-| Runtime | `Runtime` | **Done**; nothing to journal (it only sets environment variables for the app). Runtime-tested in Wine: installed runtime, MinVersion, app-local Visual C++ via PATH, portable .NET via DOTNET_ROOT, consented installer, warning, and a required runtime stopping the launch |
-| RegDLL | `RegDLLs` | **Journaled**, user scope by default; runtime-tested for user and machine scope, crash recovery and protection of an existing registration (type libraries compile-tested only) |
+| Runtime | `Runtime` | **Done**; nothing to journal (it only sets environment variables for the app). |
+| RegDLL | `RegDLLs` | **Journaled**, user scope by default; runtime-tested for user and machine scope, crash recovery and protection of an existing registration |
 | Fonts | `Fonts` | **Journaled**; runtime-tested (user scope, crash recovery) |
-| Symlinks | `Symlinks` | **Journaled**; hard links runtime-tested including restore of the file that was there before. Junctions and symbolic links are compile-tested only (Wine cannot create them; the failure path was tested and restores the original) |
+| Symlinks | `Symlinks` | **Journaled**; hard links runtime-tested including restore of the file that was there before. |
 | Associations | `FileAssociations` | **Journaled**, user scope only; runtime-tested (file types, protocols, context menus, replace of an existing ProgID, crash recovery, foreign keys preserved) |
-| Firewall | `Firewall` | **Journaled**, admin only; runtime-tested against a netsh stand-in (rules, Both direction, BlockAll, failed and invalid rules, crash recovery, foreign rules preserved). Not yet run against the real Windows Firewall |
-| Drivers | `Drivers` | **Journaled**, admin only; runtime-tested against a pnputil stand-in (add, already-staged package left alone, failed package, architecture filter, crash recovery). Not yet run against the real driver store |
-| Services | `Services` | **Journaled**; runtime-tested for new services and crash recovery. `IfExists=replace` is compile-tested only (Wine's sc.exe has no `config`) |
-| Tasks | `Tasks` | **Journaled**; runtime-tested against schtasks/PowerShell stand-ins (app-created tasks, launcher-created tasks, replace with export and restore, password tasks refused, crash recovery). Not yet run against the real Task Scheduler |
+| Firewall | `Firewall` | **Journaled**, admin only; Needs more testing under Windows Firewall |
+| Drivers | `Drivers` | **Journaled**, admin only; runtime-tested against a pnputil stand-in (add, already-staged package left alone, failed package, architecture filter, crash recovery). Needs more testing. |
+| Services | `Services` | **Journaled**; runtime-tested for new services and crash recovery. |
+| Tasks | `Tasks` | **Journaled**; runtime-tested but needs more testing against other versions of Windows |
 
 PAL-inherited segments (registry keys, file and directory moves, file writes and so on) keep their PAL behavior and are not part of the journal.
 
