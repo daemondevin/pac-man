@@ -1,920 +1,459 @@
 ;=#
-; 
+;
 ; PORTABLEAPPS COMPILER
 ; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
 ; For support, visit the GitHub project:
 ; https://github.com/daemondevin/pac-man
-; 
+;
 ; SEGMENT
-; Firewall.nsh
-;   This file handles Windows Firewall rules with creation, management,
-;   and restoration capabilities for portable applications.
-; 
+;   Firewall.nsh
+;   Windows Firewall rules that exist only while the app runs, journaled so
+;   a crash can never leave a rule behind.
+;
+;   Every rule is created with "[pac-man:<AppID>]" appended to its name and
+;   is only ever deleted by that full name, so rules the launcher did not
+;   create are never touched. Needs administrator rights; without them
+;   nothing is changed and one warning is shown.
+;
 ; USAGE
-;	Add sections [FirewallRule1], [FirewallRule2] etc. to Launcher.ini. There 
-;   is special keys you can use to (un)block all EXEs in a folder. See 
-;   'SPECIAL OPTIONS' further down below.
+;   [Activate]
+;   Firewall=true
 ;
-;	FirewallRule Keys:
-;	Name			-	Rule display name (unique identifier)
-;	Direction		-	In, Out
-;	Action			-	Allow, Block, Bypass
-;	Protocol		-	TCP, UDP, ICMPv4, ICMPv6, Any
-;	LocalPort		-	Local port number or range (e.g., 80, 8000-8080, Any)
-;	RemotePort		-	Remote port number or range (optional)
-;	LocalAddress	-	Local IP address or range (optional, default: Any)
-;	RemoteAddress	-	Remote IP address or range (optional, default: Any)
-;	Program			-	Path to program executable (supports %PAL:* variables)
-;	Service			-	Windows service name (optional)
-;	Profile			-	Domain, Private, Public, Any (comma-separated)
-;	InterfaceType	-	Wireless, Lan, Ras, Any (optional)
-;	Enabled			-	true/false (rule enabled state)
-;	IfExists		-	skip, backup, replace
-;	Required		-	true/false (show error if creation fails)
-;	Description		-	Rule description
-;	EdgeTraversal	-	true/false (allow edge traversal for inbound rules)
-;	Security		-	Authenticate, AuthEnc, AuthNoEnc, NotRequired
+;   [FirewallRule1]
+;   Name=MyApp HTTP Server
+;   Direction=In
+;   Action=Allow
+;   Protocol=TCP
+;   LocalPort=8080
+;   Program=%PAL:AppDir%\MyApp\server.exe
+;   Profile=Private,Public
+;   Description=Allow HTTP access to MyApp server
+;   Required=true
 ;
-;	SPECIAL OPTIONS
-;   ATTN: If you do not need this functionality then omit these keys entirely!
+;   Name           Rule name (required). Shown as "<Name> [pac-man:<AppID>]".
+;   Direction      In (default), Out or Both (two rules with the same name).
+;   Action         Allow (default), Block or Bypass.
+;   Protocol       Any (default), TCP, UDP, ICMPv4, ICMPv6 or a number.
+;   LocalPort      Port, range or list (80, 8000-8080, 80,443). TCP/UDP only.
+;   RemotePort     As LocalPort.
+;   LocalAddress   Address, range, subnet or keyword (optional).
+;   RemoteAddress  As LocalAddress.
+;   Program        Executable the rule applies to. Supports %PAL:...% and
+;                  environment variables.
+;   Service        Service short name the rule applies to (optional).
+;   Profile        Any (default) or a comma list of Domain, Private, Public.
+;   InterfaceType  Any (default), Wireless, LAN or RAS.
+;   Enabled        true (default) or false.
+;   EdgeTraversal  true to allow edge traversal (inbound rules only).
+;   Security       NotRequired (default), Authenticate, AuthEnc, AuthDynEnc
+;                  or AuthNoEncap.
+;   Description    Rule description.
+;   Required       true to warn when the rule cannot be created.
 ;
-;   Keys: 
-;   BlockAll        -   Set to true if you want to block all EXEs in a specified folder. 
-;   BlockAllDir     -   Folder of all the EXEs to block. May use environment variables.
-;   BlockAllRecur   -   Set to true if (Un)BlockAll should recursively search 
-;                       subfolders for EXEs to block and unblock. Defaults to true.
+;   Blocking every program in a folder:
 ;
-; EXAMPLE
-;	[FirewallRule1]
-;	Name=MyApp HTTP Server
-;	Direction=Inbound
-;	Action=Allow
-;	Protocol=TCP
-;	LocalPort=8080
-;	Program=%PAL:AppDir%\myprogram\server.exe
-;	Profile=Private,Public
-;	IfExists=replace
-;	Enabled=true
-;	Description=Allow HTTP access to MyApp server
-;	Required=true
-;
-;   ; Recursively scan a directory and it's subdirectories for EXEs to block
-;	[FirewallRule2]
+;   [FirewallRule2]
 ;   BlockAll=true
-;   BlockAllDir=%PAL:AppDir%\myprogram\LotsOFApps
+;   BlockAllDir=%PAL:AppDir%\MyApp
 ;   BlockAllRecur=true
+;
+;   BlockAll       true to add an outbound block rule for every .exe found.
+;   BlockAllDir    Folder to scan. Supports %PAL:...% and environment variables.
+;   BlockAllRecur  true (default) to include subfolders.
+;
+;   IfExists is accepted for compatibility and ignored: a rule that already
+;   carries this app's tag can only be left over from this app, so it is
+;   always replaced and removed again on exit.
+;
+; HOW IT IS UNDONE
+;   Before each rule is added a CMD entry is journaled that deletes it by its
+;   full name (exit code 1, "no rules match", counts as done). The entry is
+;   marked admin-only, so a launch without admin rights keeps it for a later
+;   elevated launch instead of losing it.
 ;
 
 !ifdef SEGMENTS_FIREWALL
 
-;= VARIABLES
+!define FW_TAG `[pac-man:${APPNAME}]`
+!define FW_NETSH `"$SYSDIR\netsh.exe" advfirewall firewall`
+
 Var FWName
-Var FWBlockAll
-Var FWBlockAllDir
-Var FWBlockAllRecur
 Var FWDirection
-Var FWAction
-Var FWProtocol
-Var FWGrouping
-Var FWLocalPort
-Var FWRemotePort
-Var FWLocalAddress
-Var FWRemoteAddress
-Var FWProgram
-Var FWService
-Var FWProfile
-Var FWInterfaceType
-Var FWEnabled
+Var FWArgs
 Var FWRequired
-Var FWDescription
-Var FWEdgeTraversal
-Var FWSecurity
+Var FWCreated
+Var FWWarned
+Var FWList
+Var FWItem
 
-;= INCLUDES
-!ifndef LOGICLIB
-    !include LogicLib.nsh
-!endif
-!ifndef FILEFUNC_INCLUDED
-    !include FileFunc.nsh
-!endif
-!ifndef STRFUNC_NSH_INCLUDED
-    !ifdef StrCase
-        !undef StrCase
-    !endif
-    !include StrFunc.nsh
-    ${Using:StrFunc} StrRep
-    ${Using:StrFunc} StrLoc
-    ${Using:StrFunc} StrTrimNewLines
-    ${Using:StrFunc} StrCase
-!endif
+;= HELPERS
+;= ################
 
-;= MACROS
-!define Firewall::InvalidKeyMsg `!insertmacro _Firewall::InvalidKeyMsg`
-!macro _Firewall::InvalidKeyMsg _MSG
-    MessageBox MB_ICONSTOP|MB_TOPMOST "Error: Invalid [Firewall$R0] key:$\r$\n${_MSG}"
-    Call Unload
-    Quit
-!macroend
-!define Firewall::BlockAll `!insertmacro _Firewall::BlockAll`
-!macro _Firewall::BlockAll _DIR _RECURSIVE
-    Push "${_DIR}"      ; folder path
-    Push ${_RECURSIVE}  ; 1 = recursive, 0 = current folder only
-    Call BlockAll
-!macroend
-!define Firewall::UnblockAll `!insertmacro _Firewall::UnblockAll`
-!macro _Firewall::UnblockAll _DIR _RECURSIVE
-    Push ${_RECURSIVE}  ; 1 = recursive, 0 = current folder only
-    Call UnblockAll
-!macroend
-
-;= FUNCTIONS
-Function BlockAll
-    Exch $1  ; recursion flag | 1 = recursive, 0 = current folder only
-    Exch
-    Exch $0  ; folder path
-    Push $2
-    Push $3
-    Push $4
-
-    ; Block all EXEs in this folder
-    FindFirst $2 $3 "$0\*.exe"
-    ${DoWhile} $3 != ""
-        DetailPrint "Blocking outbound for: $0\$3"
-        nsExec::ExecToLog 'netsh advfirewall firewall add rule name="Block_$3 Portable" dir=out program="$0\$3" action=block enable=yes'
-        FindNext $2 $3
-    ${Loop}
-    FindClose $2
-
-    ; If recursive flag is 1, process subfolders
-    ${If} $1 == 1
-        FindFirst $2 $4 "$0\*.*"
-        ${DoWhile} $4 != ""
-            ${If} ${FileExists} "$0\$4\."
-                Push "$0\$4"
-                Push $1
-                Call BlockAll
-            ${EndIf}
-            FindNext $2 $4
-        ${Loop}
-        FindClose $2
-    ${EndIf}
-
-    Pop $4
-    Pop $3
-    Pop $2
-    Pop $0
-    Pop $1
+; Sets $_JT4 to 1 when "|$FWItem|" appears in $FWList ("|a|b|c|"), else 0.
+Function FW_InList
+	StrCpy $_JT1 $FWList
+	StrCpy $_JT2 `|$FWItem|`
+	Call Journal_Contains
 FunctionEnd
-Function UnblockAll
-    Exch $1  ; recursion flag | 1 = recursive, 0 = current folder only
-    Exch
-    Exch $0  ; folder path
-    Push $2
-    Push $3
-    Push $4
+!macro _FW_Check _VALUE _LIST
+	StrCpy $FWItem `${_VALUE}`
+	StrCpy $FWList `${_LIST}`
+	Call FW_InList
+!macroend
+!define FW_Check `!insertmacro _FW_Check`
 
-    ; Remove firewall rules for all EXEs in this folder
-    FindFirst $2 $3 "$0\*.exe"
-    ${DoWhile} $3 != ""
-        DetailPrint "Removing firewall rule: Block_$3"
-        nsExec::ExecToLog 'netsh advfirewall firewall delete rule name="Block_$3 Portable"'
-        FindNext $2 $3
-    ${Loop}
-    FindClose $2
+; Reads a value, strips one pair of quotes and expands variables.
+!macro _FW_Read _VAR _KEY
+	${ReadLauncherConfig} ${_VAR} FirewallRule$R0 `${_KEY}`
+	StrCpy $_JT1 ${_VAR} 1
+	${If} $_JT1 == `"`
+		StrCpy $_JT1 ${_VAR} "" -1
+		${If} $_JT1 == `"`
+			StrCpy ${_VAR} ${_VAR} -1 1
+		${EndIf}
+	${EndIf}
+	ExpandEnvStrings ${_VAR} ${_VAR}
+!macroend
+!define FW_Read `!insertmacro _FW_Read`
 
-    ; If recursive flag is 1, process subfolders
-    ${If} $1 == 1
-        FindFirst $2 $4 "$0\*.*"
-        ${DoWhile} $4 != ""
-            ${If} ${FileExists} "$0\$4\."
-                Push "$0\$4"
-                Push $1
-                Call UnblockAll
-            ${EndIf}
-            FindNext $2 $4
-        ${Loop}
-        FindClose $2
-    ${EndIf}
-
-    Pop $4
-    Pop $3
-    Pop $2
-    Pop $0
-    Pop $1
+; Adds the rule "$FWName ${FW_TAG}" with the netsh arguments in $FWArgs, for
+; direction $FWDirection (in, out or both). $FWArgs must not contain dir=.
+; Sets $FWCreated to true when at least one rule was added.
+Function FW_AddRule
+	Push $0
+	Push $1
+	Push $2
+	Push $3
+	StrCpy $FWCreated false
+	StrCpy $3 `$FWName ${FW_TAG}`
+	; Journal before mutation. One delete by name covers both directions and
+	; any stale rule with the same tagged name.
+	${Journal::Record} Firewall CMD `${FW_NETSH} delete rule name="$3"` "0,1" admin ""
+	nsExec::ExecToStack `${FW_NETSH} delete rule name="$3"`
+	Pop $0
+	Pop $1
+	${If} $FWDirection == both
+		StrCpy $2 "in out"
+	${Else}
+		StrCpy $2 $FWDirection
+	${EndIf}
+	${Do}
+		${IfThen} $2 == "" ${|} ${ExitDo} ${|}
+		StrCpy $0 $2 3
+		${If} $0 == "in "
+		${OrIf} $2 == in
+			StrCpy $0 in
+			StrCpy $2 $2 "" 3
+		${Else}
+			StrCpy $0 out
+			StrCpy $2 ""
+		${EndIf}
+		nsExec::ExecToStack `${FW_NETSH} add rule name="$3" dir=$0 $FWArgs`
+		Pop $1
+		Pop $0
+		${If} $1 == 0
+			StrCpy $FWCreated true
+			${DebugMsg} "Added firewall rule $3."
+		${Else}
+			${DebugMsg} "netsh add rule failed ($1):$\r$\n$0"
+			${If} $FWRequired == true
+				MessageBox MB_OK|MB_ICONEXCLAMATION|MB_TOPMOST \
+					"Could not create the firewall rule$\r$\n$3$\r$\n$\r$\n$0"
+			${EndIf}
+		${EndIf}
+	${Loop}
+	${If} $FWCreated != true
+		; Nothing was added, so there is nothing to undo.
+		${Journal::Discard} Firewall
+	${EndIf}
+	Pop $3
+	Pop $2
+	Pop $1
+	Pop $0
 FunctionEnd
-Function IsNumeric
-    Exch $R0  ; Input string
-    Push $R1
-    Push $R2
-    
-    StrCpy $R1 "true"
-    StrLen $R2 $R0
-    
-    ${If} $R2 == 0
-        StrCpy $R1 "false"
-        Goto _IS_NUMERIC_END
-    ${EndIf}
-    
-    IntOp $R2 $R0 + 0
-    IntFmt $R2 "%d" $R2
-    
-    ${If} $R2 != $R0
-        StrCpy $R1 "false"
-    ${EndIf}
-    
-	_IS_NUMERIC_END:
-    Pop $R2
-    StrCpy $R0 $R1
-    Pop $R1
-    Exch $R0
+
+; Adds an outbound block rule for every .exe under $FWItem (recursively when
+; $FWList is true). Rule names use the path relative to the scanned folder.
+Function FW_BlockAll
+	Push $0
+	Push $1
+	Push $2
+	Push $3
+	Push $4
+	StrCpy $4 $FWItem
+	StrCpy $3 $FWList
+	; Pending folders, separated by "|", relative to $4 ("" is the root).
+	StrCpy $0 "|"
+	${Do}
+		${IfThen} $0 == "" ${|} ${ExitDo} ${|}
+		; Pop the first pending folder.
+		StrCpy $0 $0 "" 1
+		StrCpy $1 0
+		${Do}
+			StrCpy $2 $0 1 $1
+			${If} $2 == "|"
+			${OrIf} $2 == ""
+				${ExitDo}
+			${EndIf}
+			IntOp $1 $1 + 1
+		${Loop}
+		StrCpy $2 $0 $1
+		StrCpy $0 $0 "" $1
+		${If} $2 == ""
+			StrCpy $FWItem $4
+		${Else}
+			StrCpy $FWItem `$4\$2`
+		${EndIf}
+		FindFirst $1 $FWList `$FWItem\*.*`
+		${Do}
+			${IfThen} $FWList == "" ${|} ${ExitDo} ${|}
+			${If} $FWList != "."
+			${AndIf} $FWList != ".."
+				${If} ${FileExists} `$FWItem\$FWList\*.*`
+					${If} $3 != false
+						${If} $2 == ""
+							StrCpy $0 `$0|$FWList`
+						${Else}
+							StrCpy $0 `$0|$2\$FWList`
+						${EndIf}
+					${EndIf}
+				${Else}
+					${GetFileExt} $FWList $FWName
+					${If} $FWName == exe
+						${If} $2 == ""
+							StrCpy $FWName `Block $FWList`
+						${Else}
+							StrCpy $FWName `Block $2\$FWList`
+						${EndIf}
+						StrCpy $FWDirection out
+						StrCpy $FWArgs `action=block enable=yes program="$FWItem\$FWList"`
+						Call FW_AddRule
+					${EndIf}
+				${EndIf}
+			${EndIf}
+			FindNext $1 $FWList
+		${Loop}
+		FindClose $1
+	${Loop}
+	Pop $4
+	Pop $3
+	Pop $2
+	Pop $1
+	Pop $0
+FunctionEnd
+
+; Reads [FirewallRule$R0], validates it and builds $FWArgs. Sets the error
+; flag when the section is invalid (a message has been shown).
+Function FW_ReadRule
+	Push $0
+	Push $1
+	${FW_Read} $FWName Name
+	${If} $FWName == ""
+		${InvalidValueError} [FirewallRule$R0]:Name "(empty)"
+		Goto fw_invalid
+	${EndIf}
+
+	${ReadLauncherConfigWithDefault} $FWDirection FirewallRule$R0 Direction in
+	${NewStrCase} $FWDirection $FWDirection L
+	${IfThen} $FWDirection == inbound ${|} StrCpy $FWDirection in ${|}
+	${IfThen} $FWDirection == outbound ${|} StrCpy $FWDirection out ${|}
+	${FW_Check} $FWDirection "|in|out|both|"
+	${If} $_JT4 != 1
+		${InvalidValueError} [FirewallRule$R0]:Direction $FWDirection
+		Goto fw_invalid
+	${EndIf}
+
+	${ReadLauncherConfigWithDefault} $0 FirewallRule$R0 Action allow
+	${NewStrCase} $0 $0 L
+	${FW_Check} $0 "|allow|block|bypass|"
+	${If} $_JT4 != 1
+		${InvalidValueError} [FirewallRule$R0]:Action $0
+		Goto fw_invalid
+	${EndIf}
+	StrCpy $FWArgs `action=$0`
+
+	${ReadLauncherConfigWithDefault} $0 FirewallRule$R0 Enabled true
+	${If} $0 == false
+		StrCpy $FWArgs `$FWArgs enable=no`
+	${Else}
+		StrCpy $FWArgs `$FWArgs enable=yes`
+	${EndIf}
+
+	${ReadLauncherConfigWithDefault} $1 FirewallRule$R0 Protocol any
+	${NewStrCase} $1 $1 L
+	${FW_Check} $1 "|any|tcp|udp|icmpv4|icmpv6|"
+	${If} $_JT4 != 1
+		IntOp $0 $1 + 0
+		${If} "$0" != "$1"
+		${OrIf} $0 < 0
+		${OrIf} $0 > 255
+			${InvalidValueError} [FirewallRule$R0]:Protocol $1
+			Goto fw_invalid
+		${EndIf}
+	${EndIf}
+	StrCpy $FWArgs `$FWArgs protocol=$1`
+
+	${FW_Read} $0 LocalPort
+	${If} $0 != ""
+	${AndIf} $0 != any
+		${If} $1 != tcp
+		${AndIf} $1 != udp
+			${InvalidValueError} [FirewallRule$R0]:LocalPort "$0 (needs Protocol=TCP or UDP)"
+			Goto fw_invalid
+		${EndIf}
+		StrCpy $FWArgs `$FWArgs localport=$0`
+	${EndIf}
+	${FW_Read} $0 RemotePort
+	${If} $0 != ""
+	${AndIf} $0 != any
+		${If} $1 != tcp
+		${AndIf} $1 != udp
+			${InvalidValueError} [FirewallRule$R0]:RemotePort "$0 (needs Protocol=TCP or UDP)"
+			Goto fw_invalid
+		${EndIf}
+		StrCpy $FWArgs `$FWArgs remoteport=$0`
+	${EndIf}
+
+	${FW_Read} $0 LocalAddress
+	${IfThen} $0 != "" ${|} StrCpy $FWArgs `$FWArgs localip=$0` ${|}
+	${FW_Read} $0 RemoteAddress
+	${IfThen} $0 != "" ${|} StrCpy $FWArgs `$FWArgs remoteip=$0` ${|}
+
+	${FW_Read} $0 Program
+	${If} $0 != ""
+		${IfNot} ${FileExists} $0
+			${DebugMsg} "[FirewallRule$R0] program $0 does not exist (yet); adding the rule anyway."
+		${EndIf}
+		StrCpy $FWArgs `$FWArgs program="$0"`
+	${EndIf}
+	${FW_Read} $0 Service
+	${IfThen} $0 != "" ${|} StrCpy $FWArgs `$FWArgs service="$0"` ${|}
+
+	${ReadLauncherConfigWithDefault} $0 FirewallRule$R0 Profile any
+	${NewStrCase} $0 $0 L
+	; Check each item of the comma list and rebuild it without spaces.
+	StrCpy $1 `$0,`
+	StrCpy $0 ""
+	${Do}
+		${IfThen} $1 == "" ${|} ${ExitDo} ${|}
+		StrCpy $FWItem ""
+		${Do}
+			StrCpy $_JT3 $1 1
+			StrCpy $1 $1 "" 1
+			${IfThen} $_JT3 == "," ${|} ${ExitDo} ${|}
+			${IfThen} $_JT3 != " " ${|} StrCpy $FWItem `$FWItem$_JT3` ${|}
+		${Loop}
+		StrCpy $FWList "|any|domain|private|public|"
+		Call FW_InList
+		${If} $_JT4 != 1
+			${InvalidValueError} [FirewallRule$R0]:Profile $FWItem
+			Goto fw_invalid
+		${EndIf}
+		${If} $0 == ""
+			StrCpy $0 $FWItem
+		${Else}
+			StrCpy $0 `$0,$FWItem`
+		${EndIf}
+	${Loop}
+	StrCpy $FWArgs `$FWArgs profile=$0`
+
+	${ReadLauncherConfigWithDefault} $0 FirewallRule$R0 InterfaceType any
+	${NewStrCase} $0 $0 L
+	${FW_Check} $0 "|any|wireless|lan|ras|"
+	${If} $_JT4 != 1
+		${InvalidValueError} [FirewallRule$R0]:InterfaceType $0
+		Goto fw_invalid
+	${EndIf}
+	StrCpy $FWArgs `$FWArgs interfacetype=$0`
+
+	${ReadLauncherConfig} $0 FirewallRule$R0 Security
+	${If} $0 != ""
+		${NewStrCase} $0 $0 L
+		${FW_Check} $0 "|notrequired|authenticate|authenc|authdynenc|authnoencap|"
+		${If} $_JT4 != 1
+			${InvalidValueError} [FirewallRule$R0]:Security $0
+			Goto fw_invalid
+		${EndIf}
+		StrCpy $FWArgs `$FWArgs security=$0`
+	${EndIf}
+
+	${ReadLauncherConfig} $0 FirewallRule$R0 EdgeTraversal
+	${If} $0 == true
+		${If} $FWDirection != in
+			${InvalidValueError} [FirewallRule$R0]:EdgeTraversal "true (inbound rules only)"
+			Goto fw_invalid
+		${EndIf}
+		StrCpy $FWArgs `$FWArgs edge=yes`
+	${EndIf}
+
+	${ReadLauncherConfigWithDefault} $0 FirewallRule$R0 Description "Added by ${PORTABLEAPPNAME} while it runs"
+	StrCpy $FWArgs `$FWArgs description="$0"`
+
+	${ReadLauncherConfig} $FWRequired FirewallRule$R0 Required
+	ClearErrors
+	Goto fw_done
+
+	fw_invalid:
+	SetErrors
+	fw_done:
+	Pop $1
+	Pop $0
 FunctionEnd
 
 ${SegmentFile}
-${SegmentPre}
-	
-		${DebugMsg} "Processing Windows Firewall rule(s) Pre begin..."
 
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $FWName FirewallRule$R0 Name
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-            ${ReadLauncherConfig} $FWBlockAll FirewallRule$R0 BlockAll
-			${ReadLauncherConfig} $FWDirection FirewallRule$R0 Direction
-			${ReadLauncherConfig} $FWAction FirewallRule$R0 Action
-			${ReadLauncherConfig} $FWProtocol FirewallRule$R0 Protocol
-			${ReadLauncherConfig} $FWLocalPort FirewallRule$R0 LocalPort
-            
-            ${StrCase} $0 "$FWBlockAll" "L"
-            
-            ${If} $0 != ""
-            ${AndIf} $0 == "true"
-                Goto _PRE_FIREWALL_BLOCK_ALL
-            ${EndIf}
-
-            ; --- Validate direction ---
-            ${Switch} "$FWDirection"
-                ${Case} "Inbound"
-                ${Case} "Outbound"
-                ${Case} "in"
-                ${Case} "out"
-                    ; Valid directions
-                    ${Break}
-                ${Default}
-                    ${Firewall::InvalidKeyMsg} "Direction: $FWDirection"
-            ${EndSwitch}
-
-            ; --- Validate action ---
-            ${Switch} "$FWAction"
-                ${Case} "Allow"
-                ${Case} "Block"
-                ${Case} "Bypass"
-                ${Case} "allow"
-                ${Case} "block"
-                ${Case} "bypass"
-                    ; Valid actions
-                    ${Break}
-                ${Default}
-                    ${Firewall::InvalidKeyMsg} "Direction: $FWAction"
-            ${EndSwitch}
-			
-            ; --- Validate protocol ---
-            ${If} "$FWProtocol" != ""
-            ${AndIf} "$FWProtocol" != "Any"
-                ${Switch} "$FWProtocol"
-                    ${Case} "TCP"
-                    ${Case} "UDP"
-                    ${Case} "ICMPv4"
-                    ${Case} "ICMPv6"
-                    ${Case} "tcp"
-                    ${Case} "udp"
-                    ${Case} "icmpv4"
-                    ${Case} "icmpv6"
-                        ; Valid protocol strings
-                        ${Break}
-                    ${Default}
-                        ; Check if it's a valid protocol number (0-255)
-                        Push $FWProtocol
-                        Call IsNumeric
-                        Pop $1
-                        ${If} $1 == "true"
-                            IntOp $2 $FWProtocol + 0
-                            ${If} $2 >= 0
-                            ${AndIf} $2 <= 255
-                                ; Valid protocol number
-                            ${Else}
-                                ${Firewall::InvalidKeyMsg} "Protocol number must be 0-255: $FWProtocol"
-                            ${EndIf}
-                        ${Else}
-                            ${Firewall::InvalidKeyMsg} "Protocol: $FWProtocol"
-                        ${EndIf}
-                ${EndSwitch}
-            ${EndIf}
-
-            ; --- Validate port ---
-            ${If} "$FWLocalPort" != ""
-            ${AndIf} "$FWLocalPort" != "Any"
-                ; Check if it's a port range (contains hyphen)
-                ${StrLoc} $1 "$FWLocalPort" "-" ">"
-                ${If} $1 != ""
-                    ; Port range detected - validate both parts
-                    StrCpy $2 "$FWLocalPort" $1          ; Get start port
-                    IntOp $1 $1 + 1
-                    StrCpy $3 "$FWLocalPort" "" $1       ; Get end port
-                    
-                    ; Validate start port
-                    Push $2
-                    Call IsNumeric
-                    Pop $1
-                    ${If} $1 != "true"
-                        ${Firewall::InvalidKeyMsg} "Invalid port range start: $FWLocalPort"
-                    ${EndIf}
-                    IntOp $2 $2 + 0
-                    ${If} $2 < 1
-                    ${OrIf} $2 > 65535
-                        ${Firewall::InvalidKeyMsg} "Port range start must be 1-65535: $FWLocalPort"
-                    ${EndIf}
-                    
-                    ; Validate end port
-                    Push $3
-                    Call IsNumeric
-                    Pop $1
-                    ${If} $1 != "true"
-                        ${Firewall::InvalidKeyMsg} "Invalid port range end: $3"
-                    ${EndIf}
-                    IntOp $3 $3 + 0
-                    ${If} $3 < 1
-                    ${OrIf} $3 > 65535
-                        ${Firewall::InvalidKeyMsg}  "Port range end must be 1-65535: $3"
-                    ${EndIf}
-                    
-                    ; Validate range order
-                    ${If} $2 >= $3
-                        ${Firewall::InvalidKeyMsg} "Port range start must be less than end: $FWLocalPort"
-                    ${EndIf}
-                ${Else}
-                    ; Single port - validate it's a number in valid range
-                    Push $FWLocalPort
-                    Call IsNumeric
-                    Pop $1
-                    ${If} $1 != "true"
-                        ${Firewall::InvalidKeyMsg} "Invalid port number: $FWLocalPort"
-                    ${EndIf}
-                    IntOp $2 $FWLocalPort + 0
-                    ${If} $2 < 1
-                    ${OrIf} $2 > 65535
-                        ${Firewall::InvalidKeyMsg} "Port must be 1-65535: $FWLocalPort"
-                    ${EndIf}
-                ${EndIf}
-            ${EndIf}
-
-			${DebugMsg} "Processing firewall rule: $FWName"
-			
-            StrCpy $4 "$FWName"
-            ${StrRep} $4 $4 '"' '\"'  ; Escape any quotes in rule name
-            nsExec::ExecToStack `"$SYSDIR\netsh.exe" advfirewall firewall show rule name="$4 Portable" verbose`
-            Pop $2 ; Return code
-            Pop $3 ; Output text
-
-            ${DebugMsg} "netsh show return code: $2$\r$\nOutput: $3"
-
-			${If} $2 == "0"
-				${DebugMsg} "Firewall rule exists: $FWName Portable"
-                
-                ; Create backup filename
-                StrCpy $4 "$TEMP\FirewallRule$R0_BackupBy${APPNAME}.txt"
-
-                ${DebugMsg} "Backup file path: $4"
-
-                ; Write rule details to backup file
-                ClearErrors
-                FileOpen $R1 "$4" w
-                
-                ${IfNot} ${Errors}
-                    FileWrite $R1 "$3"
-                    FileClose $R1
-                    
-                    ; Verify file was written successfully
-                    ${If} ${FileExists} "$4"
-                        ; Store backup metadata
-                        ${WriteRuntimeData} Firewall$R0 "BackupFile" "$4"
-                        ${WriteRuntimeData} Firewall$R0 "RuleExisted" "true"
-                        ${DebugMsg} "Successfully backed up firewall rule: $FWName Portable"
-                    ${Else}
-                        ${DebugMsg} "Error: Backup file was not created: $4"
-                        ${WriteRuntimeData} Firewall$R0 "RuleExisted" "false"
-                    ${EndIf}
-                    ${WriteRuntimeData} Firewall$R0 "RuleName" "$FWName Portable"
-                ${Else}
-                    ${DebugMsg} "Failed to open backup file for writing: $4"
-                    ${WriteRuntimeData} Firewall$R0 "RuleExisted" "false"
-                ${EndIf}
-				${WriteRuntimeData} Firewall$R0 "Action" "backup"
-			${Else}
-				${DebugMsg} "Firewall rule does not exist: $FWName Portable"
-				${WriteRuntimeData} Firewall$R0 "Action" "create"
-			${EndIf}
-            _PRE_FIREWALL_BLOCK_ALL:
-            ${DebugMsg} "Blocking all EXEs"
-            ${ReadLauncherConfig} $FWBlockAllDir FirewallRule$R0 BlockAllDir
-            ${If} $FWBlockAllDir != ""
-                ${ParseLocations} $FWBlockAllDir
-                ${If} ${DirExists} $FWBlockAllDir
-                    ${DebugMsg} "Blocking all EXEs in $FWBlockAllDir"
-                    ${ReadLauncherConfigWithDefault} $FWBlockAllRecur FirewallRule$R0  Recursive true
-                    ${If} $FWBlockAllRecur == "true"
-                        StrCpy $FWBlockAllRecur 1
-                    ${Else}
-                        StrCpy $FWBlockAllRecur 0
-                    ${EndIf}
-                    ${Firewall::BlockAll} "$FWBlockAllDir" $FWBlockAllRecur
-                    ${WriteRuntimeData} Firewall$R0 "BlockAllEXEs" "true"
-                ${EndIf}
-            ${EndIf}
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
-	
-		${DebugMsg} "Processing Windows Firewall rule(s) Pre complete."
-!macroend
 ${SegmentPrePrimary}
-	
-		${DebugMsg} "Creating portable firewall rule(s) PrePrimary begin..."
-		
-		StrCpy $R0 1
-		${Do}
+	StrCpy $FWWarned ""
+	StrCpy $R0 1
+	${Do}
+		ClearErrors
+		${ReadLauncherConfig} $0 FirewallRule$R0 Name
+		${If} ${Errors}
 			ClearErrors
-			${ReadLauncherConfig} $FWName FirewallRule$R0 Name
+			${ReadLauncherConfig} $0 FirewallRule$R0 BlockAll
 			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-			
-            ${ReadRuntimeData} $R9 FirewallRule$R0 "BlockAll"
-            ${If} $R9 == "true"
-                Goto _PREPRIMARY_FIREWALL_BLOCK_ALL
-            ${EndIf}
+		${EndIf}
 
-			; Get configuration
-			${ReadLauncherConfig} $FWDirection FirewallRule$R0 Direction
-			${ReadLauncherConfig} $FWAction FirewallRule$R0 Action
-			${ReadLauncherConfig} $FWProtocol FirewallRule$R0 Protocol
-			${ReadLauncherConfig} $FWLocalPort FirewallRule$R0 LocalPort
-			${ReadLauncherConfig} $FWRemotePort FirewallRule$R0 RemotePort
-			${ReadLauncherConfig} $FWLocalAddress FirewallRule$R0 LocalAddress
-			${ReadLauncherConfig} $FWRemoteAddress FirewallRule$R0 RemoteAddress
-			${ReadLauncherConfig} $FWProgram FirewallRule$R0 Program
-			${ReadLauncherConfig} $FWService FirewallRule$R0 Service
-			${ReadLauncherConfig} $FWProfile FirewallRule$R0 Profile
-			${ReadLauncherConfig} $FWInterfaceType FirewallRule$R0 InterfaceType
-			${ReadLauncherConfig} $FWEnabled FirewallRule$R0 Enabled
+		${If} $Admin != true
+			; Fail closed: no rule without the rights to remove it again.
+			${If} $FWWarned == ""
+				StrCpy $FWWarned true
+				MessageBox MB_OK|MB_ICONEXCLAMATION|MB_TOPMOST \
+					"${PORTABLEAPPNAME} needs administrator rights to add its firewall rules.$\r$\nNo firewall rules were added."
+			${EndIf}
+			${ExitDo}
+		${EndIf}
+
+		${ReadLauncherConfig} $0 FirewallRule$R0 BlockAll
+		${If} $0 == true
+			${FW_Read} $FWItem BlockAllDir
+			ClearErrors
+			${ReadLauncherConfig} $FWList FirewallRule$R0 BlockAllRecur
+			${If} ${Errors}
+				${ReadLauncherConfigWithDefault} $FWList FirewallRule$R0 Recursive true
+			${EndIf}
 			${ReadLauncherConfig} $FWRequired FirewallRule$R0 Required
-			${ReadLauncherConfig} $FWDescription FirewallRule$R0 Description
-			${ReadLauncherConfig} $FWEdgeTraversal FirewallRule$R0 EdgeTraversal
-			${ReadLauncherConfig} $FWSecurity FirewallRule$R0 Security
-			
-			; Set defaults
-			${If} $FWEnabled == ""
-				StrCpy $FWEnabled "true"
-			${EndIf}
-			${If} $FWDescription == ""
-				StrCpy $FWDescription "Firewall rule for ${PORTABLEAPPNAME}"
-			${EndIf}
-			
-			${DebugMsg} "Creating firewall rule: $FWName Portable"
-			
-			; Check if we should process this rule
-			${ReadRuntimeData} $1 Firewall$R0 "RuleExisted"
-			
-			; Delete existing rule if we're replacing
-			${If} $1 == "true"
-                ${DebugMsg} "Deleting local firewall rule: $FWName Portable"
-
-                ; Escape quotes in rule name
-                StrCpy $4 "$FWName"
-                ${StrRep} $4 $4 '"' '\"'
-                
-                ; Execute delete command
-                nsExec::ExecToStack `"$SYSDIR\netsh.exe" advfirewall firewall delete rule name="$4 Portable"`
-                Pop $2  ; Return code
-                Pop $3  ; Output text
-
-                ${DebugMsg} "netsh delete return code: $2"
-                
-                ${Switch} $2
-                    ${Case} 0
-                        ; Command succeeded
-                        StrCpy $0 "true"
-                        ${DebugMsg} "Firewall rule deleted successfully: $FWName Portable"
-                        ${Break}
-                        
-                    ${Case} 1
-                        ; netsh returned error code 1
-                        ; Check if rule was not found (which is OK for deletion)
-                        ${StrLoc} $5 "$3" "No rules match" "<"
-                        ${If} $5 == ""
-                            ; "No rules match" not found - real error
-                            ${DebugMsg} "Failed to delete firewall rule: $FWName Portable"
-                            ${DebugMsg} "Output: $3"
-                        ${Else}
-                            ; "No rules match" found - rule didn't exist
-                            ${DebugMsg} "Firewall rule not found (considering as success): $FWName Portable"
-                        ${EndIf}
-                        ${Break}
-                        
-                    ${Default}
-                        ; Other error code
-                        ${DebugMsg} "Failed to delete firewall rule $FWName Portable$\r$\n Error code: $2"
-                        ${DebugMsg} "Output: $3"
-                        ${Break}
-                ${EndSwitch}
-                
-			${EndIf}
-
-            ; Build netsh command
-            StrCpy $R2 `"$SYSDIR\netsh.exe" advfirewall firewall add rule name="$FWName Portable"`
-            StrCpy $R2 `$R2 dir=$FWDirection action=$FWAction`
-            
-            ; Add protocol
-            ${If} "$FWProtocol" != ""
-            ${AndIf} "$FWProtocol" != "Any"
-                StrCpy $R2 `$R2 protocol=$FWProtocol`
-            ${EndIf}
-            
-            ; Add local port
-            ${If} "$FWLocalPort" != ""
-            ${AndIf} "$FWLocalPort" != "Any"
-                StrCpy $R2 `$R2 localport=$FWLocalPort`
-            ${EndIf}
-            
-            ; Add remote port
-            ${If} "$FWRemotePort" != ""
-            ${AndIf} "$FWRemotePort" != "Any"
-                StrCpy $R2 `$R2 remoteport=$FWRemotePort`
-            ${EndIf}
-            
-            ; Add local address
-            ${If} "$FWLocalAddress" != ""
-            ${AndIf} "$FWLocalAddress" != "Any"
-                StrCpy $R2 `$R2 localip=$FWLocalAddress`
-            ${EndIf}
-            
-            ; Add remote address
-            ${If} "$FWRemoteAddress" != ""
-            ${AndIf} "$FWRemoteAddress" != "Any"
-                StrCpy $R2 `$R2 remoteip=$FWRemoteAddress`
-            ${EndIf}
-            
-            ; Add program path
-            ${If} "$FWProgram" != ""
-                ExpandEnvStrings $6 "$FWProgram"
-                ${If} ${FileExists} "$6"
-                    StrCpy $R2 `$R2 program="$6"`
-                ${Else}
-                    ${Firewall::InvalidKeyMsg} "Program not found: $FWProgram"
-                ${EndIf}
-            ${EndIf}
-            
-            ; Add service
-            ${If} "$FWService" != ""
-                StrCpy $R2 `$R2 service=$FWService`
-            ${EndIf}
-            
-            ; Add profile
-            ${If} "$FWProfile" != ""
-            ${AndIf} "$FWProfile" != "Any"
-                StrCpy $R2 `$R2 profile=$FWProfile`
-            ${EndIf}
-            
-            ; Add enabled state
-            ${If} "$FWEnabled" == "false"
-                StrCpy $R2 `$R2 enable=no`
-            ${Else}
-                StrCpy $R2 `$R2 enable=yes`
-            ${EndIf}
-            
-            ; Add description
-            ${If} "$FWDescription" != ""
-                StrCpy $R2 `$R2 description="$FWDescription"`
-            ${EndIf}
-            
-            ${DebugMsg} "Executing: $R2"
-            
-            ; Execute the command
-            nsExec::ExecToStack `$R2`
-            Pop $1 ; Return code
-            Pop $2 ; Output
-
-            ${DebugMsg} "netsh return code: $1"
-            
-			${If} $1 == "0"
-				${WriteRuntimeData} Firewall$R0 "Created" "true"
-				${DebugMsg} "Firewall rule created successfully: $FWName Portable"
+			${If} ${FileExists} `$FWItem\*.*`
+				Call FW_BlockAll
 			${Else}
-				${WriteRuntimeData} Firewall$R0 "Created" "false"
-				${DebugMsg} "Failed to create firewall rule $FWName Portable$\r$\nError: $2"
-				${If} $FWRequired == "true"
-					${Firewall::InvalidKeyMsg} "Error: Failed to create required firewall rule '$FWName Portable'$\n$\nError: $2"
-				${EndIf}
+				${InvalidValueError} [FirewallRule$R0]:BlockAllDir $FWItem
 			${EndIf}
-            _PREPRIMARY_FIREWALL_BLOCK_ALL:
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
-		
-        ${DebugMsg} "Creating portable firewall rule(s) PrePrimary complete."
-!macroend
-${SegmentPostPrimary}
-	
-		${DebugMsg} "Removing portable firewall rule(s) PostPrimary begin..."
-		
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $FWName FirewallRule$R0 Name
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-                        
-            ${ReadRuntimeData} $R9 FirewallRule$R0 "BlockAll"
-            ${If} $R9 == "true"
-                Goto _POSTPRIMARY_FIREWALL_BLOCK_ALL
-            ${EndIf}
-			
-			; Check if we created this rule
-			${ReadRuntimeData} $1 Firewall$R0 "Created"
+		${Else}
+			Call FW_ReadRule
 			${IfNot} ${Errors}
-                ; Execute delete command
-                nsExec::ExecToStack `"$SYSDIR\netsh.exe" advfirewall firewall delete rule name="$FWName Portable"`
-                Pop $2  ; Return code
-                Pop $3  ; Output text
-
-				${If} $2 == "0"
-					${DebugMsg} "Portable firewall rule removed successfully: $FWName Portable"
-				${Else}
-					${DebugMsg} "Failed to remove portable firewall rule $FWName Portable$r$\nError: $3"
-				${EndIf}
+				Call FW_AddRule
 			${EndIf}
-            _POSTPRIMARY_FIREWALL_BLOCK_ALL:
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
-		
-		${DebugMsg} "Removing portable firewall rule(s) PostPrimary complete."
+		${EndIf}
+		IntOp $R0 $R0 + 1
+	${Loop}
 !macroend
-${SegmentPost}
-	
-		${DebugMsg} "Restoring original Windows Firewall rule(s) Post begin..."
-		
-		StrCpy $R0 1
-		${Do}
-			ClearErrors
-			${ReadLauncherConfig} $FWName FirewallRule$R0 Name
-			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-            
-            ${ReadRuntimeData} $R9 FirewallRule$R0 "BlockAll"
-            ${If} $R9 == "true"
-                Goto _POST_FIREWALL_BLOCK_ALL
-            ${EndIf}
-			
-			; Check if we need to restore this rule
-			${ReadRuntimeData} $1 Firewall$R0 "Action"
-			${If} $1 == "backup"
-            
-                ; Check if we have backup metadata
-                ClearErrors
-                ${ReadRuntimeData} $0 FirewallRule$R0 "RuleExisted"
-                ${If} ${Errors}
-                    ${DebugMsg} "No backup metadata found for firewall rule"
-                    Goto _FIREWALL_RESTORE_END
-                ${EndIf}
-                
-                ${DebugMsg} "Backup metadata found. Rule existed: $FWName Portable"
-                
-                ${If} $0 == "true"
-                    ; Rule existed before - need to restore it
-                    ${DebugMsg} "Attempting restoration of rule: $FWName Portable"
-                    
-                    ClearErrors
-                    ${ReadRuntimeData} $2 FirewallRule$R0 "BackupFile"
-                    ${If} ${Errors}
-                        ${DebugMsg} "Error: Cannot read backup file path: $2"
-                        Goto _FIREWALL_RESTORE_END
-                    ${EndIf}
-                    
-                    ${DebugMsg} "Backup file: $2"
-                    
-                    ; Verify backup file exists
-                    ${IfNot} ${FileExists} "$2"
-                        ${DebugMsg} "Error: Backup file not found: $2"
-                        Goto _FIREWALL_RESTORE_END
-                    ${EndIf}
-                    
-                    ; Parse backup file and recreate rule
-                    ClearErrors
-                    FileOpen $3 "$2" r
-                    ${If} ${Errors}
-                        ${DebugMsg} "Error: Cannot open backup file"
-                        Goto _FIREWALL_RESTORE_END
-                    ${EndIf}
-                    
-                    ; Parse the backup file line by line
-                    ${Do}
-                        ClearErrors
-                        FileRead $3 $4
-                        ${If} ${Errors}
-                            ${Break}
-                        ${EndIf}
-                        
-                        ; Trim line
-                        ${StrTrimNewLines} $4 $4
-                        
-                        ; Parse key-value pairs from netsh output
-                        ; Format: "Direction:              In"
-                        ${StrLoc} $5 "$4" ":" ">"
-                        ${If} $5 != ""
-                            IntOp $6 $5 + 1
-                            StrCpy $5 "$4" $5          ; Key
-                            StrCpy $6 "$4" "" $6       ; Value
-                            
-                            ; Trim whitespace
-                            ${TRIM} $5 $5
-                            ${TRIM} $6 $6
-                            
-                            ; Map netsh output to parameters
-                            ${Switch} "$5"
-                                ${Case} "Direction"
-                                    StrCpy $FWDirection "$6"
-                                    ${Break}
-                                ${Case} "Action"
-                                    StrCpy $FWAction "$6"
-                                    ${Break}
-                                ${Case} "Protocol"
-                                    StrCpy $FWProtocol "$6"
-                                    ${Break}
-                                ${Case} "Grouping"
-                                    StrCpy $FWGrouping "$6"
-                                    ${Break}
-                                ${Case} "LocalPort"
-                                    StrCpy $FWLocalPort "$6"
-                                    ${Break}
-                                ${Case} "RemotePort"
-                                    StrCpy $FWRemotePort "$6"
-                                    ${Break}
-                                ${Case} "LocalIP"
-                                    StrCpy $FWLocalAddress "$6"
-                                    ${Break}
-                                ${Case} "RemoteIP"
-                                    StrCpy $FWRemoteAddress "$6"
-                                    ${Break}
-                                ${Case} "Program"
-                                    StrCpy $FWProgram "$6"
-                                    ${Break}
-                                ${Case} "Service"
-                                    StrCpy $FWService "$6"
-                                    ${Break}
-                                ${Case} "Profiles"
-                                    StrCpy $FWProfile "$6"
-                                    ${Break}
-                                ${Case} "Enabled"
-                                    StrCpy $FWEnabled "$6"
-                                    ${Break}
-                                ${Case} "Description"
-                                    StrCpy $FWDescription "$6"
-                                    ${Break}
-                                ${Case} "Security"
-                                    StrCpy $FWSecurity "$6"
-                                    ${Break}
-                                ${Case} "InterfaceTypes"
-                                    StrCpy $FWInterfaceType "$6"
-                                    ${Break}
-                                ${Case} "Edge traversal"
-                                    StrCpy $FWEdgeTraversal "$6"
-                                    ${Break}
-                                ; Add more cases as needed for complete restoration
-                            ${EndSwitch}
-                        ${EndIf}
-                    ${Loop}
-                    
-                    FileClose $2
-                    
-                    ; Recreate the rule with parsed parameters
-                    ; Note: This is simplified - full implementation would need to parse all parameters
-                    ${If} "$FWDirection" != ""
-                    ${AndIf} "$FWAction" != ""
-                        ${DebugMsg} "Recreating rule: $FWName Portable (--dir $FWDirection, --action $FWAction)"
-                        
-                        ; Build netsh command
-                        StrCpy $R2 `"$SYSDIR\netsh.exe" advfirewall firewall add rule name="$FWName Portable"`
-                        StrCpy $R2 `$R2 dir=$FWDirection action=$FWAction`
-                        
-                        ; Add protocol
-                        ${If} "$FWProtocol" != ""
-                        ${AndIf} "$FWProtocol" != "Any"
-                            StrCpy $R2 `$R2 protocol=$FWProtocol`
-                        ${EndIf}
-                        
-                        ; Add local port
-                        ${If} "$FWLocalPort" != ""
-                        ${AndIf} "$FWLocalPort" != "Any"
-                            StrCpy $R2 `$R2 localport=$FWLocalPort`
-                        ${EndIf}
-                        
-                        ; Add remote port
-                        ${If} "$FWRemotePort" != ""
-                        ${AndIf} "$FWRemotePort" != "Any"
-                            StrCpy $R2 `$R2 remoteport=$FWRemotePort`
-                        ${EndIf}
-                        
-                        ; Add local address
-                        ${If} "$FWLocalAddress" != ""
-                        ${AndIf} "$FWLocalAddress" != "Any"
-                            StrCpy $R2 `$R2 localip=$FWLocalAddress`
-                        ${EndIf}
-                        
-                        ; Add remote address
-                        ${If} "$FWRemoteAddress" != ""
-                        ${AndIf} "$FWRemoteAddress" != "Any"
-                            StrCpy $R2 `$R2 remoteip=$FWRemoteAddress`
-                        ${EndIf}
-                        
-                        ; Add program path
-                        ${If} "$FWProgram" != ""
-                            StrCpy $R2 `$R2 program="$FWProgram"`
-   
-                        ${EndIf}
-                        
-                        ; Add service
-                        ${If} "$FWService" != ""
-                            StrCpy $R2 `$R2 service=$FWService`
-                        ${EndIf}
-                        
-                        ; Add profile
-                        ${If} "$FWProfile" != ""
-                        ${AndIf} "$FWProfile" != "Any"
-                            StrCpy $R2 `$R2 profile=$FWProfile`
-                        ${EndIf}
-                        
-                        ; Add enabled state
-                        ${If} "$FWEnabled" == "false"
-                            StrCpy $R2 `$R2 enable=no`
-                        ${Else}
-                            StrCpy $R2 `$R2 enable=yes`
-                        ${EndIf}
-                        
-                        ; Add description
-                        ${If} "$FWDescription" != ""
-                            StrCpy $R2 `$R2 description="$FWDescription"`
-                        ${EndIf}
-                        
-                        ${DebugMsg} "Executing: $R2"
-                        
-                        ; Execute the command
-                        nsExec::ExecToStack `$R2`
-                        Pop $8 ; Return code
-                        Pop $9 ; Output
 
-                        ${DebugMsg} "netsh return code: $1"
-                        
-                        
-                        ${If} $8 == "0"
-                            ${DebugMsg} "Rule recreated successfully"
-                        ${Else}
-                            ${DebugMsg} "Failed to recreate rule: $9"
-                        ${EndIf}
-                    ${Else}
-                        ${DebugMsg} "Error: Could not parse required parameters from backup file"
-                    ${EndIf}
-                    
-                    ; Clean up backup file regardless of restoration result
-                    ClearErrors
-                    ${ReadRuntimeData} $2 FirewallRule$R0 "BackupFile"
-                    ${IfNot} ${Errors}
-                        ${If} ${FileExists} "$2"
-                            Delete "$2"
-                            ${DebugMsg} "Deleted backup file: $2"
-                        ${EndIf}
-                    ${EndIf}
-                    
-                ${EndIf}
-                _FIREWALL_RESTORE_END:
-			${EndIf}
-            _POST_FIREWALL_BLOCK_ALL:
-            ${ReadLauncherConfig} $FWBlockAllDir FirewallRule$R0 BlockAllDir
-            ${If} $FWBlockAllDir != ""
-                ${ParseLocations} $FWBlockAllDir
-                ${If} ${DirExists} $FWBlockAllDir
-                    ${DebugMsg} "Deleting all rules for EXEs in $FWBlockAllDir"
-                    ${ReadLauncherConfigWithDefault} $FWBlockAllRecur FirewallRule$R0  Recursive true
-                    ${If} $FWBlockAllRecur == "true"
-                        StrCpy $FWBlockAllRecur 1
-                    ${Else}
-                        StrCpy $FWBlockAllRecur 0
-                    ${EndIf}
-                    ${Firewall::UnblockAll} "$FWBlockAllDir" $FWBlockAllRecur
-                ${EndIf}
-            ${EndIf}
-			
-			IntOp $R0 $R0 + 1
-		${Loop}
-		
-		${DebugMsg} "Restoring Windows Firewall rule(s) Post complete."
+${SegmentPostPrimary}
+	${Journal::HasEntries} Firewall $R0
+	${If} $R0 > 0
+		${Journal::Rollback} Firewall
+	${EndIf}
 !macroend
-!endif
+
+!endif ; SEGMENTS_FIREWALL

@@ -1,190 +1,240 @@
 ;=#
-; 
+;
 ; PORTABLEAPPS COMPILER
 ; Developed by daemon.devin (daemon.devin@gmail.com)
 ;
 ; For support, visit the GitHub project:
 ; https://github.com/daemondevin/pac-man
-; 
+;
 ; SEGMENT
-; Symlinks.nsh
-;     This file handles soft links, hard links, symbolic links, and junctions
-; 
+;   Symlinks.nsh
+;   Junctions, symbolic links and hard links from places an app insists on
+;   using (e.g. %APPDATA%\Vendor) into the portable Data folder, journaled so
+;   a crash can never leave a link behind or lose what was there before.
+;
 ; USAGE
-;   Add the section [SymLink#] (where '#' represents a number in numarical order) to Launcher.ini.
+;   [Activate]
+;   Symlinks=true
 ;
-;   Keys:
-;       Source	-	The name of the folder or file in the Data directory (i.e. Data\SymlinkFolder or Data\HardlinkFile.txt)
-;	    Target	-	Path that the link points to (supports all environment variables)
-;	    Type	-	soft, hard, symbolic, or junction
-;
-; EXAMPLES
 ;   [Symlink1]
-;   Type=hard
-;   Source=HardlinkFile.txt
-;   Target="%USERPROFILE%\Documents\HardlinkFile.txt"
+;   Type=junction
+;   Source=Settings
+;   Target=%APPDATA%\Vendor\App
 ;
-;   [Symlink2]
-;   Type=soft
-;   Source="Symlink'Folder"
-;   Target="%APPDATA%\Symlink'Folder"
+;   Type    junction  directory junction (no admin rights needed)
+;           soft      directory symbolic link (falls back to a junction when
+;                     Windows refuses an unprivileged symlink)
+;           symbolic  file symbolic link (needs admin rights or Developer Mode)
+;           hard      file hard link (no admin rights, same volume only)
+;   Source  File or folder inside the Data folder that the link points to.
+;           Folders are created when missing; files must exist.
+;   Target  Where the link is created. Supports environment variables.
+;
+;   The user can turn the segment off with Symlinks=false in the
+;   <AppID>.ini user configuration file.
+;
+; HOW IT IS UNDONE
+;   Whatever already exists at Target is renamed to
+;   "<Target>.BackupBy<AppID>" (on the same volume, so nothing is copied) and
+;   journaled with the link as one LINK entry. Rollback removes the link only
+;   when it provably is ours (a reparse point, or a hard link to Source) and
+;   then renames the original back. Missing parent folders created for the
+;   link are journaled as DIR entries and removed only if still empty.
+;
 
 !ifdef SEGMENTS_SYMLINKS
-;= VARIABLES
+
 Var LinkType
-Var LinkPath
-Var TargetPath
+Var LinkSource
+Var LinkTarget
+Var LinkBackup
 Var UserApprovesSymlinks
 
-;= INCLUDES
-!ifndef LOGICLIB
-    !include LogicLib.nsh
-!endif
+;= HELPERS
+;= ################
 
-;= DEFINES
-!define FILE_SUPPORTS_REPARSE_POINTS 0x00000080
-
-;= Macros
-!define YESNO "!insertmacro _YESNO"
-!macro _YESNO _FLAGS _BIT _VAR
-	IntOp ${_VAR} ${_FLAGS} & ${_BIT}
-	${IfThen} ${_VAR} <> 0 ${|} StrCpy ${_VAR} 1 ${|}
-	${IfThen} ${_VAR} == 0 ${|} StrCpy ${_VAR} 0 ${|}
-!macroend
-
-;= FUNCTIONS
-Function ValidateFS
-	!define ValidateFS `!insertmacro _ValidateFS`
-	!macro _ValidateFS _PATH _RETURN
-		Push `${_PATH}`
-		Call ValidateFS
-		Pop ${_RETURN}
-	!macroend
-	Exch $0
+; Creates the missing parent folders of $LinkTarget top-down, journaling each
+; one so rollback can remove them (deepest first, only when empty).
+Function Symlinks_MakeParents
+	Push $0
 	Push $1
 	Push $2
-	StrCpy $0 $0 3
-	System::Call `Kernel32::GetVolumeInformation(t "$0",t,i ${NSIS_MAX_STRLEN},*i,*i,*i.r1,t,i ${NSIS_MAX_STRLEN})i.r0`
-	${If} $0 <> 0
-		${YESNO} $1 ${FILE_SUPPORTS_REPARSE_POINTS} $2
-	${EndIf}
-	Pop $0
+	; Collect the missing ancestors, deepest first, as "|a|b|c".
+	StrCpy $1 ""
+	${GetParent} $LinkTarget $0
+	${Do}
+		${IfThen} $0 == "" ${|} ${ExitDo} ${|}
+		${IfThen} ${FileExists} `$0\*.*` ${|} ${ExitDo} ${|}
+		StrCpy $1 `$1|$0`
+		${GetParent} $0 $0
+	${Loop}
+	; Create them top-down: walk the list from its end.
+	${Do}
+		${IfThen} $1 == "" ${|} ${ExitDo} ${|}
+		StrLen $2 $1
+		${Do}
+			IntOp $2 $2 - 1
+			StrCpy $0 $1 1 $2
+			${IfThen} $0 == "|" ${|} ${ExitDo} ${|}
+		${Loop}
+		IntOp $0 $2 + 1
+		StrCpy $0 $1 "" $0
+		StrCpy $1 $1 $2
+		${Journal::Record} Symlinks DIR $0 "" "" ""
+		CreateDirectory $0
+	${Loop}
+	Pop $2
 	Pop $1
-	Exch $2
+	Pop $0
+FunctionEnd
+
+; Creates the link $LinkTarget -> $LinkSource of type $LinkType.
+; Sets $0 to 0 on success.
+Function Symlinks_Create
+	Push $1
+	${Select} $LinkType
+		${Case} junction
+			nsExec::ExecToStack `"$SYSDIR\cmd.exe" /c mklink /J "$LinkTarget" "$LinkSource"`
+			Pop $0
+			Pop $1
+		${Case} soft
+			; SYMBOLIC_LINK_FLAG_DIRECTORY | SYMBOLIC_LINK_FLAG_ALLOW_UNPRIVILEGED_CREATE
+			System::Call `kernel32::CreateSymbolicLinkW(w "$LinkTarget", w "$LinkSource", i 3)i .r0 ?e`
+			Pop $1
+			${If} $0 <> 0
+				StrCpy $0 0
+			${Else}
+				${DebugMsg} "Directory symlink refused (error $1); using a junction instead."
+				nsExec::ExecToStack `"$SYSDIR\cmd.exe" /c mklink /J "$LinkTarget" "$LinkSource"`
+				Pop $0
+				Pop $1
+			${EndIf}
+		${Case} symbolic
+			System::Call `kernel32::CreateSymbolicLinkW(w "$LinkTarget", w "$LinkSource", i 2)i .r0 ?e`
+			Pop $1
+			${If} $0 <> 0
+				StrCpy $0 0
+			${Else}
+				StrCpy $0 $1
+			${EndIf}
+		${Case} hard
+			System::Call `kernel32::CreateHardLinkW(w "$LinkTarget", w "$LinkSource", p 0)i .r0 ?e`
+			Pop $1
+			${If} $0 <> 0
+				StrCpy $0 0
+			${Else}
+				StrCpy $0 $1
+			${EndIf}
+	${EndSelect}
+	; Trust the file system over exit codes.
+	${If} $0 == 0
+		System::Call `kernel32::GetFileAttributes(t "$LinkTarget")i .r1`
+		${IfThen} $1 = -1 ${|} StrCpy $0 2 ${|}
+	${EndIf}
+	Pop $1
 FunctionEnd
 
 ${SegmentFile}
+
 ${SegmentPrePrimary}
-    ${ReadUserConfigWithDefault} $UserApprovesSymlinks Symlinks true
-    ${If} $UserApprovesSymlinks == true
-        ${DebugMsg} "Processing symbolic links and junctions..."
-        StrCpy $R0 1
-        ${Do}
-            ClearErrors
-            ${ReadLauncherConfig} `$0` Symlink$R0 Source
-            ${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-            ${ReadLauncherConfig} `$1` Symlink$R0 Target
-            ${ReadLauncherConfig} `$2` Symlink$R0 Type
-            
-            ${Trim} $2 `$2` 
-            
-            StrCmp $2 "hard" +7 0
-            StrCmp $2 "soft" +6 0
-            StrCmp $2 "junction" +5 0
-            StrCmp $2 "symbolic" +4 0            
-            MessageBox MB_ICONSTOP|MB_TOPMOST `[Symlink$R0]Type must be one of four options: $\r$\nhard, soft, junction, or symbolic`
-            Call Unload
-            Quit
-            StrCpy $LinkType $2
-            
-            ${DebugMsg} "Preparing $LinkType link:$\r$\n$0=$1"
-            
-            StrCpy $LinkPath `$DataDirectory\$0`
-            
-            ExpandEnvStrings $TargetPath `$1`
-            
-            ${DebugMsg} "Full path to target directory:$\r$\n$TargetPath"
-            
-            ${GetParent} $TargetPath $4
-            ${IfNot} ${FileExists} $4
-                ${DebugMsg} "Creating parent directory:$\r$\n$4"
-                CreateDirectory $4
-            ${EndIf}
-            
-            ${DebugMsg} "Source path:$\r$\n$LinkPath"
-            
-            ${If} ${FileExists} "$TargetPath\*.*"
-                StrCpy $3 "directory"
-                ${DebugMsg} "Backing up local directory:$\r$\n$TargetPath --> $TargetPath.BackupBy${APPNAME}"
-                ${GetParent} $TargetPath $R1
-                ${GetBaseName} $TargetPath $R2
-                ${Directory::BackupLocal} $R1 $R2
-            ${Else}
-                StrCpy $3 "file"
-                ${DebugMsg} "Backing up local file:$\r$\n$TargetPath --> $TargetPath.BackupBy${APPNAME}"
-                ${File::BackupLocal} $TargetPath
-            ${EndIf}
+	${ReadUserConfigWithDefault} $UserApprovesSymlinks Symlinks true
+	${If} $UserApprovesSymlinks != false
+		StrCpy $R0 1
+		${Do}
+			ClearErrors
+			${ReadLauncherConfig} $LinkSource Symlink$R0 Source
+			${IfThen} ${Errors} ${|} ${ExitDo} ${|}
+			${ReadLauncherConfig} $LinkTarget Symlink$R0 Target
+			${ReadLauncherConfigWithDefault} $LinkType Symlink$R0 Type junction
+			${NewStrCase} $LinkType $LinkType L
 
-            ${DebugMsg} "Executing CompilerLinker to link:$\r$\n$TargetPath -> $LinkPath"
-            ;System::Call "Kernel32::CreateSymbolicLink(t `$TargetPath`, t `$LinkPath`, i 3)i .r0"
-            File `/oname=$PLUGINSDIR\CompilerLinker.exe` bin\CompilerLinker.exe
-            Push $6
-            ${If} $LinkType == "soft"
-            ${OrIf} $LinkType == "symbolic"
-                ${If} $3 == "directory"
-                    nsExec::ExecToStack `"$PLUGINSDIR\CompilerLinker.exe" --soft --link "$TargetPath" --target "$LinkPath"`
-                ${Else}
-                    nsExec::ExecToStack `"$PLUGINSDIR\CompilerLinker.exe" --symbolic --link "$TargetPath" --target "$LinkPath"`
-                ${EndIf}
-            ${OrIf} $LinkType == "junction"
-                    nsExec::ExecToStack `"$PLUGINSDIR\CompilerLinker.exe" --junction --link "$TargetPath" --target "$LinkPath"`
-            ${ElseIf} $LinkType == "hard"
-                    nsExec::ExecToStack `"$PLUGINSDIR\CompilerLinker.exe" --hard --link "$TargetPath" --target "$LinkPath"`
-            ${EndIf}
-            Pop $6 ; result
-            ${IfNot} $6 == 2
-                MessageBox MB_OK|MB_ICONEXCLAMATION "Error: Cannot create $LinkType link:$\r$\n$TargetPath -> $LinkPath$\r$\n$\r$\n${PORTABLEAPPNAME} may not run correctly!"
-            ${EndIf}
-            
-            IntOp $R0 $R0 + 1
-        ${Loop}
-        ${DebugMsg} "Links and junctions processing completed."
-    ${EndIf}
+			${If} $LinkType != junction
+			${AndIf} $LinkType != soft
+			${AndIf} $LinkType != symbolic
+			${AndIf} $LinkType != hard
+				${InvalidValueError} [Symlink$R0]:Type $LinkType
+				IntOp $R0 $R0 + 1
+				${Continue}
+			${EndIf}
+
+			; Strip optional quotes, expand variables.
+			StrCpy $0 $LinkTarget 1
+			${If} $0 == `"`
+				StrCpy $LinkTarget $LinkTarget -1 1
+			${EndIf}
+			StrCpy $0 $LinkSource 1
+			${If} $0 == `"`
+				StrCpy $LinkSource $LinkSource -1 1
+			${EndIf}
+			ExpandEnvStrings $LinkTarget $LinkTarget
+			StrCpy $LinkSource `$DataDirectory\$LinkSource`
+
+			; Make sure the source exists.
+			${If} $LinkType == junction
+			${OrIf} $LinkType == soft
+				${IfNot} ${FileExists} `$LinkSource\*.*`
+					CreateDirectory $LinkSource
+				${EndIf}
+			${ElseIfNot} ${FileExists} $LinkSource
+				${DebugMsg} "[Symlink$R0] source file $LinkSource does not exist yet; skipped."
+				IntOp $R0 $R0 + 1
+				${Continue}
+			${EndIf}
+
+			; Anything already at the target is moved aside, never deleted.
+			StrCpy $LinkBackup ""
+			System::Call `kernel32::GetFileAttributes(t "$LinkTarget")i .r0`
+			${If} $0 <> -1
+				StrCpy $LinkBackup `$LinkTarget.BackupBy${APPNAME}`
+				System::Call `kernel32::GetFileAttributes(t "$LinkBackup")i .r0`
+				${If} $0 <> -1
+					MessageBox MB_OK|MB_ICONEXCLAMATION|MB_TOPMOST \
+						"[Symlink$R0] cannot link $LinkTarget:$\r$\n$LinkBackup already exists from an earlier run.$\r$\n$\r$\nCheck it, then remove or rename it. The link was skipped."
+					IntOp $R0 $R0 + 1
+					${Continue}
+				${EndIf}
+			${EndIf}
+
+			Call Symlinks_MakeParents
+
+			; Journal before mutation: one entry covers the backup rename and
+			; the link, and its undo is safe at every point in between.
+			${Journal::Record} Symlinks LINK $LinkTarget $LinkBackup $LinkSource ""
+			${If} $LinkBackup != ""
+				ClearErrors
+				Rename $LinkTarget $LinkBackup
+				${If} ${Errors}
+					${Journal::Discard} Symlinks
+					MessageBox MB_OK|MB_ICONEXCLAMATION|MB_TOPMOST \
+						"[Symlink$R0] could not move $LinkTarget out of the way (is it in use?).$\r$\nThe link was skipped."
+					IntOp $R0 $R0 + 1
+					${Continue}
+				${EndIf}
+			${EndIf}
+
+			Call Symlinks_Create
+			${If} $0 != 0
+				; Put things back the way they were right away.
+				${Journal::Discard} Symlinks
+				${If} $LinkBackup != ""
+					Rename $LinkBackup $LinkTarget
+				${EndIf}
+				MessageBox MB_OK|MB_ICONEXCLAMATION|MB_TOPMOST \
+					"Could not create the $LinkType link (error $0):$\r$\n$LinkTarget -> $LinkSource$\r$\n$\r$\n${PORTABLEAPPNAME} may not work correctly."
+			${Else}
+				${DebugMsg} "Created $LinkType link $LinkTarget -> $LinkSource."
+			${EndIf}
+
+			IntOp $R0 $R0 + 1
+		${Loop}
+	${EndIf}
 !macroend
+
 ${SegmentPostPrimary}
-    ${ReadUserConfigWithDefault} $UserApprovesSymlinks Symlinks true
-    ${If} $UserApprovesSymlinks == true
-        ${DebugMsg} "Removing created portable links and junctions..."
-        StrCpy $R0 1
-        ${Do}
-            ClearErrors
-            ${ReadLauncherConfig} $0 Symlink$R0 Source
-            ${IfThen} ${Errors} ${|} ${ExitDo} ${|}
-            ${ReadLauncherConfig} $1 Symlink$R0 Target
-            ${ReadLauncherConfig} $2 Symlink$R0 Type
-            
-            ${ParseLocations} $1
-
-            StrCmp $2 "hard" +2 0
-            StrCmp $2 "symbolic" +1 +3
-            Delete $1
-            Goto +4
-            StrCmp $2 "junction" +2 0
-            StrCmp $2 "symbolic" +1 +2
-            RMDir $1
-            
-            ${If} ${FileExists} "$1.BackupBy${APPNAME}\*.*"
-                ${DebugMsg} "Restoring local directory:$\r$\n$1.BackupBy${APPNAME} --> $1"
-                ${GetParent} $1 $R1
-                ${GetBaseName} $1 $R2
-                ${Directory::RestoreLocal} $R1 $R2
-            ${Else}
-                ${DebugMsg} "Restoring local file:$\r$\n$1.BackupBy${APPNAME} --> $1"
-                ${File::RestoreLocal} $1
-            ${EndIf}
-            IntOp $R0 $R0 + 1
-        ${Loop}
-        ${DebugMsg} "Portable links and junctions removal completed."
-    ${EndIf}
+	${Journal::HasEntries} Symlinks $R0
+	${If} $R0 > 0
+		${Journal::Rollback} Symlinks
+	${EndIf}
 !macroend
-!endif
+
+!endif ; SEGMENTS_SYMLINKS

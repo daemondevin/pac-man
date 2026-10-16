@@ -488,6 +488,9 @@ Function Init
 	${EndIf}
 	${RunSegment} DirectoryMoving
 	${RunSegment} Variables
+	; Runtime checks need the PAL variables and may stop the launch, so they
+	; run here, before anything is changed.
+	${RunIfEnabled} SEGMENTS_RUNTIME Runtime
 	${RunIfEnabled} SEGMENTS_JAVA Java
 	${RunIfEnabled} SEGMENTS_GHOSTSCRIPT Ghostscript
 	${RunIfEnabled} SEGMENTS_DOTNET DotNet

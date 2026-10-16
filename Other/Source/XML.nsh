@@ -1,4 +1,6 @@
-!ifdef XML_PLUGIN
+!ifndef _XML_LIB_
+!define _XML_LIB_
+!ifdef SEGMENTS_XML
 	!define XMLWriteText "!insertmacro _XMLWriteText"
 	!macro _XMLWriteText _FILE _XPATH _VALUE
 		nsisXML::create
@@ -56,3 +58,4 @@
 		nsisXML::release $0
 	!macroend
 !endif
+!endif ; _XML_LIB_

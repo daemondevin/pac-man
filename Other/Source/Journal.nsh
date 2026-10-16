@@ -36,16 +36,33 @@
 ;	Undo operations (every one is idempotent and safe to re-run)
 ;		REGKEY     A=root(HKCU|HKLM) B=subkey C=.reg backup or "" D=view(32|64|"")
 ;		           Deletes the key, then re-imports the backup if one was taken.
+;		REGEMPTY   A=root B=subkey
+;		           Deletes the key only if it has no subkeys and no values.
+;		           Used for parent keys created on the way to a new key.
 ;		REGVALUE   A=root B=subkey C=value name D=previous value or "" if absent
 ;		           Previous value format: STR:<data> | EXP:<data> | DWORD:<number>
 ;		FILE       A=path B=backup or ""
 ;		           Deletes the file, then moves the backup back into place.
 ;		DIR        A=path B=backup or "" C="recursive" to allow a recursive delete
 ;		           Never recurses into a reparse point (junction or symlink).
-;		LINK       A=link path B=backup or ""
-;		           Removes the link itself (never its target), restores backup.
+;		LINK       A=link path B=backup or "" C=link source (for hard links)
+;		           Removes the link itself (never its target) only when it is
+;		           provably ours, then restores the backup.
 ;		CMD        A=command line B=accepted exit codes (comma list, default 0)
+;		           C="admin" when the command only works elevated; without
+;		           admin rights the entry is then kept instead of run, so an
+;		           exit code that also means "nothing to do" can't hide an
+;		           access-denied failure.
 ;		FONT       A=font file B=AddFontResourceEx flags used (16 = private)
+;		DRIVER     A=copy of the driver package's INF in the journal store
+;		           Finds the driver store's oemNN.inf with the same content
+;		           and removes the package with pnputil /delete-driver
+;		           /uninstall /force. Needs admin rights. A missing copy
+;		           means the package was already removed.
+;		TASK       A=scheduled task name B=task XML backup or "" C="admin" or ""
+;		           Deletes the task if it exists, then re-creates the backup
+;		           with schtasks /XML. A missing backup file means the
+;		           backup was already restored, so nothing is touched.
 ;		STRIPLINES A=text file B=marker
 ;		           Removes every line containing the marker.
 ;		SVCSTOP    A=service name B=timeout in seconds (default 30)
@@ -80,7 +97,7 @@
 ; afterwards in registry enumeration order.
 !include TypeLib.nsh
 
-!define JOURNAL_RECOVERY_ORDER `Tasks Services Hosts Firewall Associations Symlinks Fonts RegDLL Runtime`
+!define JOURNAL_RECOVERY_ORDER `Tasks Services Drivers Hosts Firewall Associations Symlinks Fonts RegDLL Runtime`
 
 Var JournalActive
 Var JournalIncomplete
@@ -181,6 +198,55 @@ Var _JT4
 	${IfThen} ${_VAR} == "" ${|} StrCpy ${_VAR} 0 ${|}
 !macroend
 
+; ${Journal::RegKeyExists} Root Subkey $var
+; Sets $var to 1 when the key exists, else 0. Root is HKCU, HKLM or HKCR.
+!define Journal::RegKeyExists `!insertmacro _Journal::RegKeyExists`
+!macro _Journal::RegKeyExists _ROOT _KEY _VAR
+	StrCpy $_JT1 `${_ROOT}`
+	StrCpy $_JT2 `${_KEY}`
+	Call Journal_RegKeyExists
+	StrCpy ${_VAR} $_JT4
+!macroend
+
+; ${Journal::RegKey} Segment Root Subkey $var
+; Journals a registry key the caller is about to create or replace. Root is
+; HKCU or HKLM. When the key exists it is exported to the journal store and
+; recorded as REGKEY with that backup; $var is set to "existed". When it does
+; not, every missing parent is recorded as REGEMPTY (top-down) and the key
+; itself as REGKEY with no backup; $var is set to "new". When an existing
+; key cannot be backed up nothing is recorded and $var is set to "".
+!define Journal::RegKey `!insertmacro _Journal::RegKey`
+!macro _Journal::RegKey _SEG _ROOT _KEY _VAR
+	Push `${_KEY}`
+	Push `${_ROOT}`
+	Push `${_SEG}`
+	Call Journal_RegKey
+	StrCpy ${_VAR} $_JT4
+!macroend
+
+; ${Journal::FindStagedInf} InfFile $var
+; Sets $var to the oemNN.inf in %WINDIR%\INF whose content is identical to
+; InfFile (the published name of that driver package), or "" when the
+; package is not in the driver store.
+!define Journal::FindStagedInf `!insertmacro _Journal::FindStagedInf`
+!macro _Journal::FindStagedInf _INF _VAR
+	StrCpy $_JT3 `${_INF}`
+	Call Journal_FindStagedInf
+	StrCpy ${_VAR} $_JT4
+!macroend
+
+; ${Journal::PnPUtil} $var
+; Sets $var to the 64-bit pnputil.exe when the launcher runs under WOW64
+; (SysWOW64 has none), else to the one in $SYSDIR.
+!define Journal::PnPUtil `!insertmacro _Journal::PnPUtil`
+!macro _Journal::PnPUtil _VAR
+	${If} ${FileExists} `$WINDIR\Sysnative\pnputil.exe`
+		StrCpy ${_VAR} `$WINDIR\Sysnative\pnputil.exe`
+	${Else}
+		StrCpy ${_VAR} `$SYSDIR\pnputil.exe`
+	${EndIf}
+!macroend
+
 ; ${Journal::BackupFile} Segment Path $outvar
 ; Copies Path into the journal store and returns the backup path in $outvar
 ; ("" when Path does not exist). Does not record an entry by itself.
@@ -256,6 +322,173 @@ Function Journal_BackupFile
 			StrCpy $_JT1 ""
 		${EndIf}
 	${EndIf}
+FunctionEnd
+
+; Sets $_JT4 to 1 when key $_JT2 exists under root $_JT1, else 0.
+Function Journal_RegKeyExists
+	ClearErrors
+	${If} $_JT1 == HKLM
+		EnumRegKey $_JT4 HKLM `$_JT2` 0
+	${ElseIf} $_JT1 == HKCR
+		EnumRegKey $_JT4 HKCR `$_JT2` 0
+	${Else}
+		EnumRegKey $_JT4 HKCU `$_JT2` 0
+	${EndIf}
+	${If} ${Errors}
+		StrCpy $_JT4 0
+	${Else}
+		StrCpy $_JT4 1
+	${EndIf}
+FunctionEnd
+
+; Stack in: segment, root, subkey. Result in $_JT4 (see ${Journal::RegKey}).
+Function Journal_RegKey
+	Exch $0 ; segment
+	Exch
+	Exch $1 ; root
+	Exch 2
+	Exch $2 ; subkey
+	Push $3
+	Push $4
+	Push $5
+	StrCpy $_JT1 $1
+	StrCpy $_JT2 $2
+	Call Journal_RegKeyExists
+	${If} $_JT4 == 1
+		; Export it so the undo can put it back exactly as it was.
+		CreateDirectory `${JOURNAL_STORE}\$0`
+		System::Call `kernel32::GetTickCount()i.r3`
+		StrCpy $4 0
+		${Do}
+			StrCpy $5 `${JOURNAL_STORE}\$0\$3-$4.reg`
+			${IfNotThen} ${FileExists} $5 ${|} ${ExitDo} ${|}
+			IntOp $4 $4 + 1
+		${Loop}
+		nsExec::ExecToStack `"$SYSDIR\reg.exe" export "$1\$2" "$5" /y`
+		Pop $3
+		Pop $4
+		${If} ${FileExists} $5
+			${Journal::Record} $0 REGKEY $1 $2 $5 ""
+			StrCpy $_JT4 existed
+		${Else}
+			StrCpy $_JT4 ""
+		${EndIf}
+	${Else}
+		; Collect the missing parents, deepest first, as "|a|b|c".
+		StrCpy $3 ""
+		${GetParent} $2 $4
+		${Do}
+			${IfThen} $4 == "" ${|} ${ExitDo} ${|}
+			StrCpy $_JT1 $1
+			StrCpy $_JT2 $4
+			Call Journal_RegKeyExists
+			${IfThen} $_JT4 == 1 ${|} ${ExitDo} ${|}
+			StrCpy $3 `$3|$4`
+			${GetParent} $4 $4
+		${Loop}
+		; Record them top-down: walk the list from its end.
+		${Do}
+			${IfThen} $3 == "" ${|} ${ExitDo} ${|}
+			StrLen $5 $3
+			${Do}
+				IntOp $5 $5 - 1
+				StrCpy $4 $3 1 $5
+				${IfThen} $4 == "|" ${|} ${ExitDo} ${|}
+			${Loop}
+			IntOp $4 $5 + 1
+			StrCpy $4 $3 "" $4
+			StrCpy $3 $3 $5
+			${Journal::Record} $0 REGEMPTY $1 $4 "" ""
+		${Loop}
+		${Journal::Record} $0 REGKEY $1 $2 "" ""
+		StrCpy $_JT4 new
+	${EndIf}
+	Pop $5
+	Pop $4
+	Pop $3
+	Pop $2
+	Pop $1
+	Pop $0
+FunctionEnd
+
+; Sets $_JT4 to 1 when files $_JT1 and $_JT2 have identical content, else 0.
+Function Journal_SameContent
+	Push $0
+	Push $1
+	Push $2
+	Push $3
+	Push $4
+	Push $5
+	Push $6
+	Push $7
+	StrCpy $_JT4 0
+	ClearErrors
+	FileOpen $0 `$_JT1` r
+	FileOpen $1 `$_JT2` r
+	${IfNot} ${Errors}
+		FileSeek $0 0 END $2
+		FileSeek $1 0 END $3
+		${If} $2 = $3
+			FileSeek $0 0 SET
+			FileSeek $1 0 SET
+			System::Alloc 65536
+			Pop $4
+			System::Alloc 65536
+			Pop $5
+			StrCpy $_JT4 1
+			${Do}
+				System::Call `kernel32::ReadFile(p r0, p r4, i 65536, *i .r6, p 0)`
+				System::Call `kernel32::ReadFile(p r1, p r5, i 65536, *i .r7, p 0)`
+				${If} $6 <> $7
+					StrCpy $_JT4 0
+					${ExitDo}
+				${EndIf}
+				${IfThen} $6 = 0 ${|} ${ExitDo} ${|}
+				System::Call `ntdll::RtlCompareMemory(p r4, p r5, p r6)p .r3`
+				${If} $3 <> $6
+					StrCpy $_JT4 0
+					${ExitDo}
+				${EndIf}
+			${Loop}
+			System::Free $4
+			System::Free $5
+		${EndIf}
+	${EndIf}
+	FileClose $0
+	FileClose $1
+	Pop $7
+	Pop $6
+	Pop $5
+	Pop $4
+	Pop $3
+	Pop $2
+	Pop $1
+	Pop $0
+FunctionEnd
+
+; Sets $_JT4 to the oemNN.inf whose content equals $_JT3, or "".
+Function Journal_FindStagedInf
+	Push $0
+	Push $1
+	StrCpy $1 ""
+	FindFirst $0 $_JT4 `$WINDIR\INF\oem*.inf`
+	${Do}
+		${IfThen} $_JT4 == "" ${|} ${ExitDo} ${|}
+		Push $_JT4
+		StrCpy $_JT1 `$WINDIR\INF\$_JT4`
+		StrCpy $_JT2 $_JT3
+		Call Journal_SameContent
+		Pop $_JT1
+		${If} $_JT4 == 1
+			StrCpy $1 $_JT1
+			${ExitDo}
+		${EndIf}
+		FindNext $0 $_JT4
+	${Loop}
+	FindClose $0
+	StrCpy $_JT4 $1
+	Pop $1
+	Pop $0
 FunctionEnd
 
 ; Sets $_JT4 to 32 or 64 from the PE header of $_JT1, 0 when unknown.
@@ -374,6 +607,50 @@ Function Journal_Discard
 	Pop $_JSeg
 FunctionEnd
 
+; Sets $_JT4 to 1 when $_JT1 and $_JT2 are the same file on disk (same
+; volume serial and file index, i.e. hard links of each other), else 0.
+Function Journal_SameFile
+	Push $0
+	Push $1
+	Push $2
+	Push $3
+	Push $4
+	Push $5
+	StrCpy $_JT4 0
+	StrCpy $5 ""
+	StrCpy $4 $_JT1
+	${Do}
+		; FILE_SHARE_READ|WRITE|DELETE, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS
+		System::Call `kernel32::CreateFile(t r4, i 0, i 7, p 0, i 3, i 0x02000000, p 0)p .r0`
+		${If} $0 = -1
+			${ExitDo}
+		${EndIf}
+		System::Call `*(&i52)p .r2`
+		System::Call `kernel32::GetFileInformationByHandle(p r0, p r2)i .r3`
+		System::Call `kernel32::CloseHandle(p r0)`
+		${If} $3 = 0
+			System::Free $2
+			${ExitDo}
+		${EndIf}
+		; dwVolumeSerialNumber @28, nFileIndexHigh @44, nFileIndexLow @48
+		System::Call `*$2(&i28, i .r0, &i12, i .r1, i .r3)`
+		System::Free $2
+		${If} $5 == ""
+			StrCpy $5 `$0:$1:$3`
+			StrCpy $4 $_JT2
+		${Else}
+			${IfThen} $5 == `$0:$1:$3` ${|} StrCpy $_JT4 1 ${|}
+			${ExitDo}
+		${EndIf}
+	${Loop}
+	Pop $5
+	Pop $4
+	Pop $3
+	Pop $2
+	Pop $1
+	Pop $0
+FunctionEnd
+
 ; Returns 1 in $_JT4 when $_JT1 contains $_JT2 (case-insensitive), else 0.
 Function Journal_Contains
 	Push $0
@@ -464,6 +741,16 @@ Function Journal_UndoEntry
 				${EndIf}
 			${EndIf}
 
+		${Case} REGEMPTY
+			${If} $_JA == HKLM
+			${AndIf} $Admin != true
+				StrCpy $_JOk false
+			${ElseIf} $_JA == HKLM
+				DeleteRegKey /ifempty HKLM `$_JB`
+			${Else}
+				DeleteRegKey /ifempty HKCU `$_JB`
+			${EndIf}
+
 		${Case} REGVALUE
 			${If} $_JA == HKLM
 			${AndIf} $Admin != true
@@ -534,15 +821,36 @@ Function Journal_UndoEntry
 			${EndIf}
 
 		${Case} LINK
-			${If} ${FileExists} `$_JA\*.*`
-				; A directory link: RMDir removes the reparse point only.
-				RMDir `$_JA`
-			${Else}
-				Delete `$_JA`
+			; Only ever remove something that is provably our link: a reparse
+			; point (junction or symlink) or a hard link to the source in C.
+			; Anything else at A is somebody's real data and is left alone.
+			System::Call `kernel32::GetFileAttributes(t "$_JA")i.r0`
+			${If} $0 <> -1
+				IntOp $1 $0 & ${JOURNAL_REPARSE_POINT}
+				IntOp $2 $0 & 0x10
+				${If} $1 <> 0
+					${If} $2 <> 0
+						; RMDir removes the reparse point, never the target.
+						RMDir `$_JA`
+					${Else}
+						Delete `$_JA`
+					${EndIf}
+				${ElseIf} $_JC != ""
+					StrCpy $_JT1 $_JA
+					StrCpy $_JT2 $_JC
+					Call Journal_SameFile
+					${IfThen} $_JT4 == 1 ${|} Delete `$_JA` ${|}
+				${EndIf}
 			${EndIf}
 			System::Call `kernel32::GetFileAttributes(t "$_JA")i.r0`
 			${If} $0 <> -1
-				StrCpy $_JOk false
+				; Still there. Fine if it was never ours and there is no backup
+				; to put back (the crash happened before the link was made);
+				; a failure if a backup is waiting for this spot.
+				${If} $_JB != ""
+				${AndIf} ${FileExists} `$_JB`
+					StrCpy $_JOk false
+				${EndIf}
 			${Else}
 				StrCpy $_JT1 $_JB
 				StrCpy $_JT2 $_JA
@@ -550,15 +858,71 @@ Function Journal_UndoEntry
 			${EndIf}
 
 		${Case} CMD
-			nsExec::ExecToStack `$_JA`
-			Pop $0
-			Pop $1
-			${IfThen} $_JB == "" ${|} StrCpy $_JB 0 ${|}
-			StrCpy $_JT1 ",$_JB,"
-			StrCpy $_JT2 ",$0,"
-			Call Journal_Contains
-			${If} $_JT4 != 1
+			${If} $_JC == admin
+			${AndIf} $Admin != true
 				StrCpy $_JOk false
+			${Else}
+				nsExec::ExecToStack `$_JA`
+				Pop $0
+				Pop $1
+				${IfThen} $_JB == "" ${|} StrCpy $_JB 0 ${|}
+				StrCpy $_JT1 ",$_JB,"
+				StrCpy $_JT2 ",$0,"
+				Call Journal_Contains
+				${If} $_JT4 != 1
+					StrCpy $_JOk false
+				${EndIf}
+			${EndIf}
+
+		${Case} DRIVER
+			${If} $Admin != true
+				StrCpy $_JOk false
+			${ElseIf} ${FileExists} `$_JA`
+				StrCpy $_JT3 $_JA
+				Call Journal_FindStagedInf
+				${If} $_JT4 != ""
+					${Journal::PnPUtil} $2
+					nsExec::ExecToStack `"$2" /delete-driver "$_JT4" /uninstall /force`
+					Pop $0
+					Pop $1
+					${If} $0 != 0
+					${AndIf} $0 != 3010
+						StrCpy $_JOk false
+					${EndIf}
+				${EndIf}
+				${If} $_JOk == true
+					Delete `$_JA`
+				${EndIf}
+			${EndIf}
+
+		${Case} TASK
+			${If} $_JC == admin
+			${AndIf} $Admin != true
+				StrCpy $_JOk false
+			${ElseIf} $_JB != ""
+			${AndIfNot} ${FileExists} `$_JB`
+				; Restored on an earlier attempt; the task there is the original.
+			${Else}
+				nsExec::ExecToStack `"$SYSDIR\schtasks.exe" /Query /TN "$_JA"`
+				Pop $0
+				Pop $1
+				${If} $0 == 0
+					nsExec::ExecToStack `"$SYSDIR\schtasks.exe" /Delete /TN "$_JA" /F`
+					Pop $0
+					Pop $1
+					${IfThen} $0 != 0 ${|} StrCpy $_JOk false ${|}
+				${EndIf}
+				${If} $_JOk == true
+				${AndIf} $_JB != ""
+					nsExec::ExecToStack `"$SYSDIR\schtasks.exe" /Create /TN "$_JA" /XML "$_JB" /F`
+					Pop $0
+					Pop $1
+					${If} $0 == 0
+						Delete `$_JB`
+					${Else}
+						StrCpy $_JOk false
+					${EndIf}
+				${EndIf}
 			${EndIf}
 
 		${Case} FONT

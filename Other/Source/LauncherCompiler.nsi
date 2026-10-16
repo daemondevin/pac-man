@@ -865,4 +865,4 @@ Function .onGUIEnd
 FunctionEnd
 
 ; Sign ourselves using both SHA-1 and SHA-2 too.
-!finalize `"${SIGNTOOL}" sign /f "contrib\certificates\daemon.devin.pfx" /p "FuckYouMendi" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
+!finalize `"${SIGNTOOL}" sign /f "contrib\certificates\daemon.devin.pfx" /p "" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`

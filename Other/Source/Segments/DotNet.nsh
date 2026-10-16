@@ -12,6 +12,7 @@
 ; 
 
 !ifdef DOTNET
+Var DotNETVersion
 Function dotNETCheck
 	!define CheckDOTNET "!insertmacro _CheckDOTNET"
 	!macro _CheckDOTNET _RESULT _VALUE
@@ -23,7 +24,15 @@ Function dotNETCheck
 	Push $0
 	Push $1
 	
-	${If} $1 == "4.7"
+	${If} $1 == "4.8.1"
+		StrCpy $R1 533320
+	${ElseIf} $1 == "4.8"
+		StrCpy $R1 528040
+	${ElseIf} $1 == "4.7.2"
+		StrCpy $R1 461808
+	${ElseIf} $1 == "4.7.1"
+		StrCpy $R1 461308
+	${ElseIf} $1 == "4.7"
 		StrCpy $R1 460798
 	${ElseIf} $1 == "4.6.2"
 		StrCpy $R1 394802
@@ -98,10 +107,7 @@ Function HasDotNETFramework
 	Exch $0
 FunctionEnd
 
-!ifndef ___DOTNETVER__NSH___
-    !include DotNetVer.nsh
-!endif
-
+${IncludeIfNotDefined} ___DOTNETVER__NSH___ DotNetVer.nsh
 
 ${SegmentFile}
 ${SegmentInit}
@@ -113,18 +119,41 @@ ${SegmentInit}
 	;  - 4.0[SP<n>][C|F]
 	;
 	; Added by daemon.devin
-	;  - (4.7|4.6.2|4.6.1|4.6|4.5.2|4.5.1|4.5)
+	;  - (4.8.1|4.8|4.7.2|4.7.1|4.7|4.6.2|4.6.1|4.6|4.5.2|4.5.1|4.5)
 	; 
 	ReadINIStr $DotNETVersion "${INFOINI}" Dependencies UsesDotNetVersion
-	${If} $DotNETVersion <= "4.0"
-		${IfNot} ${HasDotNet4.0}
+	; Versions are compared as versions, not integers ("4.5" is not 4).
+	StrCpy $1 $DotNETVersion 3
+	StrCpy $2 0
+	${If} $DotNETVersion != ""
+		${VersionCompare} $1 4.5 $2
+	${EndIf}
+	${If} $DotNETVersion == ""
+		; Nothing to check.
+	${ElseIf} $2 == 2
+		StrCpy $0 false
+		${Select} $1
+			${Case} 1.0
+				${IfThen} ${HasDotNet1.0} ${|} StrCpy $0 true ${|}
+			${Case} 1.1
+				${IfThen} ${HasDotNet1.1} ${|} StrCpy $0 true ${|}
+			${Case} 2.0
+				${IfThen} ${HasDotNet2.0} ${|} StrCpy $0 true ${|}
+			${Case} 3.0
+				${IfThen} ${HasDotNet3.0} ${|} StrCpy $0 true ${|}
+			${Case} 3.5
+				${IfThen} ${HasDotNet3.5} ${|} StrCpy $0 true ${|}
+			${CaseElse}
+				${IfThen} ${HasDotNet4.0} ${|} StrCpy $0 true ${|}
+		${EndSelect}
+		${If} $0 != true
 			${DebugMsg} "Unable to find .NET Framework $DotNETVersion." ; Required .NET version not found
 			MessageBox MB_OK|MB_ICONSTOP `$(LauncherNoDotNet)`
 			Quit
 		${Else}
 			${DebugMsg} ".NET Framework $DotNETVersion found." ; Required .NET version found. 4.0 or below.
 		${EndIf}
-	${ElseIf} $DotNETVersion >= "4.5"
+	${Else}
 		Push $DotNETVersion
 		Call dotNETCheck
 		Pop $0
@@ -136,9 +165,6 @@ ${SegmentInit}
 		${Else}
 			${DebugMsg} "The required .NET Framework was found." ; Required .NET version found. Has 4.5 or above.
 		${EndIf}
-	${Else}
-		; Invalid .NET version
-		${InvalidValueError} [Dependencies]:UsesDotNetVersion $DotNETVersion
 	${EndIf}
 !macroend
 !endif
