@@ -213,10 +213,10 @@ ${ECHO} "${NEWLINE}Including required files and/or plugins...${NEWLINE}${NEWLINE
 		!include x64.nsh
 	!endif
 !endif
-!ifdef Include_LineWrite.nsh
+!ifdef Include_LineWrite
 	!include LineWrite.nsh
 !endif
-!ifdef Include_WinMessages.nsh
+!ifdef Include_WinMessages
 	!include WinMessages.nsh
 !endif
 !ifdef SEGMENTS_UAC
@@ -254,6 +254,7 @@ ${ECHO} "${NEWLINE}Loading language strings...${NEWLINE}${NEWLINE}"
 ;= ################
 ${ECHO} "${NEWLINE}Initializing variables and macros...${NEWLINE}${NEWLINE}"
 Var Bit
+Var Arch
 Var App
 Var Admin
 Var AppID
@@ -403,6 +404,36 @@ Function .onInit
 	StrCpy $Bit 64
 	Goto +2
 	StrCpy $Bit 32
+	; $Arch is the architecture Windows itself runs on: x86, x64 or arm64.
+	; IsWow64Process2 (Windows 10 1709 and later) tells an ARM64 PC apart
+	; from an x64 one, which IsWow64Process can't: both report WOW64 for this
+	; 32-bit launcher. Where it is missing, PROCESSOR_ARCHITEW6432 is used.
+	; Custom.nsh may change $Arch in its .onInit hook to force a build.
+	Push $1
+	Push $2
+	Push $3
+	${If} $Bit == 64
+		StrCpy $Arch x64
+	${Else}
+		StrCpy $Arch x86
+	${EndIf}
+	StrCpy $2 0
+	System::Call `*(i 0) p .r1`
+	System::Call `*(i 0) p .r3`
+	System::Call `kernel32::IsWow64Process2(p -1, p r1, p r3) i .r2`
+	${If} $2 <> 0
+		; IMAGE_FILE_MACHINE_ARM64 = 0xAA64 = 43620
+		System::Call `*$3(&i2 .r2)`
+		${IfThen} $2 = 43620 ${|} StrCpy $Arch arm64 ${|}
+	${Else}
+		ReadEnvStr $2 PROCESSOR_ARCHITEW6432
+		${IfThen} $2 == ARM64 ${|} StrCpy $Arch arm64 ${|}
+	${EndIf}
+	System::Free $1
+	System::Free $3
+	Pop $3
+	Pop $2
+	Pop $1
 	!ifdef HYBRID
 		StrCmpS $Bit 32 +6
 		IfFileExists `${EXE64}` 0 +5
@@ -488,9 +519,6 @@ Function Init
 	${EndIf}
 	${RunSegment} DirectoryMoving
 	${RunSegment} Variables
-	; Runtime checks need the PAL variables and may stop the launch, so they
-	; run here, before anything is changed.
-	${RunIfEnabled} SEGMENTS_RUNTIME Runtime
 	${RunIfEnabled} SEGMENTS_JAVA Java
 	${RunIfEnabled} SEGMENTS_GHOSTSCRIPT Ghostscript
 	${RunIfEnabled} SEGMENTS_DOTNET DotNet
@@ -499,6 +527,11 @@ Function Init
 		${RunSegment} Temp
 	${EndIf}
 	${RunSegment} InstanceManagement
+	${RunIfEnabled} SEGMENTS_REGISTRY Registry
+	; Runtime checks need the PAL variables and the instance state (a second
+	; launch must not repeat them) and may stop the launch, so they run here,
+	; before anything is changed.
+	${RunIfEnabled} SEGMENTS_RUNTIME Runtime
 	${If} ${PrimaryInstance}
 		${RunSegment} Settings
 	${EndIf}

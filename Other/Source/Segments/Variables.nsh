@@ -64,8 +64,8 @@ FunctionEnd
 !define IsAdmin `"" IsAdmin ""`
 ${SegmentFile}
 ; Macros {{{1
-!define SetEnvironmentVariablesPath "!insertmacro SetEnvironmentVariablesPathCall"
-!macro SetEnvironmentVariablesPathCall _VARIABLE_NAME _PATH
+!define SetEnvironmentVariablesPath "!insertmacro _SetEnvironmentVariablesPath"
+!macro _SetEnvironmentVariablesPath _VARIABLE_NAME _PATH
 	Push "${_VARIABLE_NAME}"
 	Push "${_PATH}"
 	${CallArtificialFunction2} SetEnvironmentVariablesPath_
@@ -170,26 +170,44 @@ ${SegmentFile}
 !define ParseLocations "!insertmacro ParseLocations"
 Var AppDirectory
 Var DataDirectory
+!ifdef SEGMENTS_RUNTIME
+    Var Prerequisites
+!endif
 Var PortableAppsDirectory
 Var PortableAppsCommonFiles
 Var PortableAppsBaseDirectory
 Var LastPortableAppsBaseDirectory
 ${SegmentInit}
-	${InsertMacroIfExists} EnvironmentVariables
+	!ifmacrodef EnvironmentVariables
+		!insertmacro EnvironmentVariables
+	!endif
 	StrCpy $AppDirectory `$EXEDIR\App`
 	StrCpy $DataDirectory `$EXEDIR\Data`
+    !ifdef SEGMENTS_RUNTIME
+        StrCpy $Prerequisites `$AppDirectory\Prerequisites`
+    !endif
 	${SetEnvironmentVariablesPath} PAL:AppDir  $AppDirectory
+	${SetEnvironmentVariablesPath} PAC:AppDir  $AppDirectory
 	${SetEnvironmentVariablesPath} PAL:DataDir $DataDirectory
+	${SetEnvironmentVariablesPath} PAC:DataDir $DataDirectory
+	; The folder of the executable picked for this launch (its build and,
+	; with parameters, its WhenParameters variant).
+	${GetParent} `$AppDirectory\$ProgramExecutable` $0
+	${SetEnvironmentVariablesPath} PAL:ProgramDir $0
 	${GetParentUNC} $EXEDIR $PortableAppsDirectory
 	StrCpy $PortableAppsCommonFiles $PortableAppsDirectory\CommonFiles
 	${SetEnvironmentVariablesPath} PAL:PortableAppsDir $PortableAppsDirectory
+	${SetEnvironmentVariablesPath} PAC:PortableAppsDir $PortableAppsDirectory
 	${SetEnvironmentVariablesPath} PAL:CommonFiles $PortableAppsDirectory\CommonFiles
+	${SetEnvironmentVariablesPath} PAC:CommonFiles $PortableAppsDirectory\CommonFiles
 	${GetParentUNC} $PortableAppsDirectory $PortableAppsBaseDirectory
 	${SetEnvironmentVariablesPath} PAL:PortableAppsBaseDir $PortableAppsBaseDirectory
+	${SetEnvironmentVariablesPath} PAC:PortableAppsBaseDir $PortableAppsBaseDirectory
 	ClearErrors
-	ReadINIStr `$LastPortableAppsBaseDirectory` `${SETINI}` PortableApps.comLauncherLastRunEnvironment PAL:LastPortableAppsBaseDir
+	ReadINIStr `$LastPortableAppsBaseDirectory` `${SETINI}` PACLastRunEnvironment PAC:LastPortableAppsBaseDir
 	${IfNot} ${Errors}
 		${SetEnvironmentVariablesPath} PAL:LastPortableAppsBaseDir $LastPortableAppsBaseDirectory
+		${SetEnvironmentVariablesPath} PAC:LastPortableAppsBaseDir $LastPortableAppsBaseDirectory
 	${EndIf}
 	ReadEnvStr $0 PortableApps.comDocuments
 	${If} $0 == ""
@@ -225,8 +243,10 @@ ${SegmentInit}
 	${SetEnvironmentVariablesPath} ALLUSERSAPPDATA $APPDATA
 	${SetEnvironmentVariablesPath} PROGRAMDATA $APPDATA
 	SetShellVarContext current
-	${InsertMacroIfExists} PostEnvironmentVariables
+	!ifmacrodef PostEnvironmentVariables
+		!insertmacro PostEnvironmentVariables
+	!endif
 !macroend
 ${SegmentPrePrimary}
-	WriteINIStr `${SETINI}` ${PAL}LastRunEnvironment PAL:LastPortableAppsBaseDir `$PortableAppsBaseDirectory`
+	WriteINIStr `${SETINI}` PACLastRunEnvironment PAC:LastPortableAppsBaseDir `$PortableAppsBaseDirectory`
 !macroend

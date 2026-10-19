@@ -864,5 +864,12 @@ Function .onGUIEnd
 	RealProgress::Unload
 FunctionEnd
 
+!define _PASS_RAW	`$%PACMAN_CERT_PASS%`
+!searchparse /noerrors "${_PASS_RAW}" "%PACMAN_CERT_PASS" _PASS_UNSET
+
 ; Sign ourselves using both SHA-1 and SHA-2 too.
-!finalize `"${SIGNTOOL}" sign /f "contrib\certificates\daemon.devin.pfx" /p "" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
+!ifdef _PASS_UNSET
+	!finalize `"${SIGNTOOL}" sign /f "contrib\certificates\daemon.devin.pfx" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
+!else
+	!finalize `"${SIGNTOOL}" sign /f "contrib\certificates\daemon.devin.pfx" /p "${_PASS_RAW}" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
+!endif

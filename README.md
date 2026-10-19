@@ -251,6 +251,26 @@ Everything that is available with the [PortableApps.com Launcher](https://portab
   > JAVA_HOME=%PAL:CommonFiles%\Java64
   > ```
 
+**Executables per architecture**
+
+`[Launch]` takes an executable for each Windows architecture, and a second one for launches with command line parameters:
+
+```INI
+[Launch]
+ProgramExecutable=App\app.exe
+ProgramExecutable64=App64\app.exe
+ProgramExecutableARM64=AppARM64\app.exe
+ProgramExecutableWhenParameters=App\app-cli.exe
+ProgramExecutableWhenParameters64=App64\app-cli.exe
+ProgramExecutableWhenParametersARM64=AppARM64\app-cli.exe
+```
+
+- The launcher works out the architecture Windows itself runs on, so an ARM64 PC is told apart from an x64 one (a 32-bit launcher sees both as 64-bit).
+- With parameters, `ProgramExecutableWhenParameters<arch>` is used; without them, or when that key is missing, `ProgramExecutable<arch>`.
+- ARM64 falls back to x64 and then x86, and x64 to x86, when its keys are missing or the file they name doesn't exist. A package can add an ARM64 build without breaking copies that don't have one yet.
+- `%PAL:ProgramDir%` is the folder of the executable picked for the launch (with the usual `:ForwardSlash` and `:DoubleBackslash` forms), for use in `WorkingDirectory` and anywhere else a path is needed.
+- `Custom.nsh` can force a build by setting `$Arch` (`x86`, `x64` or `arm64`) in its `.onInit` hook.
+
 Added new keys to the `[Activate]` section. They are as follows (a short description of what each key means or does can be found further below):
 
 > Note: You should only use the following keys if you need them, otherwise they should be omitted entirely.

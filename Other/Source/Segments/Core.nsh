@@ -17,6 +17,36 @@ Var LauncherFile
 ;= INCLUDES
 !include PortableAppsCompiler.nsh
 
+; Sets $ProgramExecutable from the [Launch] keys for one architecture. Stack
+; in: the key suffix ("ARM64", "64" or "" for x86). $1 holds the command line
+; parameters: when there are some, ProgramExecutableWhenParameters<suffix> is
+; tried before ProgramExecutable<suffix>. For ARM64 and x64 the file has to
+; exist too, so a package whose build for this machine is missing falls back
+; to the next one (ARM64 to x64 to x86) instead of failing to start. The
+; x64 build is only tried when $Arch isn't x86, so forcing x86 works.
+Function Core_ProgramExecutable
+	Exch $2
+	Push $3
+	StrCpy $3 ""
+	${If} $1 != ""
+		ClearErrors
+		${ReadLauncherConfig} $3 Launch ProgramExecutableWhenParameters$2
+	${EndIf}
+	${If} $3 == ""
+		ClearErrors
+		${ReadLauncherConfig} $3 Launch ProgramExecutable$2
+	${EndIf}
+	${If} $3 != ""
+		${If} $2 == ""
+		${OrIf} ${FileExists} `$EXEDIR\App\$3`
+			StrCpy $ProgramExecutable $3
+		${EndIf}
+	${EndIf}
+	ClearErrors
+	Pop $3
+	Pop $2
+FunctionEnd
+
 ${SegmentFile}
 ${Segment.onInit}
 	${GetBaseName} $EXEFILE $BaseName
@@ -53,16 +83,20 @@ ${SegmentInit}
 			!insertmacro ProExecInit
 		!else
 			StrCpy $ProgramExecutable ""
-			StrCmpS $Bit 64 0 +5
-			StrCmpS $0 "" +2
-			${ReadLauncherConfig} $ProgramExecutable Launch ProgramExecutableWhenParameters64
-			StrCmpS $ProgramExecutable "" 0 +2
-			${ReadLauncherConfig} $ProgramExecutable Launch ProgramExecutable64
-			StrCmpS $0 "" +3
-			StrCmpS $ProgramExecutable "" 0 +2
-			${ReadLauncherConfig} $ProgramExecutable Launch ProgramExecutableWhenParameters
-			StrCmpS $ProgramExecutable "" 0 +2
-			${ReadLauncherConfig} $ProgramExecutable Launch ProgramExecutable
+			StrCpy $1 $0
+			${If} $Arch == arm64
+				Push ARM64
+				Call Core_ProgramExecutable
+			${EndIf}
+			${If} $ProgramExecutable == ""
+			${AndIf} $Arch != x86
+				Push 64
+				Call Core_ProgramExecutable
+			${EndIf}
+			${If} $ProgramExecutable == ""
+				Push ""
+				Call Core_ProgramExecutable
+			${EndIf}
 		!endif
 	!endif
 	StrCmpS $ProgramExecutable "" 0 +3

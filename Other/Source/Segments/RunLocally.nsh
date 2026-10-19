@@ -39,6 +39,8 @@ ${SegmentPre}
 		${EndIf}
 		${SetEnvironmentVariablesPath} PAL:AppDir $AppDirectory
 		${SetEnvironmentVariablesPath} PAL:DataDir $DataDirectory
+		${GetParent} `$AppDirectory\$ProgramExecutable` $0
+		${SetEnvironmentVariablesPath} PAL:ProgramDir $0
 		StrCmpS $SecondaryLaunch true +2
 		StrCpy $WaitForProgram true
 	${EndIf}
