@@ -1,12 +1,5 @@
 # Symbolic Links
 
-> [!CAUTION]
-> Before proceeding with this topic I would like to point out that John, the founder of PortableApps.com, [explains in detail](https://portableapps.com/comment/233867#comment-233867) why it would be bad practice to make use of any of these concepts in this topic. 
-> 
-> **TLDR:** Basically a portable application can potentionally render a host machine in a much worse state if it crashes while running a portable app which uses junctions or the like. Luckily, this is precisely what pac-man tries to mitigate against with it's journaling system. 
-
-## Synopsis
-
 Hard Links, Junction Points and Symbolic Links are all methods used by your operating system to "link" files, directories or volumes together. To a computer, you could say that symbolic links are just _advance shortcuts_ which make a file or folder appear to be the same as another file or folder located elsewhere on the host machine—even though it's just a link pointing at the original file or folder.
 
 > [!IMPORTANT]
@@ -78,29 +71,3 @@ Junctions and Symbolic links are really doing the same thing in the same way (re
 > **CompilerLinker**
 >
 > PortableApps Compiler comes with a small utility to help in the creation in making symbolic links. More information can be found [here](https://github.com/daemondevin/CompilerLinker).
-
-## Launcher.ini
-
-To make use of this feature in PortableApps Compiler, simply add the section `[SymLink#]` (where `#` represents a number in numerical order) to your `launcher.ini`.
-
-### Configuration
-
-| **Key** | **Description** |
-|----------|-------------|
-| `type` | The type of link to create. Either one of the following four: `soft`, `hard`, `symbolic`, or `junction` |
-| `source` | The name of the folder or file in the Data directory (i.e. Data\SymlinkFolder or Data\HardlinkFile.txt) |
-| `target` | The path that the link points to (supports all environment variables) |
-
-### Examples
-
-```ini
-[Symlink1]
-Type=hard
-Source=HardlinkFile.txt
-Target="%USERPROFILE%\Documents\HardlinkFile.txt"
-
-[Symlink2]
-Type=soft
-Source="Symlink'Folder"
-Target="%APPDATA%\Symlink'Folder"
-```
