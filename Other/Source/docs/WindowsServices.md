@@ -1,7 +1,5 @@
 # Windows Services
 
-## Overview
-
 A **Windows Service** is a long-running executable that operates independently of a user's 
 login session. Unlike traditional desktop applications, services are managed by the **Windows 
 Service Control Manager (SCM)** and can start automatically when Windows boots, run in the 
@@ -20,8 +18,6 @@ Services are commonly used for tasks such as:
 
 Because they are managed by Windows itself, services provide a reliable mechanism for continuously 
 running software.
-
----
 
 ## How Windows Services Work
 
@@ -45,8 +41,6 @@ flowchart TD
     D -->|Stop| E["Removed"]
     D -->|Restart| E
 ```
-
----
 
 ## Services in Portable Apps
 
@@ -74,9 +68,7 @@ Examples include:
 * Remote access software
 * Network proxies
 
----
-
-## Pac-Man's Service Strategy
+## Portable Service Strategy
 
 When updating an installation, it's good practice for you to stop the application, or _kill_ the app process, 
 before overwriting any of its data. The same goes for portable apps. Since you're essentially _installing_ the 
@@ -107,8 +99,6 @@ flowchart TD
 
 This leaves the host machine in the same state it was before the application was launched.
 
----
-
 ## Administrator Privileges
 
 Creating or deleting Windows services generally requires administrative privileges.
@@ -121,8 +111,6 @@ A portable launcher should:
 
 > [!IMPORTANT]
 > Applications that never use services should never trigger a UAC prompt.
-
----
 
 ## Detecting Existing Services
 
@@ -243,53 +231,6 @@ Additional information can be gathered using:
 These tools reveal service names, executable paths, startup modes, dependencies, recovery options, 
 and registry configuration.
 
----
-
-### Services in `Launcher.ini`
-
-Take note of the service name(s) that you find. Open Terminal or whatever command prompt of your 
-choosing and enter `sc qc W32Time`. For the sake of this guide, I'm using the _Windows Time_ 
-service which is called `W32Time` but replace `W32Time` with the name of your service. Repeat 
-this for any other services you may find. After hitting enter, you should get something resembling 
-the following:
-
-```cmd
-Microsoft Windows [Version 10.0.22621.4037]
-(c) Microsoft Corporation. All rights reserved.
-
-C:\Users\daemondevin>sc qc W32Time
-[SC] QueryServiceConfig SUCCESS
-
-SERVICE_NAME: W32Time
-        TYPE               : 20  WIN32_SHARE_PROCESS
-        START_TYPE         : 2   AUTO_START  (DELAYED)
-        ERROR_CONTROL      : 1   NORMAL
-        BINARY_PATH_NAME   : C:\Windows\system32\svchost.exe -k LocalService
-        LOAD_ORDER_GROUP   :
-        TAG                : 0
-        DISPLAY_NAME       : Windows Time
-        DEPENDENCIES       :
-        SERVICE_START_NAME : NT AUTHORITY\LocalService
-
-C:\Users\daemondevin>
-```
-
-So now you have all the information you need to deal with a service. What we would use from the above
-output and how we'd add it to the `launcher.ini` file would be like this:
-
-```ini
-[Service1]
-Name=W32Time
-Path=%PAC:DataDir%\svchost.exe -k LocalService
-Type=share
-Start=auto
-IfExists=skip
-Description=Portable Windows Time service
-```
-
-Refer to the Wiki for [Windows Services Config Examples](https://github.com/daemondevin/pac-man/wiki/Windows-Services-Config-Examples) 
-for an exhaustive list showing how to configure services with pac-man.
-
 ## Cleanup
 
 Proper cleanup is essential.
@@ -304,8 +245,6 @@ When the portable application exits, the launcher should attempt to:
 
 If the application crashes unexpectedly, the launcher may attempt cleanup during the next launch.
 
----
-
 ## Advantages
 
 Using temporary services provides several benefits.
@@ -315,8 +254,6 @@ Using temporary services provides several benefits.
 * Supports applications requiring background services.
 * Allows automatic cleanup.
 * Minimizes changes to the host system.
-
----
 
 ## Limitations
 
@@ -343,8 +280,6 @@ When implementing service support in a portable launcher:
 * Handle unexpected crashes gracefully.
 * Log all service operations.
 * Avoid modifying existing service configurations unless explicitly requested.
-
----
 
 ## Example Lifecycle
 
@@ -374,8 +309,6 @@ flowchart TD
     class G,H runtime;
     class I,J,K cleanup;
 ```
-
----
 
 ## Summary
 
