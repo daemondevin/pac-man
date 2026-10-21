@@ -407,8 +407,8 @@ Function Journal_RegKey
 	Pop $4
 	Pop $3
 	Pop $2
-	Pop $1
 	Pop $0
+	Pop $1
 FunctionEnd
 
 ; Sets $_JT4 to 1 when files $_JT1 and $_JT2 have identical content, else 0.
