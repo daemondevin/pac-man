@@ -12,7 +12,7 @@
 ;   the program itself.
 ;
 ;   Some packages can't ship the program they launch: commercial software
-;   (WeBuilder, FL Studio, Photoshop), or free software whose licence doesn't
+;   (WeBuilder, FL Studio, Photoshop), or free software whose license doesn't
 ;   allow copies to be passed on. The user copies the program folder of an
 ;   installed copy into App. Until that is done, this segment explains what to
 ;   copy and where, offers to open the App folder, and quits.
@@ -36,7 +36,7 @@
 ;
 ;   Reason         Why the program isn't included: commercial (the default:
 ;                  commercial software, the user needs their own copy and
-;                  licence), noredistribute (its licence doesn't allow copies
+;                  license), noredistribute (its license doesn't allow copies
 ;                  to be passed on), or any other text, shown as it is.
 ;   URL            Where to get the program, shown in the message.
 ;   Folder         The folder in App to copy the program into. By default it
