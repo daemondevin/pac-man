@@ -207,6 +207,7 @@ Exact reverse order. This ensures no consumer exists without its provider. Segme
 | Drivers | `Drivers` | **Journaled**, admin only; runtime-tested against a pnputil stand-in (add, already-staged package left alone, failed package, architecture filter, crash recovery). Needs more testing. |
 | Services | `Services` | **Journaled**; runtime-tested for new services and crash recovery. |
 | Tasks | `Tasks` | **Journaled**; runtime-tested but needs more testing against other versions of Windows |
+| MissingApp | `MissingApp` | **Done**; nothing to journal (it only reads, and quits before anything starts). Only English strings so far; other languages fall back to them |
 
 PAL-inherited segments (registry keys, file and directory moves, file writes and so on) keep their PAL behavior and are not part of the journal.
 
@@ -299,6 +300,7 @@ Runtime=true
 FileCleanup=true
 DirectoryCleanup=true
 Hosts=true
+MissingApp=true
 ```
 
 A key set to `false` is treated the same as an omitted key.
@@ -585,6 +587,23 @@ A key set to `false` is treated the same as an omitted key.
   > [Hosts]
   > 1=127.0.0.1 example.local
   > 2=::1 example.local
+  > ```
+
+- **MissingApp:** For packages that don't include the program they launch, such as commercial software or free software whose license doesn't allow copies to be passed on. When the program isn't in `App`, the launcher explains which folder to copy from an installed copy and where to put it, offers to open the `App` folder, and quits. It runs before the UAC prompt and before anything else starts, so nothing needs undoing, and the message uses the launcher's language strings.
+
+  > The program is the executable the launch will use, chosen exactly as Core chooses it: `ProgramExecutableARM64`, `ProgramExecutable64` and `ProgramExecutable` (and their `WhenParameters` variants), for this computer's architecture. The `[MissingApp]` section is optional:
+  >
+  > - **Reason:** _commercial_ (default), _noredistribute_, or any other text, shown as it is.
+  > - **URL:** where to get the program.
+  > - **Folder:** the folder in `App` to copy the program into. By default, the first folder of the program's path.
+  > - **RequiredFile1**, **RequiredFile2** and so on: more files or folders, relative to `App`, that must be there as well (wildcards work, so `Folder\*.*` checks a folder isn't empty). When the program is there but one of these isn't, the launcher says the copy is incomplete. Copying only the program file out of its folder is the usual cause.
+  >
+  > When `custom.nsh` chooses the executable itself (a `ProExecInit` macro), only the `RequiredFileN` entries are checked.
+  >
+  > ```INI
+  > [MissingApp]
+  > Reason=noredistribute
+  > URL=https://www.emsisoft.com/en/emergency-kit/
   > ```
 
 ---

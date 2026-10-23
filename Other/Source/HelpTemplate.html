@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<!--IF:Template-->
+<!--
+	PAC-MAN help page template.
+
+	The PortableApps Compiler fills this in for the package it compiles and
+	writes it to the package's root as help.html. Words between double percent
+	signs are replaced with the package's details from appinfo.ini and its
+	launcher.ini, and IF blocks are kept or dropped:
+
+	  %%PortableName%%  [Details] Name, ending in Portable
+	  %%AppName%%       the same without Portable
+	  %%AppID%%         [Details] AppID
+	  %%Launcher%%      [Control] Start, or AppID.exe
+	  %%Description%%   [Details] Description
+	  %%Homepage%%      [Details] Homepage
+	  %%Version%%       [Version] DisplayVersion, or PackageVersion
+	  %%Packager%%      [Team] Developer, or [Details] Publisher
+
+	  IF:Description  IF:Homepage   IF:Version  IF:MissingApp  IF:Admin
+	  IF:OpenSource   IF:Freeware   IF:Commercial  IF:Packager
+
+	Keep the template ASCII (use entities such as &amp;middot;) and keep
+	each line under 1000 characters.
+
+	This comment is a block that is always dropped (IF:Template), so it
+	isn't copied into help.html.
+
+	A generated help.html carries the marker below. The compiler only
+	rewrites help.html files that have it, or that are the old
+	PortableApps.com help template, so to keep hand edits in a package's
+	help.html, delete the marker line there.
+-->
+<!--ENDIF-->
+<!--
+	Written by the PortableApps Compiler from Other\Source\HelpTemplate.html,
+	and written again each time the launcher is compiled. To keep your own
+	edits to this page, delete the marker line below.
+-->
+<!-- pac-man:help-generated -->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="generator" content="PAC-MAN PortableApps Compiler">
+<title>%%PortableName%% Help</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f766e'/%3E%3Cpath d='M44 22a15 15 0 1 0 4 12' fill='none' stroke='%23fff' stroke-width='6' stroke-linecap='round'/%3E%3Cpath d='M38 14h10v10' fill='none' stroke='%23fff' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23fbbf24'/%3E%3C/svg%3E">
+<style>
+	:root {
+		--bg: #eef1f3;
+		--surface: #ffffff;
+		--surface-2: #f6f8f9;
+		--text: #1c2328;
+		--muted: #5b6770;
+		--border: #d7dde1;
+		--accent: #0f766e;
+		--accent-strong: #0b5c56;
+		--accent-soft: #e3f3f1;
+		--signal: #b45309;
+		--signal-soft: #fdf3e5;
+		--code-bg: #f1f4f6;
+		--shadow: 0 1px 2px rgba(16, 24, 32, 0.06), 0 8px 24px rgba(16, 24, 32, 0.06);
+	}
+	@media (prefers-color-scheme: dark) {
+		:root {
+			--bg: #0f1417;
+			--surface: #161d21;
+			--surface-2: #1b2328;
+			--text: #e3e8eb;
+			--muted: #9aa6ae;
+			--border: #2b353b;
+			--accent: #3cc3b4;
+			--accent-strong: #6fd8cc;
+			--accent-soft: #15302d;
+			--signal: #f0b35a;
+			--signal-soft: #2d2416;
+			--code-bg: #1f282e;
+			--shadow: none;
+		}
+	}
+
+	* { box-sizing: border-box; }
+	html { -webkit-text-size-adjust: 100%; }
+	body {
+		margin: 0;
+		padding: 32px 16px 48px;
+		background: var(--bg);
+		color: var(--text);
+		font: 15px/1.6 "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+	}
+	.page {
+		max-width: 820px;
+		margin: 0 auto;
+		background: var(--surface);
+		border: 1px solid var(--border);
+		border-radius: 14px;
+		box-shadow: var(--shadow);
+		overflow: hidden;
+	}
+
+	/* Header */
+	header {
+		padding: 28px 36px 24px;
+		border-bottom: 1px solid var(--border);
+		background: linear-gradient(180deg, var(--accent-soft), var(--surface));
+	}
+	.brand {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		margin-bottom: 18px;
+		color: var(--muted);
+		font-size: 13px;
+		letter-spacing: 0.02em;
+	}
+	.brand svg { width: 28px; height: 28px; flex: none; }
+	.brand strong { color: var(--text); letter-spacing: 0.08em; }
+	h1 {
+		margin: 0;
+		font-size: 30px;
+		line-height: 1.2;
+		font-weight: 650;
+		letter-spacing: -0.01em;
+	}
+	.version {
+		margin: 4px 0 0;
+		color: var(--muted);
+		font-size: 13px;
+	}
+	.tagline {
+		margin: 6px 0 0;
+		color: var(--muted);
+		font-size: 17px;
+	}
+
+	main { padding: 8px 36px 32px; }
+	h2 {
+		margin: 32px 0 10px;
+		font-size: 19px;
+		font-weight: 650;
+		padding-bottom: 6px;
+		border-bottom: 1px solid var(--border);
+	}
+	p, ul, ol { margin: 0 0 12px; }
+	ul, ol { padding-left: 22px; }
+	li { margin: 4px 0; }
+
+	a { color: var(--accent); font-weight: 600; text-decoration: none; }
+	a:hover { color: var(--accent-strong); text-decoration: underline; }
+	a:focus-visible, .button:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+		border-radius: 4px;
+	}
+
+	code, kbd {
+		font-family: "Cascadia Mono", Consolas, "Courier New", monospace;
+		font-size: 0.9em;
+		background: var(--code-bg);
+		border: 1px solid var(--border);
+		border-radius: 5px;
+		padding: 1px 5px;
+		overflow-wrap: anywhere;
+	}
+
+	/* The journal promise */
+	.promise {
+		display: flex;
+		gap: 16px;
+		align-items: flex-start;
+		margin: 24px 0 8px;
+		padding: 16px 18px;
+		border: 1px solid var(--border);
+		border-left: 4px solid var(--accent);
+		border-radius: 10px;
+		background: var(--surface-2);
+	}
+	.promise svg { width: 36px; height: 36px; flex: none; margin-top: 2px; }
+	.promise p { margin: 0; }
+	.promise strong { display: block; margin-bottom: 2px; }
+
+	/* Links */
+	.links {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+		gap: 10px;
+		margin: 20px 0 4px;
+	}
+	.button {
+		display: block;
+		padding: 12px 14px;
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		background: var(--surface);
+		color: var(--text);
+		font-weight: 600;
+	}
+	.button span {
+		display: block;
+		color: var(--muted);
+		font-weight: 400;
+		font-size: 13px;
+	}
+	.button:hover {
+		border-color: var(--accent);
+		color: var(--text);
+		text-decoration: none;
+	}
+
+	/* Steps */
+	.steps { counter-reset: step; list-style: none; padding: 0; }
+	.steps li {
+		position: relative;
+		padding-left: 38px;
+		margin: 10px 0;
+	}
+	.steps li::before {
+		counter-increment: step;
+		content: counter(step);
+		position: absolute;
+		left: 0;
+		top: 1px;
+		width: 26px;
+		height: 26px;
+		border-radius: 50%;
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-weight: 700;
+		font-size: 13px;
+		text-align: center;
+		line-height: 26px;
+	}
+
+	.note {
+		padding: 12px 16px;
+		border-radius: 10px;
+		background: var(--signal-soft);
+		border: 1px solid var(--border);
+		border-left: 4px solid var(--signal);
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		margin: 6px 0 14px;
+		font-size: 14px;
+	}
+	th, td {
+		text-align: left;
+		vertical-align: top;
+		padding: 8px 10px;
+		border-bottom: 1px solid var(--border);
+	}
+	th { color: var(--muted); font-weight: 600; font-size: 13px; }
+	td:first-child { width: 1%; white-space: nowrap; }
+	td:first-child code { overflow-wrap: normal; }
+
+	footer {
+		padding: 18px 36px;
+		border-top: 1px solid var(--border);
+		background: var(--surface-2);
+		color: var(--muted);
+		font-size: 13px;
+	}
+	footer p { margin: 0 0 6px; }
+	footer p:last-child { margin: 0; }
+
+	@media (max-width: 600px) {
+		body { padding: 0; }
+		.page { border-radius: 0; border-left: 0; border-right: 0; }
+		header, main, footer { padding-left: 16px; padding-right: 16px; }
+		h1 { font-size: 25px; }
+		.promise { flex-direction: column; gap: 8px; }
+		table, thead, tbody, tr, th, td { display: block; }
+		thead { display: none; }
+		td { border: 0; padding: 2px 0; }
+		td:first-child { width: auto; white-space: normal; }
+		td:first-child code { overflow-wrap: anywhere; }
+		tr { padding: 8px 0; border-bottom: 1px solid var(--border); }
+	}
+
+	@media print {
+		body { background: #fff; padding: 0; color: #000; }
+		.page { border: 0; box-shadow: none; max-width: none; }
+		header { background: none; }
+		.links { display: none; }
+		a { color: #000; font-weight: 600; }
+		main a[href^="http"]::after { content: " (" attr(href) ")"; font-weight: 400; font-size: 0.85em; }
+	}
+</style>
+</head>
+
+<body>
+<div class="page">
+
+<header>
+	<div class="brand">
+		<svg viewBox="0 0 64 64" aria-hidden="true">
+			<rect width="64" height="64" rx="14" fill="#0f766e"/>
+			<path d="M44 22a15 15 0 1 0 4 12" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+			<path d="M38 14h10v10" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+			<circle cx="32" cy="32" r="5" fill="#fbbf24"/>
+		</svg>
+		<div><strong>PAC-MAN</strong> &middot; PortableApps Compiler &amp; Management</div>
+	</div>
+	<h1>%%PortableName%% Help</h1>
+<!--IF:Description-->
+	<p class="tagline">%%Description%%</p>
+<!--ENDIF-->
+<!--IF:Version-->
+	<p class="version">Version %%Version%%</p>
+<!--ENDIF-->
+</header>
+
+<main>
+	<p>%%PortableName%% is %%AppName%% packaged with the
+	<a href="https://github.com/daemondevin/pac-man">PAC-MAN</a> launcher, so you
+	can run it from a USB drive, an external hard drive or any folder you like,
+	without installing it. Your settings travel with it in the <code>Data</code>
+	folder, and it leaves nothing behind on the computers you use it on.
+<!--IF:Homepage-->
+	<a href="%%Homepage%%">Learn more about %%AppName%%</a>
+<!--ENDIF-->
+	</p>
+
+	<div class="promise">
+		<svg viewBox="0 0 64 64" aria-hidden="true">
+			<circle cx="32" cy="32" r="30" style="fill: var(--accent-soft)"/>
+			<path d="M42 24a13 13 0 1 0 3.5 10.5" style="fill: none; stroke: var(--accent)" stroke-width="5" stroke-linecap="round"/>
+			<path d="M37 17h8.5v8.5" style="fill: none; stroke: var(--accent)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+		</svg>
+		<p><strong>Every change can be undone.</strong> Anything the launcher
+		changes on the computer is written down first, in a journal. When the
+		program closes, the journal is used to put everything back. If it closes
+		badly, after a crash, a power cut or a USB drive pulled out too soon, the
+		next launch finds the journal and finishes the job.</p>
+	</div>
+
+	<nav class="links" aria-label="Links">
+<!--IF:Homepage-->
+		<a class="button" href="%%Homepage%%">%%AppName%%<span>The program's homepage</span></a>
+<!--ENDIF-->
+		<a class="button" href="https://github.com/daemondevin/pac-man">PAC-MAN<span>The launcher on GitHub</span></a>
+		<a class="button" href="https://github.com/daemondevin/pac-man/wiki">Wiki<span>Guides and reference</span></a>
+		<a class="button" href="https://github.com/daemondevin/pac-man/discussions">Discussions<span>Ask questions, share launchers</span></a>
+	</nav>
+
+	<h2>Getting started</h2>
+	<ol class="steps">
+<!--IF:MissingApp-->
+		<li>This package doesn't include %%AppName%% itself. The first time you
+		start it, it tells you which folder to copy from an installed
+		%%AppName%%, and where to put it.</li>
+<!--ENDIF-->
+		<li>Start <code>%%Launcher%%</code>, in the same folder as this page. You
+		don't need to install anything.</li>
+<!--IF:Admin-->
+		<li>Windows asks for administrator rights when it starts, because
+		%%AppName%% needs them. <code>Other\Source\README.md</code> says why.</li>
+<!--ENDIF-->
+		<li>To use it from the
+		<a href="https://portableapps.com/download">PortableApps.com Platform</a>,
+		put this folder in the Platform's <code>PortableApps</code> folder. The
+		Platform is optional.</li>
+		<li>Close the program as you normally would. The launcher waits for it,
+		then tidies up.</li>
+	</ol>
+
+	<h2>Files in this package</h2>
+	<table>
+		<thead>
+			<tr><th>Location</th><th>What it holds</th></tr>
+		</thead>
+		<tbody>
+			<tr><td><code>App</code></td><td>The program and the launcher's
+			configuration. Updating the package replaces it.</td></tr>
+			<tr><td><code>Data</code></td><td>Your settings and files. Copy this
+			folder to back them up, or to move them to another copy of the
+			package.</td></tr>
+			<tr><td><code>%%AppID%%.ini</code></td><td>Optional settings for the
+			launcher. A copy with the defaults and notes on each setting is in
+			<code>Other\Source</code>.</td></tr>
+			<tr><td><code>Other\Source\README.md</code></td><td>What this launcher
+			changes on the computer, how it is undone, and how to build
+			it.</td></tr>
+		</tbody>
+	</table>
+
+	<h2>If something goes wrong</h2>
+	<p>If the program didn't close properly last time, the launcher says so when
+	you next start it, and undoes what that session changed. Start it again
+	afterwards and it runs as normal.</p>
+	<p class="note">When reporting a problem, please include an export of the
+	registry key <code>HKEY_CURRENT_USER\Software\pac-man\Journal</code> and
+	the contents of the folder <code>%LOCALAPPDATA%\pac-man\Journal</code>.
+	Remove any licence keys or personal details first. Report launcher problems
+	on the <a href="https://github.com/daemondevin/pac-man/issues">PAC-MAN issue
+	tracker</a>, and problems with the program itself to its developer.</p>
+
+	<h2>PortableApps.com Platform help</h2>
+	<p>This package uses the PortableApps.com Format, so the Platform's guides
+	apply to it too:</p>
+	<ul>
+		<li><a href="https://portableapps.com/support/portable_app#downloading">Downloading a portable app</a></li>
+		<li><a href="https://portableapps.com/support/portable_app#installing">Installing a portable app</a></li>
+		<li><a href="https://portableapps.com/support/portable_app#using">Using a portable app</a></li>
+		<li><a href="https://portableapps.com/support/portable_app#upgrading">Upgrading a portable app</a></li>
+	</ul>
+
+	<h2>Licences</h2>
+	<p>PAC-MAN, the launcher that makes this program portable, is open source,
+	and its code is on <a href="https://github.com/daemondevin/pac-man">GitHub</a>.</p>
+<!--IF:OpenSource-->
+	<p>%%AppName%% itself is open source software, under the licence its
+	developer chose.</p>
+<!--ENDIF-->
+<!--IF:Freeware-->
+	<p>%%AppName%% itself is freeware, under its developer's licence. Check its
+	terms before using it at work.</p>
+<!--ENDIF-->
+<!--IF:Commercial-->
+	<p>%%AppName%% itself is commercial software. You need your own licence to
+	use it; this package doesn't include one.</p>
+<!--ENDIF-->
+</main>
+
+<footer>
+<!--IF:Packager-->
+	<p>Packaged by %%Packager%% with PAC-MAN.</p>
+<!--ENDIF-->
+	<p>PAC-MAN is built on the PortableApps.com Launcher and produces packages
+	in the PortableApps.com Format. It is a separate project, not made or
+	endorsed by PortableApps.com.</p>
+</footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,171 @@
+name: Bug report
+description: Something in PAC-MAN or a PAC-MAN launcher doesn't work as it should
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. PAC-MAN records every change it makes before making it, so the journal export below is usually what solves a report.
+
+        **Before you start:**
+        - PAC-MAN is not PAL. Problems with the PortableApps.com Launcher itself belong at PortableApps.com.
+        - Security problems (running code, escalating privileges, deleting what the launcher didn't create) go to daemon.devin@gmail.com, not here.
+        - Remove license keys, serial numbers, account tokens and personal paths from everything you paste or attach.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and this hasn't been reported.
+          required: true
+        - label: I'm using a launcher compiled from the current `master-rewrite` branch.
+          required: true
+        - label: I removed license keys and personal data from what I'm attaching.
+          required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where does the problem seem to be?
+      options:
+        - Rollback journal or crash recovery
+        - A segment (name it below)
+        - The compiler (LauncherCompiler, GUI, feature flags)
+        - A launcher's custom.nsh
+        - PAL behaviour inside PAC-MAN (RegistryKeys, DirectoriesMove, FileWrite and so on)
+        - Documentation
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: segment
+    attributes:
+      label: Segment
+      description: If a segment is involved, which one?
+      placeholder: Symlinks, Services, RegDLL, Firewall...
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you see? Include the exact text of any message box.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Start from a clean state if you can.
+      placeholder: |
+        1. Fresh package, no Data folder
+        2. Launch, let the app start
+        3. Kill the launcher in Task Manager
+        4. Launch again
+    validations:
+      required: true
+
+  - type: dropdown
+    id: crash
+    attributes:
+      label: Did a crash or forced close happen before or during this?
+      options:
+        - "No"
+        - Yes, the app crashed
+        - Yes, the launcher was killed or crashed
+        - Yes, power cut, sleep or USB drive removed
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: host-state
+    attributes:
+      label: Was the host left modified?
+      description: After the launcher closed, or after the next launch's recovery, was anything left behind or not put back (a registry key, service, link, file, firewall rule)?
+      options:
+        - "No"
+        - Yes, after a normal close
+        - Yes, even after recovery
+        - Not sure
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      placeholder: Windows 11 Pro 24H2, 64-bit (x64)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: elevation
+    attributes:
+      label: Did the launcher run as administrator?
+      options:
+        - "No"
+        - "Yes"
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: location
+    attributes:
+      label: Where does the package live?
+      options:
+        - Internal drive (NTFS)
+        - USB drive (NTFS)
+        - USB drive (FAT32 or exFAT)
+        - Network share
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: PAC-MAN version or commit
+      description: The commit hash you compiled from, or the version in the launcher's file properties.
+      placeholder: master-rewrite @ 70bde12
+
+  - type: textarea
+    id: config
+    attributes:
+      label: Package configuration
+      description: |
+        Paste `App\AppInfo\Launcher\<AppID>.ini`, the relevant parts of `appinfo.ini`, the user's `<AppID>.ini`, and `custom.nsh` if there is one (or attach them).
+      render: ini
+
+  - type: textarea
+    id: journal
+    attributes:
+      label: Journal
+      description: |
+        Run `reg export HKCU\Software\pac-man\Journal journal.reg` and attach it, along with a list of what's in `%LOCALAPPDATA%\pac-man\Journal`. Write "empty" if the key doesn't exist.
+
+  - type: textarea
+    id: debug
+    attributes:
+      label: Debug output
+      description: |
+        If you can reproduce it, put a `Debug.nsh` containing `!define DEBUG_ALL` (or `!define DEBUG_JOURNAL` for journal problems) in `App\AppInfo\Launcher`, recompile, and paste or attach what it shows.
+      render: text
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots, logs from the app itself, or what you've already tried.

@@ -39,6 +39,7 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Tasks=` TASKSCHEDULER
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `RuntimeDependencies=` SEGMENTS_RUNTIME
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Hosts=` SEGMENTS_HOSTS
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `MissingApp=` SEGMENTS_MISSINGAPP
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Drivers=` DRIVERS
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `FileAssociations=` ASSOCIATIONS
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Firewall=` FIREWALL
@@ -114,6 +115,13 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!ifdef SEGMENTS_HOSTS
 		!undef SEGMENTS_HOSTS
+	!endif
+!endif
+!if "${SEGMENTS_MISSINGAPP}" == true
+	!define /REDEF SEGMENTS_MISSINGAPP
+!else
+	!ifdef SEGMENTS_MISSINGAPP
+		!undef SEGMENTS_MISSINGAPP
 	!endif
 !endif
 !if "${DRIVERS}" == true

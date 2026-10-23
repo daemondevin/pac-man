@@ -1,0 +1,94 @@
+name: Feature or segment request
+description: Suggest a new feature, a new segment, or a change to how PAC-MAN works
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the problem first, then your idea. A feature request that starts from what an app needs is much easier to design well than one that starts from a solution.
+
+        Requests to bypass licensing, activation or copy protection are closed (see the Code of Conduct).
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues and the roadmap, and this isn't already planned.
+          required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of change is this?
+      options:
+        - A new segment
+        - A change to an existing segment
+        - A new journal undo operation
+        - The compiler or its GUI
+        - Configuration keys (Launcher.ini, appinfo.ini, the user ini)
+        - Documentation or the Wiki
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What can't you do today? Which app needs it, and what does that app do to Windows when installed normally?
+      placeholder: An app registers a shell extension in HKLM and won't show its context menu without it...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you propose
+      description: How should PAC-MAN handle it? Example configuration helps a lot.
+      placeholder: |
+        [Activate]
+        ShellExtensions=true
+
+        [ShellExtension1]
+        ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: undo
+    attributes:
+      label: How it's undone
+      description: |
+        Every change PAC-MAN makes to the host must be recorded before it's made and undone afterwards, including after a crash. What would be recorded, and how would it be put back? What happens if the same thing already exists on the host?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: admin
+    attributes:
+      label: Does it need administrator rights?
+      options:
+        - "No, it works in user scope"
+        - "Yes, it needs machine scope"
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Existing segments, custom.nsh code, or other approaches, and why they fall short.
+
+  - type: dropdown
+    id: help
+    attributes:
+      label: Can you help build it?
+      options:
+        - Yes, I'd like to write it
+        - I can test it on real Windows
+        - "No"
+    validations:
+      required: true

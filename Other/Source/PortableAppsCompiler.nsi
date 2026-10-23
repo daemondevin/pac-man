@@ -455,6 +455,11 @@ Function .onInit
 	${RunSegment} Temp
 	${RunSegment} Language
 	${RunSegment} OperatingSystem
+	; A package without its program says how to add it, in the user's
+	; language and before any UAC prompt.
+	!ifdef SEGMENTS_MISSINGAPP
+		${RunSegment} MissingApp
+	!endif
 	!ifdef SEGMENTS_UAC
 		${RunSegment} RunAsAdmin
 	!endif

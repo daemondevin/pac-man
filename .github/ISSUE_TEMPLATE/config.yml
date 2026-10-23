@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security problem
+    url: mailto:daemon.devin@gmail.com
+    about: Report privilege escalation, code execution or data loss privately by email, not in a public issue.
+  - name: Question or help with a launcher
+    url: https://github.com/daemondevin/pac-man/discussions/categories/q-a
+    about: Ask in Discussions (Q&A), or check the Wiki first.
+  - name: PAC-MAN Wiki
+    url: https://github.com/daemondevin/pac-man/wiki
+    about: Guides for custom.nsh, services, DLL registration and more.
+  - name: PortableApps.com Launcher (PAL) problems
+    url: https://portableapps.com/forums/development
+    about: PAC-MAN is not PAL. Problems with PAL itself belong at PortableApps.com.

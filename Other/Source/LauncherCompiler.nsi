@@ -69,6 +69,7 @@ SetDatablockOptimize On
 !include NewTextReplace.nsh
 !include ReplaceInFileWithTextReplace.nsh
 !include LogicLibAdditions.nsh
+!include HelpFile.nsh
 !AddPluginDir Plugins
 
 ;= ICON & STYLE
@@ -536,77 +537,92 @@ Section Main
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "UseStdUtils"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "UseStdUtils" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "StdUtils" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "INF_Install"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "INF_Install" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "RegistryValueWrite"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "RegSleep" "50" "$\t$\t"
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "FileWriteReplace"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "REPLACE" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "CloseWindow"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "CloseWindow" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "FileLocking"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "IsFileLocked" "" ""
 			${AddConditionIfNot} "CloseWindow"
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "Firewall"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "FIREWALL" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "ACLRegSupport"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "ACL" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "ACLDirSupport"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "ACL_DIR" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "RMEmptyDir"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "RMEMPTYDIRECTORIES" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "LocalLow"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "LocalLow" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "PublicDoc"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "PublicDoc" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "CompareVersions"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "CompareVersions" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "ConfigFunctions"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "ConFunc" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "JSONSupport"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "JSON" "" ""
 		${EndIf}
 		ClearErrors
@@ -617,56 +633,67 @@ Section Main
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "WinMessages"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "Include_WinMessages" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "LineWrite"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "Include_LineWrite" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "TrimString"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "TrimString" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "CloseProcess"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "CloseProc" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "Include64"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "64.nsh" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "IncludeWordRep"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "Include_WordRep" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "GetBetween"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "GetBetween.nsh" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "DisableLanguageCustom"
 		${IfNot} ${Errors}
-			${WriteGlobalDefines} "DisablePAC:LanguageCustom" "" ""
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "DisablePAL:LanguageCustom" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "DisableProgramExecSegment"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "DisableProgramExecSegment" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "TLB_FUNCTION"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "TLB_FUNCTION" "" ""
 		${EndIf}
 		ClearErrors
 		${ReadAppInfoConfig} $0 "Dependencies" "DirectX"
 		${IfNot} ${Errors}
+		${AndIf} $0 != false
 			${WriteGlobalDefines} "DIRECTX" "" ""
 		${EndIf}
 	${EndIf}
@@ -801,6 +828,12 @@ Section Main
 		${AndIf} $0 != false
 			${WriteGlobalDefines} "SEGMENTS_HOSTS" "" ""
 		${EndIf}
+		ClearErrors
+		${ReadLauncherConfig} $0 "Activate" "MissingApp"
+		${IfNot} ${Errors}
+		${AndIf} $0 != false
+			${WriteGlobalDefines} "SEGMENTS_MISSINGAPP" "" ""
+		${EndIf}
 		
 		FileClose $GFLAGS
 
@@ -837,6 +870,9 @@ Section Main
 	DetailPrint " "
 	DetailPrint "Process complete.."
 	${If} ${FileExists} $PACKAGE\$AppID.exe
+		; The package's help.html, filled in from Other\Source\HelpTemplate.html.
+		; A help.html written by hand is left alone (see HelpFile.nsh).
+		${Help::Generate} $PACKAGE $AppID $AppPName $AppFullname "$EXEDIR\Other\Source\HelpTemplate.html"
 		StrCpy $FINISHTITLE "Launcher Packaged"
 		StrCpy $FINISHTEXT "The launcher has been compiled. It's located at:\r\n$PACKAGE\r\n\r\nLauncher Name:\r\n$AppID.exe" 
 	${Else}
@@ -864,12 +900,24 @@ Function .onGUIEnd
 	RealProgress::Unload
 FunctionEnd
 
-!define _PASS_RAW	`$%PACMAN_CERT_PASS%`
-!searchparse /noerrors "${_PASS_RAW}" "%PACMAN_CERT_PASS" _PASS_UNSET
-
-; Sign ourselves using both SHA-1 and SHA-2 too.
-!ifdef _PASS_UNSET
-	!finalize `"${SIGNTOOL}" sign /f "contrib\certificates\daemon.devin.pfx" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
+; Sign ourselves. The certificate password is never stored in source: set
+; PACMAN_CERT_PASS in the environment before compiling (the same variable
+; PortableAppsCompiler.nsi uses). PACMAN_CERT can point at another .pfx.
+!define LC_CERT_RAW	`$%PACMAN_CERT%`
+!searchparse /noerrors "${LC_CERT_RAW}" "%PACMAN_CERT" _LC_CERT_UNSET
+!ifdef _LC_CERT_UNSET
+	!define LC_CERT	`contrib\certificates\daemon.devin.pfx`
 !else
-	!finalize `"${SIGNTOOL}" sign /f "contrib\certificates\daemon.devin.pfx" /p "${_PASS_RAW}" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
+	!define LC_CERT	`${LC_CERT_RAW}`
+!endif
+!define LC_PASS_RAW	`$%PACMAN_CERT_PASS%`
+!searchparse /noerrors "${LC_PASS_RAW}" "%PACMAN_CERT_PASS" _LC_PASS_UNSET
+!if /FileExists "${LC_CERT}"
+	!ifdef _LC_PASS_UNSET
+		!finalize `"${SIGNTOOL}" sign /f "${LC_CERT}" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
+	!else
+		!finalize `"${SIGNTOOL}" sign /f "${LC_CERT}" /p "${LC_PASS_RAW}" /fd sha512 /t "http://timestamp.sectigo.com/" /v "%1"`
+	!endif
+!else
+	!warning "Cannot find the certificate ${LC_CERT}; PortableAppsCompiler.exe will not be signed."
 !endif
