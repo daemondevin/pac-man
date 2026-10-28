@@ -234,6 +234,15 @@ All shell integration follows **documented registry contracts** and respects OS 
 
 Pac-Man is suitable for portable developer tools, security tooling, controlled enterprise environments and forensic or sandbox workflows. It is **not** intended for silent system takeover, persistent background services or circumventing OS security policies.
 
+### In The Wild
+
+Portable versions of Windows programs, already built with PAC-MAN. They're a good place to get familiar with how to use PAC-MAN.
+
+> [!IMPORTANT]
+> These packages aren't made or endorsed by PortableApps.com, or by the developers of the programs they launch. PAC-MAN is built on the PortableApps.com Launcher and produces packages in the PortableApps.com Format, so they work with the [PortableApps.com Platform](https://portableapps.com/), but it's a separate project.
+
+They can be found [here](https://envs.net/~daemondevin/portableapps).
+
 ## Configuration Reference
 
 Everything that is available with the [PortableApps.com Launcher](https://portableapps.com/apps/development/portableapps.com_launcher) is also available with Pac-Man. The sections below cover what Pac-Man adds.
