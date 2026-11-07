@@ -798,6 +798,36 @@ Section Main
 		${AndIf} $0 != false
 			${WriteGlobalDefines} "SEGMENTS_ASSOCIATIONS" "" ""
 		${EndIf}
+		; Toolchains: Toolchains=Git,Python,NodeJS,Rust,Go
+		ClearErrors
+		${ReadLauncherConfig} $R0 "Activate" "Toolchains"
+		${IfNot} ${Errors}
+			StrCpy $R1 Git
+			Call HasToolchain
+			${If} $R2 == true
+				${WriteGlobalDefines} "TOOLCHAINS_GIT" "" ""
+			${EndIf}
+			StrCpy $R1 Python
+			Call HasToolchain
+			${If} $R2 == true
+				${WriteGlobalDefines} "TOOLCHAINS_PYTHON" "" ""
+			${EndIf}
+			StrCpy $R1 NodeJS
+			Call HasToolchain
+			${If} $R2 == true
+				${WriteGlobalDefines} "TOOLCHAINS_NODEJS" "" ""
+			${EndIf}
+			StrCpy $R1 Rust
+			Call HasToolchain
+			${If} $R2 == true
+				${WriteGlobalDefines} "TOOLCHAINS_RUST" "" ""
+			${EndIf}
+			StrCpy $R1 Go
+			Call HasToolchain
+			${If} $R2 == true
+				${WriteGlobalDefines} "TOOLCHAINS_GO" "" ""
+			${EndIf}
+		${EndIf}
         ClearErrors
 		${ReadLauncherConfig} $0 "Activate" "Runtime"
 		${IfNot} ${Errors}
@@ -882,6 +912,39 @@ Section Main
 	${EndIf}
 SectionEnd
 
+; $R2 = true when the toolchain $R1 is named in the list $R0 (separated by
+; commas, semicolons, pipes or spaces; any case). Node is taken for NodeJS.
+Function HasToolchain
+	Push $0
+	Push $1
+	Push $2
+	StrCpy $R2 false
+	StrCpy $0 0
+	StrCpy $2 ""
+	${Do}
+		StrCpy $1 $R0 1 $0
+		${If} $1 == ","
+		${OrIf} $1 == ";"
+		${OrIf} $1 == "|"
+		${OrIf} $1 == " "
+		${OrIf} $1 == ""
+			${If} $2 == $R1
+				StrCpy $R2 true
+			${ElseIf} $2 == Node
+			${AndIf} $R1 == NodeJS
+				StrCpy $R2 true
+			${EndIf}
+			StrCpy $2 ""
+			${IfThen} $1 == "" ${|} ${ExitDo} ${|}
+		${Else}
+			StrCpy $2 $2$1
+		${EndIf}
+		IntOp $0 $0 + 1
+	${Loop}
+	Pop $2
+	Pop $1
+	Pop $0
+FunctionEnd
 Function ShowFinishPage
 	${If} $AUTOMATICCOMPILE == "true"
 	${AndIf} $ERROROCCURED != true

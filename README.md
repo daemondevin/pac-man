@@ -155,6 +155,57 @@ ${SegmentPostPrimary}
 
 Then add the segment to `JOURNAL_RECOVERY_ORDER` in `Journal.nsh` and to the apply/cleanup lists in `PortableAppsCompiler.nsi`, and give it a `SEGMENTS_*` flag in `FeatureFlags.nsh` and `LauncherCompiler.nsi`.
 
+### Writing a toolchain
+
+Toolchains (`Other/Source/toolchains/<Name>.nsh`, turned on with `[Activate]:Toolchains`) are written like segments, with `${SegmentFile}` and the same hooks, and run with `${RunToolchain}` instead of `${RunSegment}`. `Toolchains.nsh` gives them shared helpers:
+
+| Macro | Purpose |
+| :---- | :------ |
+| `${ReadCustomConfig} $var Section Key Default` | A key from the toolchain's own section: the user's `<AppID>.ini`, then `Launcher.ini`, then the default; environment variables expanded |
+| `${Toolchain::Enabled} Toolchain $var` | _false_ when `Enabled=false`, else _true_ |
+| `${Toolchain::DataDir} Toolchain $var` | `Data\Toolchains\<Name>` |
+| `${Toolchain::AddPath} Folder` | Add folders in front of the app's `PATH`. Applied once, after every toolchain and Custom.nsh, with no length limit |
+| `${Toolchain::Seed} Toolchain` | Copy `App\DefaultData\Toolchains\<Name>` the first time |
+| `${Toolchain::JournalDir} Toolchain Folder` | Journal a profile folder a tool may create, when it isn't there yet |
+
+```nsis
+!ifdef TOOLCHAINS_EXAMPLE
+Var ExampleDir
+Var ExampleOn
+
+${SegmentFile}
+
+${SegmentPre}
+	StrCpy $ExampleOn false
+	${Toolchain::Enabled} Example $0
+	${If} $0 == true
+		${ReadCustomConfig} $ExampleDir Example Path `%PAL:CommonFiles%\Example`
+		${IfThen} ${FileExists} `$ExampleDir\bin\example.exe` ${|} StrCpy $ExampleOn true ${|}
+	${EndIf}
+!macroend
+
+${SegmentPrePrimary}
+	${If} $ExampleOn == true
+		${Toolchain::JournalDir} Example `$PROFILE\.example`
+	${EndIf}
+!macroend
+
+${SegmentPreExec}
+	${If} $ExampleOn == true
+		${Toolchain::DataDir} Example $0
+		${SetEnvironmentVariablesPath} EXAMPLE_HOME $0
+		${Toolchain::AddPath} `$ExampleDir\bin`
+	${EndIf}
+!macroend
+
+${SegmentPostPrimary}
+	${Journal::Rollback} Example
+!macroend
+!endif
+```
+
+Then add it to `_PacToolchains` and `_PacToolchainsCleanup` in `Toolchains.nsh`, to the front of `JOURNAL_RECOVERY_ORDER`, to the `TOOLCHAINS_ANY` test in `FeatureFlags.nsh`, and to the `Toolchains` parsing in `LauncherCompiler.nsi` and `GlobalCLDefines.nsh`. A toolchain's name must not be a segment's.
+
 The journal API lives in `Other/Source/Journal.nsh`:
 
 | Macro | Purpose |
@@ -187,6 +238,7 @@ The journal API lives in `Other/Source/Journal.nsh`:
 7. Hosts
 8. Services (Drivers run just before Services)
 9. Tasks
+10. Toolchains: Git, Python, NodeJS, Rust, Go
 
 ### Cleanup / Recovery Order
 
@@ -207,6 +259,7 @@ Exact reverse order. This ensures no consumer exists without its provider. Segme
 | Drivers | `Drivers` | **Journaled**, admin only; runtime-tested against a pnputil stand-in (add, already-staged package left alone, failed package, architecture filter, crash recovery). Needs more testing. |
 | Services | `Services` | **Journaled**; runtime-tested for new services and crash recovery. |
 | Tasks | `Tasks` | **Journaled**; runtime-tested but needs more testing against other versions of Windows |
+| Toolchains | `Toolchains` | **Done**, journaled; runtime-tested in Wine against stand-in programs: every toolchain's variables and `PATH` order, a `PATH` and a toolchain list longer than NSIS strings, a list inherited from another launcher ignored, `Enabled=false`, a missing toolchain, `Redirect=false`, `Home=true`, `ClearCache`, seeding from `DefaultData`, and crash recovery of the journaled profile folders. Not yet run against real toolchains |
 | MissingApp | `MissingApp` | **Done**; nothing to journal (it only reads, and quits before anything starts). Only English strings so far; other languages fall back to them |
 
 PAL-inherited segments (registry keys, file and directory moves, file writes and so on) keep their PAL behavior and are not part of the journal.
@@ -310,6 +363,7 @@ FileCleanup=true
 DirectoryCleanup=true
 Hosts=true
 MissingApp=true
+Toolchains=Git,Python,NodeJS,Rust,Go
 ```
 
 A key set to `false` is treated the same as an omitted key.
@@ -425,7 +479,7 @@ A key set to `false` is treated the same as an omitted key.
 
 - **Fonts:** Make fonts available while the app runs. Font files are never copied into the Windows Fonts folder.
 
-  > With no `[FontN]` sections, every font in `Data\Fonts` is loaded for the session (the old `FontsFolder` behaviour). For more control add `[Font1]`, `[Font2]` and so on:
+  > With no `[FontN]` sections, every font in `Data\Fonts` is loaded for the session (the old `FontsFolder` behavior). For more control add `[Font1]`, `[Font2]` and so on:
   >
   > - **File:** Font file or wildcard. Supports environment variables.
   > - **Scope:** _Temporary_ (default) loads the font for the session with `AddFontResource`. _User_ also registers it under `HKCU` (per-user fonts, Windows 10 1809 and later). _System_ registers it under `HKLM` and needs admin rights; without them the font is loaded temporarily instead.
@@ -615,6 +669,44 @@ A key set to `false` is treated the same as an omitted key.
   > URL=https://www.emsisoft.com/en/emergency-kit/
   > ```
 
+- **Toolchains:** Portable development toolchains put in front of the app's `PATH`, with the data their tools write kept in the package, the way VS Code Portable does it but for any app (an editor, an IDE, a terminal, a build tool). List the toolchains, separated by commas: _Git_, _Python_, _NodeJS_ (or _Node_), _Rust_, _Go_. Only the listed ones are compiled in.
+
+  > A toolchain's programs aren't part of the package: each toolchain looks for its own in `CommonFiles` next to the package (shared by every package that uses it), or wherever `Path` says. When they aren't there the toolchain does nothing, so the app starts with whatever the computer has. Nothing is changed for Windows or the computer's own `PATH`: the variables are set for the app only.
+  >
+  > Each toolchain reads its own section, first from the user's `<AppID>.ini`, then from `Launcher.ini` (the package's default), then its built-in default. Environment variables work in every value. Every toolchain takes:
+  >
+  > - **Enabled:** _false_ turns the toolchain off.
+  > - **Path:** where the toolchain is.
+  > - **Redirect:** _true_ (default) keeps what its tools write in `Data\Toolchains\<Name>`; _false_ leaves them with their usual folders in the user profile.
+  > - **ClearCache:** _true_ empties the toolchain's download or build cache when the app closes (Python, Node.js, Rust and Go).
+  >
+  > | Toolchain | Looks for | Added to `PATH` | With `Redirect=true` |
+  > | :----- | :-------- | :-------------- | :------------------- |
+  > | Git | `%PAL:CommonFiles%\Git\cmd\git.exe` ([PortableGit](https://git-scm.com/download/win)) | `cmd` | `GIT_CONFIG_GLOBAL` (`.gitconfig`). `Home=true` also moves `HOME` (`.ssh`, `.bash_history`, credential files) |
+  > | Python | `%PAL:CommonFiles%\Python\python.exe` | The Python folder, its `Scripts`, and the user `Scripts` folder | `PYTHONUSERBASE` (`pip install --user`), `PIP_CACHE_DIR` |
+  > | NodeJS | `%PAL:CommonFiles%\NodeJS\node.exe` | The Node.js folder and npm's prefix (global packages) | `npm_config_prefix`, `npm_config_cache`, `npm_config_userconfig` (`.npmrc`), `COREPACK_HOME`, `NODE_REPL_HISTORY` |
+  > | Rust | `%PAL:CommonFiles%\Rust\bin\rustc.exe` (a standalone Rust), or `cargo\bin\rustup.exe` (a rustup install, with `RUSTUP_HOME` in `rustup`) | `bin`, or `cargo\bin`, and Cargo's `bin` | `CARGO_HOME`. `ClearCache` is _true_ by default here: the downloaded crates (`registry\cache` and `registry\src`) go when the app closes |
+  > | Go | `%PAL:CommonFiles%\Go\bin\go.exe` | `bin` and `GOPATH\bin` | `GOPATH` (with the module cache), `GOCACHE`, `GOENV`. `GOROOT` is always set to the Go found |
+  >
+  > The toolchains also clear variables from the computer that would point their programs somewhere else (`PYTHONHOME`, and `GOMODCACHE` when Go's data is redirected). With `Redirect=true`, the default folders a tool would create in the user profile (such as `%USERPROFILE%\.cargo`, `%APPDATA%\npm`, `%APPDATA%\Python`, `%APPDATA%\go`) are journaled when they aren't there yet, so they are removed again if a tool ignores the variables; folders that were already there are never touched. A package can ship starting files (a `.gitconfig`, an `.npmrc`) in `App\DefaultData\Toolchains\<Name>`; they are copied to `Data\Toolchains\<Name>` the first time.
+  >
+  > ```INI
+  > [Activate]
+  > Toolchains=Git,Python,Rust
+  >
+  > [Python]
+  > Path=%PAL:PortableAppsDir%\PythonPortable\App\Python
+  >
+  > [Rust]
+  > ClearCache=false
+  > ```
+  >
+  > The user can override any of it in their `<AppID>.ini`:
+  >
+  > ```INI
+  > [Git]
+  > Home=true
+
 ---
 
 #### **AppInfo.ini**
@@ -757,6 +849,10 @@ Check out the Wiki section for various related articles related to creating Port
 
 #### **Visit the Wiki:** [Pac-Man Wiki][wikihome]
 
+#### **Ask questions and share launchers:** [Pac-Man Discussions][discussions]
+
+Questions, launchers you've built and ideas for new segments go in Discussions. Bugs you can reproduce go in [Issues][issues].
+
 ## Contributors
 
 This project has been started by **daemon.devin** and hopefully maintained on a regular basis. However, if you would like to be a part of this then please do not hesitate on getting involved! I'm always open to new ideas and a willingness for the betterment of all things code. =)
@@ -776,4 +872,5 @@ A special thanks to FukenGruven. His codebase was the skeleton which was used to
 [ghostscriptportable]: https://portableapps.com/apps/utilities/ghostscript_portable "Ghostscript Portable"
 [wikihome]: https://github.com/daemondevin/pac-man/wiki "Pac-Man Wiki"
 [tekspert]: http://tekspert.se/ "Webmaster of TekSpert.se/"
-[discordworkbench]: https://discord.gg/ExKbgXg "A PAFing Community (Discord Chat Platform)"
+[discussions]: https://github.com/daemondevin/pac-man/discussions "Pac-Man Discussions"
+[issues]: https://github.com/daemondevin/pac-man/issues "Pac-Man Issues"

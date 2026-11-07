@@ -93,11 +93,12 @@
 !define /ifndef JOURNAL_REPARSE_POINT 0x400
 
 ; Rollback order for recovery. This is the README apply order reversed, so no
-; consumer outlives its provider. Segments not in this list are rolled back
-; afterwards in registry enumeration order.
+; consumer outlives its provider. The toolchains are applied last, so they
+; come first. Segments not in this list are rolled back afterward in registry
+; enumeration order.
 !include TypeLib.nsh
 
-!define JOURNAL_RECOVERY_ORDER `Tasks Services Drivers Hosts Firewall Associations Symlinks Fonts RegDLL Runtime`
+!define JOURNAL_RECOVERY_ORDER `Go Rust NodeJS Python Git Tasks Services Drivers Hosts Firewall Associations Symlinks Fonts RegDLL Runtime`
 
 Var JournalActive
 Var JournalIncomplete
@@ -406,6 +407,8 @@ Function Journal_RegKey
 	Pop $5
 	Pop $4
 	Pop $3
+	; The Exch dance above left the caller's $2, $0 and $1 on the stack in
+	; that order (top first).
 	Pop $2
 	Pop $0
 	Pop $1

@@ -300,6 +300,11 @@ ${ECHO} "${NEWLINE}Loading the rollback journal...${NEWLINE}${NEWLINE}"
 ${ECHO} "${NEWLINE}Loading Segments...${NEWLINE}${NEWLINE}"
 !include Segments.nsh
 
+;= TOOLCHAINS
+;= ################
+${ECHO} "${NEWLINE}Loading Toolchains...${NEWLINE}${NEWLINE}"
+!include Toolchains.nsh
+
 ;= PACKAGE DETAILS
 ;= ################
 ${ECHO}			    `${NEWLINE}Writing launcher's specification details...${NEWLINE}${NEWLINE}`
@@ -548,6 +553,7 @@ Function Pre
 		${PacSegmentsApply}
 	${EndIf}
 	${RunIfEnabled} SEGMENTS_REGISTRY Registry
+	${PacToolchains}
 	${RunSegment} Custom
 	${RunSegment} RunLocally
 	${RunSegment} Temp
@@ -574,6 +580,7 @@ Function PrePrimary
 		${RunSegment} RegistryValueWrite
 	!endif
 	${PacSegmentsApply}
+	${PacToolchains}
 	${ENABLE_REDIRECTION}
 FunctionEnd
 Function PreSecondary
@@ -583,7 +590,16 @@ Function PreSecondary
 FunctionEnd
 Function PreExec
 	${DISABLE_REDIRECTION}
+	!ifdef TOOLCHAINS_ANY
+		${Toolchain::ResetPath}
+	!endif
+	${PacToolchains}
 	${RunSegment} Custom
+	; Custom.nsh may add its own folders with ${Toolchain::AddPath}, so PATH is
+	; changed once, after both.
+	!ifdef TOOLCHAINS_ANY
+		Call Toolchains_ApplyPath
+	!endif
 	${RunSegment} RefreshShellIcons
 	${RunSegment} WorkingDirectory
 	${RunSegment} RunBeforeAfter
@@ -698,6 +714,7 @@ Function PostExec
 FunctionEnd
 Function PostPrimary
 	${DISABLE_REDIRECTION}
+	${PacToolchainsCleanup}
 	${PacSegmentsCleanup}
 	!ifdef SEGMENTS_REGISTRY
 		${RunSegment} RegistryValueBackupDelete

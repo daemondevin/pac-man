@@ -112,7 +112,25 @@
 	${ReadUserConfig} ${_VALUE} "${_KEY}"
 	${IfThen} ${Errors} ${|} StrCpy ${_VALUE} "${_DEFAULT}" ${|}
 !macroend
-; 
+;
+; ${ReadCustomConfig}
+; Reads a key from a section of its own, such as [Rust], for the toolchains
+; and anything else that needs more than the app's own section. The user
+; configuration file is read first, then the launcher's INI (the package's
+; default), then the given default. An empty value counts as missing.
+; Environment variables in the value are expanded.
+;
+!define ReadCustomConfig "!insertmacro _ReadCustomConfig"
+!macro _ReadCustomConfig _VALUE _SECTION _KEY _DEFAULT
+	ReadINIStr ${_VALUE} "${CONFIG}" "${_SECTION}" "${_KEY}"
+	${If} ${_VALUE} == ""
+		ReadINIStr ${_VALUE} "${LAUNCHER}" "${_SECTION}" "${_KEY}"
+		${IfThen} ${_VALUE} == "" ${|} StrCpy ${_VALUE} "${_DEFAULT}" ${|}
+	${EndIf}
+	ExpandEnvStrings ${_VALUE} ${_VALUE}
+	ClearErrors
+!macroend
+;
 ; ${InvalidValueError}
 ; Alerts the user if there is an invalid value used in an INI file.
 ; 

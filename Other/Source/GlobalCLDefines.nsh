@@ -21,7 +21,7 @@
 !define CUSTOM			`${PACKAGE}\App\AppInfo\Launcher\custom.nsh`
 !define LAUNCHERINI		`${PACKAGE}\App\AppInfo\Launcher\${AppID}.ini`
 
-${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
+${ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory...${NEWLINE}${NEWLINE}"
 
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `ProgramExecutable64=` APPEXE64
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Registry=` REGISTRY
@@ -47,9 +47,17 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `FileCleanup=` FileCleanup
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `DirectoryCleanup=` DirectoryCleanup
 !searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Fonts=` FONTS_ENABLE
+!searchparse /ignorecase /noerrors /file "${LAUNCHERINI}" `Toolchains=` TOOLCHAINS_LIST
 
 !searchparse /ignorecase /noerrors /file "${APPINFOINI}" `AppID=` APPNAME
 !searchparse /ignorecase /noerrors /file "${APPINFOINI}" `Name=` PORTABLEAPPNAME
+; The package details the wizard (LauncherCompiler.nsi) writes to GlobalDefines.nsh.
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `PackageVersion=` PACKAGE_VERSION
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `Publisher=` PUBLISHER
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `Trademarks=` TRADEMARK
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `Developer=` DEVELOPER
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `Contributors=` CONTRIBUTORS
+!searchparse /ignorecase /noerrors /file "${APPINFOINI}" `Start=` OUTFILE
 !searchparse /ignorecase /noerrors /file "${APPINFOINI}" `UsesDotNetVersion=` dotNET_Version
 !searchparse /ignorecase /noerrors /file "${APPINFOINI}" `ElevatedPrivileges=` Elevate
 !searchparse /ignorecase /noerrors /file "${APPINFOINI}" `FileWriteReplace=` REPLACE
@@ -77,6 +85,23 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !searchparse /ignorecase /noerrors /file "${APPINFOINI}" `GetBetween=` GetBetween
 !searchparse /ignorecase /noerrors /file "${APPINFOINI}" `DirectX=` DIRECTX
 
+; Without a [Team] Developer, the publisher is named, as the wizard would ask.
+!ifndef PACKAGE_VERSION
+	!error "appinfo.ini needs [Version] PackageVersion (X.X.X.X) for a command-line build."
+!endif
+!ifndef DEVELOPER
+	!ifdef PUBLISHER
+		!define DEVELOPER `${PUBLISHER}`
+	!else
+		!define DEVELOPER `PortableAppsCompiler`
+	!endif
+!endif
+!ifndef PUBLISHER
+	!define PUBLISHER `${DEVELOPER}`
+!endif
+!ifndef OUTFILE
+	!define OUTFILE `${APPNAME}.exe`
+!endif
 !searchreplace APP "${APPNAME}" "Portable" ""
 !searchreplace FULLNAME "${PORTABLEAPPNAME}" " Portable" ""
 !define APPDIR			`$EXEDIR\App\${APP}`
@@ -143,6 +168,29 @@ ${!ECHO} "${NEWLINE}Retrieving information from files in the AppInfo directory..
 !else
 	!ifdef ASSOCIATIONS
 		!undef ASSOCIATIONS
+	!endif
+!endif
+; Toolchains: Toolchains=Git,Python,NodeJS,Rust,Go
+!ifdef TOOLCHAINS_LIST
+	!searchparse /ignorecase /noerrors "${TOOLCHAINS_LIST}" `Git` TOOLCHAINS_GIT
+	!searchparse /ignorecase /noerrors "${TOOLCHAINS_LIST}" `Python` TOOLCHAINS_PYTHON
+	!searchparse /ignorecase /noerrors "${TOOLCHAINS_LIST}" `Node` TOOLCHAINS_NODEJS
+	!searchparse /ignorecase /noerrors "${TOOLCHAINS_LIST}" `Rust` TOOLCHAINS_RUST
+	!searchparse /ignorecase /noerrors "${TOOLCHAINS_LIST}" `Go` TOOLCHAINS_GO
+	!ifdef TOOLCHAINS_GIT
+		!define /REDEF TOOLCHAINS_GIT
+	!endif
+	!ifdef TOOLCHAINS_PYTHON
+		!define /REDEF TOOLCHAINS_PYTHON
+	!endif
+	!ifdef TOOLCHAINS_NODEJS
+		!define /REDEF TOOLCHAINS_NODEJS
+	!endif
+	!ifdef TOOLCHAINS_RUST
+		!define /REDEF TOOLCHAINS_RUST
+	!endif
+	!ifdef TOOLCHAINS_GO
+		!define /REDEF TOOLCHAINS_GO
 	!endif
 !endif
 !if "${JAVA}" == "find"

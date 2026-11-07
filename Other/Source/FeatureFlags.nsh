@@ -24,6 +24,10 @@
 ;		SEGMENTS_DIRECTX        SEGMENTS_DOTNET         SEGMENTS_EXEC_AS_USER
 ;		SEGMENTS_MISSINGAPP
 ;
+;	Toolchains ([Activate] Toolchains=):
+;		TOOLCHAINS_GIT  TOOLCHAINS_PYTHON  TOOLCHAINS_NODEJS  TOOLCHAINS_RUST  TOOLCHAINS_GO
+;	and TOOLCHAINS_ANY when at least one of them is on.
+;
 
 !ifndef FEATURE_FLAGS_NSH_INCLUDED
 !define FEATURE_FLAGS_NSH_INCLUDED
@@ -98,6 +102,12 @@ ${FF_Alias} DISABLEFSR              DisableFSR
 !ifdef SEGMENTS_GHOSTSCRIPT
 	!ifndef SEGMENTS_REGISTRY
 		!define SEGMENTS_REGISTRY
+	!endif
+!endif
+; Any toolchain brings in the shared toolchain helpers.
+!ifdef TOOLCHAINS_GIT | TOOLCHAINS_PYTHON | TOOLCHAINS_NODEJS | TOOLCHAINS_RUST | TOOLCHAINS_GO
+	!ifndef TOOLCHAINS_ANY
+		!define TOOLCHAINS_ANY
 	!endif
 !endif
 
