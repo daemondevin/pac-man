@@ -294,7 +294,7 @@ Portable versions of Windows programs, already built with PAC-MAN. They're a goo
 > [!IMPORTANT]
 > These packages aren't made or endorsed by PortableApps.com, or by the developers of the programs they launch. PAC-MAN is built on the PortableApps.com Launcher and produces packages in the PortableApps.com Format, so they work with the [PortableApps.com Platform](https://portableapps.com/), but it's a separate project.
 
-They can be found [here](https://envs.net/~daemondevin/portableapps).
+They can be found [here](https://github.com/daemondevin/PortableApps).
 
 ## Configuration Reference
 
